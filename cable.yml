@@ -1,0 +1,25 @@
+name: cable
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=1_gnu
+  - ca-certificates=2021.5.30=ha878542_0
+  - ld_impl_linux-64=2.36.1=hea4e1c9_2
+  - libffi=3.4.2=h9c3ff4c_1
+  - libgcc-ng=11.2.0=h1d223b6_8
+  - libgomp=11.2.0=h1d223b6_8
+  - libstdcxx-ng=11.2.0=he4da1e4_8
+  - ncurses=6.2=h58526e2_4
+  - openssl=1.1.1l=h7f98852_0
+  - pip=21.2.4=pyhd8ed1ab_0
+  - python=3.8.12=hb7a2778_0_cpython
+  - python_abi=3.8=2_cp38
+  - readline=8.1=h46c0cb4_0
+  - setuptools=58.0.4=py38h578d9bd_0
+  - sqlite=3.36.0=h9cd32fc_1
+  - tk=8.6.11=h27826a3_1
+  - wheel=0.37.0=pyhd8ed1ab_1
+  - xz=5.2.5=h516909a_1
+  - zlib=1.2.11=h516909a_1010
