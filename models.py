@@ -9,6 +9,8 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
+import os
+os.system("rm -rf `find -type d -name .ipynb_checkpoints`:")
 
 # Import required packages
 from bezpy.mt import Site1d
@@ -81,11 +83,10 @@ class LayeredOcean(object):
     Methods:
     --------
     update_resistivity_list: Update list of layers and resistivities
-    calcZfloor: Caclulate Z for seafloor for given 1D Earth model and frequencies
     calcTF: Calculate various transfer functions
     plotTF: Plot various transfer functions with frequencies
     plot_resistivity: Plot resistivity depth plot
-    plot_impedance_seafloor: Plot seafloor impedance with frequency
+    plot_impedance: Plot seafloor impedance with frequency
     
     Parameters:
     -----------
@@ -98,7 +99,7 @@ class LayeredOcean(object):
     """
     
     def __init__(self, model_name="BM1", ocean_parameters=None, 
-                 layers=None, flim=[1e-3, 1e3], layer_interaction=False):
+                 layers=None, flim=[1e-6, 1e0]):
         """
         Initialize all model parameters.
         """
@@ -109,7 +110,6 @@ class LayeredOcean(object):
         self.freqs = np.linspace(flim[0], flim[1], int(flim[1]/flim[0])+1)
         self.ini_tfs()
         self.update_resistivity_list()
-        self.layer_interaction = layer_interaction
         return
     
     def ini_tfs(self):
@@ -191,8 +191,8 @@ class LayeredOcean(object):
         ax.pcolormesh(t, r, np.ones((N, N)), vmin=0, vmax=1., cmap="Greys")
         return
     
-    def plot_resistivity(self, ax, params={"ylim":[1e-3, 1e3], "xlim":[1e-3, 1e5], 
-                                           "yscale":"log", "xscale":"log", "ylabel":"Depth (km)",
+    def plot_resistivity(self, ax, params={"ylim":[0, 1e3], "xlim":[1e-3, 1e5], 
+                                           "xscale":"log", "ylabel":"Depth (km)",
                                            "xlabel":r"Resistivity, $\rho$ ($\Omega-m$)"}):
         """
         Plot resistivity depth plot
@@ -209,20 +209,6 @@ class LayeredOcean(object):
         ax.invert_yaxis()
         return
     
-    def calcZfloor(self):
-        """
-        Caclulate Z for seafloor for given 1D Earth model and frequencies
-        """
-        self.Zf = self.calcZ(0)[1, :]
-        return
-    
-    def calcZsurface(self):
-        """
-        Caclulate Z for sea surface for given 1D Earth model and frequencies
-        """
-        self.Zs = self.calcZ(1)[1, :]
-        return
-    
     def calcZ(self, layer=0):
         """
         Caclulate Zs for given 1D Earth model and frequencies
@@ -232,14 +218,15 @@ class LayeredOcean(object):
             freqs = np.copy(self.freqs)
             resistivities = self.resistivities
             thicknesseses = self.depths
-        
+            
             n = len(resistivities)
             nfreq = len(freqs)
-
+            
             omega = 2*np.pi*freqs
             complex_factor = 1j*omega*C.mu_0
-
+            
             k = np.sqrt(1j*omega[np.newaxis, :]*C.mu_0/resistivities[:, np.newaxis])
+            self.kd = k[0]*self.thicknesses[0]
             Z = np.zeros(shape=(n, nfreq), dtype=np.complex)
             # DC frequency produces divide by zero errors
             with np.errstate(divide="ignore", invalid="ignore"):
@@ -251,9 +238,21 @@ class LayeredOcean(object):
                                (1+k[i, :]*Z[i+1, :]/complex_factor))
                     Z[i, :] = (complex_factor*(1-r[i, :]*np.exp(-2*k[i, :]*thicknesseses[i])) /
                                (k[i, :]*(1+r[i, :]*np.exp(-2*k[i, :]*thicknesseses[i]))))
+            
+            ## ###########################################
+            ## Update 0th layer's impedance
+            ## ###########################################
+            omega = 2*C.pi*self.freqs
+            sigma_s = 1/self.resistivities[0]
+            k2 = 1.j*omega*C.mu_0*sigma_s
+            k = np.sqrt(k2)
+            Z[0, :] = (C.mu_0/1.e-3)*1.j*omega*C.mu_0/k
+            
             if freqs[0] == 0.: Z[:, 0] = 0.
             self.Z = np.copy(Z)
+        
         else: nfreq = len(self.freqs)
+        
         Z_output = np.zeros(shape=(4, nfreq), dtype=np.complex)
         Z_output[1, :] = self.Z[layer, :]*(1.e-3/C.mu_0)
         Z_output[2, :] = -Z_output[1, :]
@@ -265,22 +264,21 @@ class LayeredOcean(object):
         """
         omega = 2*C.pi*self.freqs
         Zd = self.calcZ(1)[1, :]
-        if self.layer_interaction:
-            Z, kd = self.calcZ(0)[1, :], (np.sqrt(1j*omega[np.newaxis, :]*C.mu_0/
-                                                  self.resistivities[:, np.newaxis])[0])*self.thicknesses[0]
-        else:
-            sigma_s = 1/self.resistivities[0]
-            k2 = 1.j*omega*C.mu_0*sigma_s
-            k = np.sqrt(k2)
-            kd = k*self.thicknesses[0]
-            Z = 1.j*omega*C.mu_0/k
+        Z = self.calcZ(0)[1, :]
         TFs = {}
+        
+        omega = 2*C.pi*self.freqs
+        sigma_s = 1/self.resistivities[0]
+        k2 = 1.j*omega*C.mu_0*sigma_s
+        k = np.sqrt(k2)
+        kd = k*self.thicknesses[0]
+        
         for kind in kinds:
             TFs[kind] = self.functions[kind](Z, Zd, kd)
         if ax is not None: self.plotTF(ax, TFs)
         return TFs
     
-    def plotTF(self, ax, TFs, freqs=None, ylims=[1e-10, 1]):
+    def plotTF(self, ax, TFs, freqs=None, ylims=[1e-6, 1e0]):
         """
         Plot transfer function frequency plot
         """
@@ -295,7 +293,7 @@ class LayeredOcean(object):
         ax.set_ylabel("Amplitude Ratio")
         ax.set_ylim(ylims)
         ax.set_xlim(freqs[0],freqs[-1])
-        ax.legend(loc=1)
+        ax.legend(loc=3)
         return
     
     def plot_impedance(self, ax, layer=0):
@@ -303,19 +301,15 @@ class LayeredOcean(object):
         Plot impedance with frequency for a leyer
         """
         ax.text(0.99, 1.05, "Earth Model: %s (L=%d)"%(self.model_name, layer), ha="right", va="center", transform=ax.transAxes)
-        if (not self.layer_interaction) and layer == 0: 
-            omega = 2*C.pi*self.freqs
-            sigma_s = 1/self.resistivities[0]
-            k2 = 1.j*omega*C.mu_0*sigma_s
-            k = np.sqrt(k2)
-            Z = 1.j*omega*C.mu_0/k
-        else: Z = self.calcZ(layer)[1, :]
+        Z = self.calcZ(layer)[1, :]
         mag, phase = np.abs(Z), np.rad2deg(np.angle(Z))
-        ax.semilogx(self.freqs, mag, "r", lw=1.)
+        ax.loglog(self.freqs, mag, "r", lw=1.)
+        ax.set_ylim(1e-8, 1e0)
         ax.set_ylabel("|Z|=|a+jb|", fontdict={"color":"r"})
         ax.set_xlabel(r"$f_0$ (Hz)")
         ax = ax.twinx()
         ax.semilogx(self.freqs, phase, "b", lw=1.)
+        ax.set_ylim(0, 80)
         ax.set_xlim(self.freqs[0], self.freqs[-1])
         ax.set_ylabel(r"$\theta(Z)=tan^{-1}(\frac{b}{a})$", fontdict={"color":"b"})
         return
