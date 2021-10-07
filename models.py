@@ -15,8 +15,11 @@ os.system("rm -rf `find -type d -name .ipynb_checkpoints`:")
 # Import required packages
 from bezpy.mt import Site1d
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolor
 import numpy as np
 from scipy import constants as C
+
+from multiprocessing import Pool
 
 def efmte(x, n=3, m=1, e="e", nmax=16):
     n = 3 if x < 1. else 0
@@ -73,6 +76,14 @@ def read_1d_usgs_profile(fname):
                           resistivities=[1./x for x in conductivities])
             return site
 
+
+    
+def Ed2Ho(Z, Zd, kd):
+    return Zd/(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
+
+def Hd2Ho(Z, Zd, kd):
+    return 1./(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
+        
 class LayeredOcean(object):
     """
     This class is to emulate electric and magnetic fields
@@ -116,9 +127,7 @@ class LayeredOcean(object):
         """
         Create transfer (lambda) functions
         """
-        self.functions = {}
-        self.functions["Ed2Ho"] = lambda Z, Zd, kd: Zd/(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
-        self.functions["Hd2Ho"] = lambda Z, Zd, kd: 1./(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
+        self.functions = {"Ed2Ho": Ed2Ho, "Hd2Ho": Hd2Ho}
         return
     
     @property
@@ -214,7 +223,6 @@ class LayeredOcean(object):
         Caclulate Zs for given 1D Earth model and frequencies
         """
         if not hasattr(self, "Z"):
-            
             freqs = np.copy(self.freqs)
             resistivities = self.resistivities
             thicknesseses = self.depths
@@ -246,7 +254,7 @@ class LayeredOcean(object):
             sigma_s = 1/self.resistivities[0]
             k2 = 1.j*omega*C.mu_0*sigma_s
             k = np.sqrt(k2)
-            Z[0, :] = (C.mu_0/1.e-3)*1.j*omega*C.mu_0/k
+            Z[0, :] = 1.j*omega*C.mu_0/k
             
             if freqs[0] == 0.: Z[:, 0] = 0.
             self.Z = np.copy(Z)
@@ -254,7 +262,7 @@ class LayeredOcean(object):
         else: nfreq = len(self.freqs)
         
         Z_output = np.zeros(shape=(4, nfreq), dtype=np.complex)
-        Z_output[1, :] = self.Z[layer, :]*(1.e-3/C.mu_0)
+        Z_output[1, :] = self.Z[layer, :]
         Z_output[2, :] = -Z_output[1, :]
         return Z_output
     
@@ -278,7 +286,7 @@ class LayeredOcean(object):
         if ax is not None: self.plotTF(ax, TFs)
         return TFs
     
-    def plotTF(self, ax, TFs, freqs=None, ylims=[1e-6, 1e0]):
+    def plotTF(self, ax, TFs, freqs=None, ylims=[1e-2, 1e0]):
         """
         Plot transfer function frequency plot
         """
@@ -313,3 +321,84 @@ class LayeredOcean(object):
         ax.set_xlim(self.freqs[0], self.freqs[-1])
         ax.set_ylabel(r"$\theta(Z)=tan^{-1}(\frac{b}{a})$", fontdict={"color":"b"})
         return
+    
+class OceanFloor(object):
+    """
+    Ocean floor model based on parametric or emperical definations
+    """
+    
+    def __init__(self, length_segment, depths, verbose=False):
+        self.length_segment = length_segment
+        self.depths = depths
+        self.verbose = verbose
+        return
+    
+    def plot_ocean_basin(self, ax):
+        """
+        Plot ocean basin based on segment and depths
+        """
+        ax.plot(self.length_segment, self.depths, "r")
+        ax.axvline(0, ls="--", lw=1., color="k")
+        ax.set_ylim(min(self.depths), max(self.depths))
+        ax.set_xlim(min(self.length_segment), max(self.length_segment))
+        ax.set_xlabel("Ocean Basin Segment/Length, km")
+        ax.set_ylabel("Ocean Basin Depths, km")
+        return
+    
+    def _run_rkck_(self, ls, d, model_name, flim):
+        if self.verbose: print(" Calculate transfer functions for location, depths: %.2f, %.2f"%(ls, d))
+        o = LayeredOcean(model_name=model_name, flim=flim)
+        o.thicknesses[0] = d*1.e3
+        o.calcZ()
+        return o
+    
+    def create_basin_tf(self, model_name="BM1", flim=[1e-6, 1e0], nprocs=24):
+        """
+        Create a list of LayeredOcean for each segments
+        """        
+        if self.verbose: print(" Total processes (nprocs): %d(%d)"%(len(self.length_segment), nprocs))
+        self.flim = flim
+        inputs = [(ls, d, model_name, flim) for ls, d in zip(self.length_segment, np.abs(self.depths))]
+        pool = Pool(nprocs)
+        self.oceans = pool.starmap(self._run_rkck_, inputs)
+        pool.close()
+        pool.join()
+        return
+    
+    def contour_plots(self, ax, param="Zd:mag", cmap="Greens", 
+                      norm=mcolor.LogNorm(vmin=1e-4, vmax=1e0), 
+                      label=r"$|Z_d|$"):
+        """
+        Contour plot for a specific parameter
+        """
+        freqs, ls = np.linspace(self.flim[0], self.flim[1], int(self.flim[1]/self.flim[0])+1), self.length_segment
+        pv = np.zeros((len(self.oceans), len(freqs)))
+        for i, o in enumerate(self.oceans):
+            if param=="Zd:mag": pv[i, :] = np.absolute(o.calcZ(1)[1, :])
+            if param=="Zd:pha": pv[i, :] = np.angle(o.calcZ(1)[1, :])
+        ax.contour(ls, freqs, pv.T, norm=norm)
+        im = ax.contourf(ls, freqs, pv.T, cmap=cmap, norm=norm)
+        cb = plt.gcf().colorbar(im, ax=ax, extend="max")
+        cb.set_label(label)
+        ax.set_yscale("log")
+        ax.set_xlim(min(self.length_segment), max(self.length_segment))
+        ax.set_xlabel("Ocean Basin Segment/Length, (km)")
+        ax.set_ylim(freqs[0],freqs[-1])
+        ax.set_ylabel(r"$f_0$, (Hz)")
+        return
+    
+class SimpleParabolicOcean(OceanFloor):
+    """
+    Ocean floor model based on parabolic definations
+    """
+    
+    def __init__(self, lseg=[-5,5], dmax=5., dseg=.2, verbose=False):
+        self.lseg = lseg
+        self.dmax = dmax
+        self.npts = int((lseg[-1]-lseg[0])/dseg)+1
+        x = np.linspace(lseg[0],lseg[-1],self.npts)
+        a = np.max(x**2)/(dmax*4)
+        y = x**2/(4*a)-dmax
+        super().__init__(x, y, verbose=verbose)
+        return
+    
