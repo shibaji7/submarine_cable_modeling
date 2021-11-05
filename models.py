@@ -86,7 +86,102 @@ def read_1d_usgs_profile(fname):
                           resistivities=[1./x for x in conductivities])
             return site
 
-
+class BEZpyClass(object):
+    """
+    This class is an example code to check my calculation
+    """
+    
+    def __init__(self, model_name="BM1", flim=[1e-6, 1e0]):
+        self.model_name = model_name
+        self.site = read_1d_usgs_profile("data/ocean_model_%s.txt"%model_name)
+        self.freqs = np.linspace(flim[0], flim[1], int(flim[1]/flim[0])+1)
+        self.functions = {"Ed2Ho": Ed2Ho, "Hd2Ho": Hd2Ho}
+        return
+    
+    def calcZ(self, layer="ocean"):
+        if not hasattr(self, "Z"):
+            freqs = np.copy(self.freqs)
+            omega = 2*C.pi*self.freqs
+            sigma_s = 1/self.site.resistivities[0]
+            k2 = 1.j*omega*C.mu_0*sigma_s
+            k = np.sqrt(k2)
+            Zo = 1.j*omega*C.mu_0/k
+            Kf = self.site.calcZ(freqs)[1]*(C.mu_0/1.e-3)
+            self.Z = {"ocean": Zo, "floor": Kf}
+        return self.Z[layer]
+    
+    def calcTF(self, kinds=["Ed2Ho", "Hd2Ho"], ax=None, ylims=[1e-2, 1e0],):
+        omega = 2*C.pi*self.freqs
+        Zd = self.calcZ("floor")
+        Z = self.calcZ("ocean")
+        TFs = {}
+        
+        omega = 2*C.pi*self.freqs
+        sigma_s = 1/self.site.resistivities[0]
+        k2 = 1.j*omega*C.mu_0*sigma_s
+        k = np.sqrt(k2)
+        kd = k*self.site.thicknesses[0]
+        
+        for kind in kinds:
+            TFs[kind] = self.functions[kind](Z, Zd, kd)
+        if ax is not None: self.plotTF(ax, TFs, ylims=ylims)
+        return TFs
+    
+    def plotTF(self, ax, TFs, freqs=None, ylims=[1e-2, 1e0]):
+        """
+        Plot transfer function frequency plot
+        """
+        if freqs is None: freqs = np.copy(self.freqs)
+        ax.text(0.99, 1.05, r"$\rho_s (\Omega-m)$: %.2f"%(self.site.resistivities[0]), 
+            ha="right", va="center", transform=ax.transAxes)
+        ax.text(1.05, 0.99, r"$D_{Ocean} (km)$: %d"%(self.site.thicknesses[0]/1e3), 
+                ha="center", va="top", transform=ax.transAxes, rotation=90)
+        ax.loglog(freqs, np.absolute(TFs["Ed2Ho"])*1e3, "r", lw=0.8, label=r"$\left|\frac{E_d}{B_o}\right|$")
+        #ax.loglog(freqs, np.absolute(TFs["Ed2Bo"])*1e3, "r", lw=1.2, ls="--", label=r"$\frac{E_d}{B_o}$")
+        ax.loglog(freqs, np.absolute(TFs["Hd2Ho"]), "b", lw=0.8, label=r"$\left|\frac{B_d}{B_o}\right|$")
+        ax.set_xlabel(r"$f_0$, (Hz)")
+        ax.set_ylabel("Amplitude Ratio")
+        ax.set_ylim(ylims)
+        ax.set_xlim(freqs[0],freqs[-1])
+        ax.legend(loc=3)
+        return
+    
+    def plotTFMagPhase(self, ax, freqs=None, ylims=[1e-2, 1e0]):
+        """
+        Plot transfer function frequency plot
+        """
+        TFs = self.calcTF()
+        if freqs is None: freqs = np.copy(self.freqs)
+        ax.text(0.99, 1.05, r"$\rho_s (\Omega-m)$: %.2f"%(self.site.resistivities[0]), 
+            ha="right", va="center", transform=ax.transAxes)
+        ax.loglog(freqs, np.absolute(TFs["Ed2Ho"])*1e3, "r", lw=0.8)
+        ax.set_xlabel(r"$f_0$, (Hz)")
+        ax.set_ylabel(r"$\left|\frac{E_d}{B_o}\right|$", fontdict={"color":"r"})
+        ax.set_ylim(ylims)
+        ax.set_xlim(freqs[0],freqs[-1])
+        ax = ax.twinx()
+        ax.semilogx(freqs, 180*np.angle(TFs["Ed2Ho"])/np.pi, "b", lw=0.8)
+        ax.set_ylim(0,90)
+        ax.set_ylabel(r"$\theta(\frac{E_d}{B_o})$", fontdict={"color":"b"})
+        return
+    
+    def plot_impedance(self, ax, layer="ocean"):
+        """
+        Plot impedance with frequency for a leyer
+        """
+        ax.text(0.99, 1.05, "Earth Model: %s (L=%s)"%(self.model_name, layer), ha="right", va="center", transform=ax.transAxes)
+        Z = self.calcZ(layer)
+        mag, phase = np.abs(Z), np.rad2deg(np.angle(Z))
+        ax.loglog(self.freqs, mag, "r", lw=1.)
+        ax.set_ylim(1e-8, 1e0)
+        ax.set_ylabel(r"$|Z|=|a+jb|$", fontdict={"color":"r"})
+        ax.set_xlabel(r"$f_0$ (Hz)")
+        ax = ax.twinx()
+        ax.semilogx(self.freqs, phase, "b", lw=1.)
+        ax.set_ylim(0, 80)
+        ax.set_xlim(self.freqs[0], self.freqs[-1])
+        ax.set_ylabel(r"$\theta(Z)=\arctan(\frac{b}{a})$", fontdict={"color":"b"})
+        return
     
 def Ed2Ho(Z, Zd, kd):
     return Zd/(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
@@ -276,31 +371,6 @@ class LayeredOcean(object):
         Z_output[1, :] = self.Z[layer, :]
         Z_output[2, :] = -Z_output[1, :]
         return Z_output
-    
-    def calcTFRec(self, freq):
-        """
-        """
-        resistivities = self.resistivities
-        thicknesseses = self.depths
-        omega = 2*np.pi*freq
-        n = len(thicknesseses)
-        
-        omega = 2*np.pi*freq
-        complex_factor = 1j*omega*C.mu_0
-        k = np.sqrt(1j*omega*C.mu_0/resistivities)
-        Z = np.zeros(shape=(n), dtype=np.complex)
-        
-        with np.errstate(divide="ignore", invalid="ignore"):
-            Z[-1] = complex_factor/k[-1]
-            
-            r = np.zeros(shape=(n), dtype=np.complex)
-            for i in range(n-2, -1, -1):
-                r[i] = ((1-k[i]*Z[i]/complex_factor) /
-                           (1+k[i]*Z[i+1]/complex_factor))
-                Z[i] = (complex_factor*(1-r[i]*np.exp(-2*k[i]*thicknesseses[i])) /
-                           (k[i]*(1+r[i]*np.exp(-2*k[i]*thicknesseses[i]))))
-        o = self.functions["Ed2Ho"](Z[0], Z[1], k[0]*thicknesseses[0])
-        return o
     
     def calcTF(self, kinds=["Ed2Ho", "Hd2Ho"], ax=None, ylims=[1e-2, 1e0], th=None):
         """
