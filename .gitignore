@@ -8,6 +8,7 @@ __pycache__/
 *.jpg
 *.png
 *.pickle
+*tmp*
 
 # Distribution / packaging
 .Python

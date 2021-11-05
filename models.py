@@ -18,8 +18,18 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolor
 import numpy as np
 from scipy import constants as C
+import pandas as pd
+import cartopy.crs as ccrs
 
 from multiprocessing import Pool
+from fastkml import kml
+from netCDF4 import Dataset
+
+from math import radians, degrees, sin, cos, asin, acos, sqrt
+
+def great_circle(lon1, lat1, lon2, lat2, R = 6371.):
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    return R * ( acos(sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(lon1 - lon2)) )
 
 def efmte(x, n=3, m=1, e="e", nmax=16):
     n = 3 if x < 1. else 0
@@ -218,7 +228,7 @@ class LayeredOcean(object):
         ax.invert_yaxis()
         return
     
-    def calcZ(self, layer=0):
+    def calcZ(self, layer=0, ocean=True):
         """
         Caclulate Zs for given 1D Earth model and frequencies
         """
@@ -250,11 +260,12 @@ class LayeredOcean(object):
             ## ###########################################
             ## Update 0th layer's impedance
             ## ###########################################
-            omega = 2*C.pi*self.freqs
-            sigma_s = 1/self.resistivities[0]
-            k2 = 1.j*omega*C.mu_0*sigma_s
-            k = np.sqrt(k2)
-            Z[0, :] = 1.j*omega*C.mu_0/k
+            if ocean:
+                omega = 2*C.pi*self.freqs
+                sigma_s = 1/self.resistivities[0]
+                k2 = 1.j*omega*C.mu_0*sigma_s
+                k = np.sqrt(k2)
+                Z[0, :] = 1.j*omega*C.mu_0/k
             
             if freqs[0] == 0.: Z[:, 0] = 0.
             self.Z = np.copy(Z)
@@ -266,7 +277,32 @@ class LayeredOcean(object):
         Z_output[2, :] = -Z_output[1, :]
         return Z_output
     
-    def calcTF(self, kinds=["Ed2Ho", "Hd2Ho"], ax=None):
+    def calcTFRec(self, freq):
+        """
+        """
+        resistivities = self.resistivities
+        thicknesseses = self.depths
+        omega = 2*np.pi*freq
+        n = len(thicknesseses)
+        
+        omega = 2*np.pi*freq
+        complex_factor = 1j*omega*C.mu_0
+        k = np.sqrt(1j*omega*C.mu_0/resistivities)
+        Z = np.zeros(shape=(n), dtype=np.complex)
+        
+        with np.errstate(divide="ignore", invalid="ignore"):
+            Z[-1] = complex_factor/k[-1]
+            
+            r = np.zeros(shape=(n), dtype=np.complex)
+            for i in range(n-2, -1, -1):
+                r[i] = ((1-k[i]*Z[i]/complex_factor) /
+                           (1+k[i]*Z[i+1]/complex_factor))
+                Z[i] = (complex_factor*(1-r[i]*np.exp(-2*k[i]*thicknesseses[i])) /
+                           (k[i]*(1+r[i]*np.exp(-2*k[i]*thicknesseses[i]))))
+        o = self.functions["Ed2Ho"](Z[0], Z[1], k[0]*thicknesseses[0])
+        return o
+    
+    def calcTF(self, kinds=["Ed2Ho", "Hd2Ho"], ax=None, ylims=[1e-2, 1e0], th=None):
         """
         Calculate various transfer functions
         """
@@ -279,11 +315,12 @@ class LayeredOcean(object):
         sigma_s = 1/self.resistivities[0]
         k2 = 1.j*omega*C.mu_0*sigma_s
         k = np.sqrt(k2)
-        kd = k*self.thicknesses[0]
+        kd = k*self.thicknesses[0] if th is None else k*th
         
         for kind in kinds:
             TFs[kind] = self.functions[kind](Z, Zd, kd)
-        if ax is not None: self.plotTF(ax, TFs)
+        TFs["Ed2Bo"] = TFs["Ed2Ho"]*C.mu_0
+        if ax is not None: self.plotTF(ax, TFs, ylims=ylims)
         return TFs
     
     def plotTF(self, ax, TFs, freqs=None, ylims=[1e-2, 1e0]):
@@ -295,13 +332,33 @@ class LayeredOcean(object):
             ha="right", va="center", transform=ax.transAxes)
         ax.text(1.05, 0.99, r"$D_{Ocean} (km)$: %d"%(self.thicknesses[0]/1e3), 
                 ha="center", va="top", transform=ax.transAxes, rotation=90)
-        ax.loglog(freqs, np.absolute(TFs["Ed2Ho"])*1e3, "r", lw=0.8, label=r"$\frac{E_d}{H_0}$")
-        ax.loglog(freqs, np.absolute(TFs["Hd2Ho"]), "b", lw=0.8, label=r"$\frac{H_d}{H_0}$")
+        ax.loglog(freqs, np.absolute(TFs["Ed2Ho"])*1e3, "r", lw=0.8, label=r"$\left|\frac{E_d}{B_o}\right|$")
+        #ax.loglog(freqs, np.absolute(TFs["Ed2Bo"])*1e3, "r", lw=1.2, ls="--", label=r"$\frac{E_d}{B_o}$")
+        ax.loglog(freqs, np.absolute(TFs["Hd2Ho"]), "b", lw=0.8, label=r"$\left|\frac{B_d}{B_o}\right|$")
         ax.set_xlabel(r"$f_0$, (Hz)")
         ax.set_ylabel("Amplitude Ratio")
         ax.set_ylim(ylims)
         ax.set_xlim(freqs[0],freqs[-1])
         ax.legend(loc=3)
+        return
+    
+    def plotTFMagPhase(self, ax, freqs=None, ylims=[1e-2, 1e0], th=None):
+        """
+        Plot transfer function frequency plot
+        """
+        TFs = self.calcTF(th=th)
+        if freqs is None: freqs = np.copy(self.freqs)
+        ax.text(0.99, 1.05, r"$\rho_s (\Omega-m)$: %.2f"%(self.resistivities[0]), 
+            ha="right", va="center", transform=ax.transAxes)
+        ax.loglog(freqs, np.absolute(TFs["Ed2Ho"])*1e3, "r", lw=0.8)
+        ax.set_xlabel(r"$f_0$, (Hz)")
+        ax.set_ylabel(r"$\left|\frac{E_d}{B_o}\right|$", fontdict={"color":"r"})
+        ax.set_ylim(ylims)
+        ax.set_xlim(freqs[0],freqs[-1])
+        ax = ax.twinx()
+        ax.semilogx(freqs, 180*np.angle(TFs["Ed2Ho"])/np.pi, "b", lw=0.8)
+        ax.set_ylim(0,90)
+        ax.set_ylabel(r"$\theta(\frac{E_d}{B_o})$", fontdict={"color":"b"})
         return
     
     def plot_impedance(self, ax, layer=0):
@@ -313,13 +370,13 @@ class LayeredOcean(object):
         mag, phase = np.abs(Z), np.rad2deg(np.angle(Z))
         ax.loglog(self.freqs, mag, "r", lw=1.)
         ax.set_ylim(1e-8, 1e0)
-        ax.set_ylabel("|Z|=|a+jb|", fontdict={"color":"r"})
+        ax.set_ylabel(r"$|Z|=|a+jb|$", fontdict={"color":"r"})
         ax.set_xlabel(r"$f_0$ (Hz)")
         ax = ax.twinx()
         ax.semilogx(self.freqs, phase, "b", lw=1.)
         ax.set_ylim(0, 80)
         ax.set_xlim(self.freqs[0], self.freqs[-1])
-        ax.set_ylabel(r"$\theta(Z)=tan^{-1}(\frac{b}{a})$", fontdict={"color":"b"})
+        ax.set_ylabel(r"$\theta(Z)=\arctan(\frac{b}{a})$", fontdict={"color":"b"})
         return
     
 class OceanFloor(object):
@@ -366,7 +423,7 @@ class OceanFloor(object):
         return
     
     def contour_plots(self, ax, param="Zd:mag", cmap="Greens", 
-                      norm=mcolor.LogNorm(vmin=1e-4, vmax=1e0), 
+                      norm=mcolor.LogNorm(vmin=1e-7, vmax=1e-1), 
                       label=r"$|Z_d|$"):
         """
         Contour plot for a specific parameter
@@ -376,9 +433,13 @@ class OceanFloor(object):
         for i, o in enumerate(self.oceans):
             if param=="Zd:mag": pv[i, :] = np.absolute(o.calcZ(1)[1, :])
             if param=="Zd:pha": pv[i, :] = np.angle(o.calcZ(1)[1, :])
-        ax.contour(ls, freqs, pv.T, norm=norm)
-        im = ax.contourf(ls, freqs, pv.T, cmap=cmap, norm=norm)
-        cb = plt.gcf().colorbar(im, ax=ax, extend="max")
+            if param=="TF.Ed2Ho:mag": pv[i, :] = np.absolute(o.calcTF()["Ed2Ho"])
+            if param=="TF.Ed2Ho:pha": pv[i, :] = np.angle(o.calcTF()["Ed2Ho"])
+            if param=="TF.Hd2Ho:mag": pv[i, :] = np.absolute(o.calcTF()["Hd2Ho"])
+            if param=="TF.Hd2Ho:pha": pv[i, :] = np.angle(o.calcTF()["Hd2Ho"])
+        ax.contour(ls, freqs, pv.T, norm=norm, cmap=cmap)
+        im = ax.contourf(ls, freqs, pv.T, cmap=cmap, norm=norm, vmax=1e-1, vmin=1e-7)
+        cb = plt.gcf().colorbar(im, ax=ax, extend="max", shrink=0.5)
         cb.set_label(label)
         ax.set_yscale("log")
         ax.set_xlim(min(self.length_segment), max(self.length_segment))
@@ -401,4 +462,106 @@ class SimpleParabolicOcean(OceanFloor):
         y = x**2/(4*a)-dmax
         super().__init__(x, y, verbose=verbose)
         return
+
+class CableDetails(object):
+    """
+    This class is dedicated to extract cable detailes form kml files
+    """
+    
+    def __init__(self, cable_file="data/cablemap.info.kml", cables=["TAT-14"]):
+        self.cable_file = cable_file
+        self.cables = cables
+        if ".kml" in cable_file:
+            with open(cable_file, "rt") as f: 
+                d = f.read()
+                d = "\n".join(d.split("\n")[1:])
+            self.root = kml.KML()
+            self.root.from_string(d)
+            self._extract_cable_details_()
+        elif ".cable" in cable_file:
+            self.cable_props = {}
+            details = pd.read_csv(cable_file)
+            for c in self.cables:
+                self.cable_props[c] = {"name": c, "lats": [], "lons": [], "alts": [], "A->E": {}}
+                self.cable_props[c]["lons"].extend(details.lons)
+                self.cable_props[c]["lats"].extend(details.lats)
+                self.cable_props[c]["alts"].extend([0]*len(details))
+                self.cable_props[c]["A->E"]["lats"] = details.lats.tolist()
+                self.cable_props[c]["A->E"]["lons"] = details.lons.tolist()
+                self.cable_props[c]["A->E"]["thickness"] = (1e-3*details.thickness).tolist()
+        else: print(f"System is not able to work with file type .{cable_file.split('.')[-1]}")
+        return
+    
+    def _extract_cable_details_(self):
+        folders = list(list(list(self.root.features())[0].features())[1].features())
+        self.cable_props = {}
+        for f in folders:
+            if f.name in self.cables: 
+                cfeatures = list(f.features())
+                self.cable_props[f.name] = {"name": f.name, "lats": [], "lons": [], "alts": []}
+                coords = list(cfeatures[0].geometry.coords)
+                for c in coords:
+                    self.cable_props[f.name]["lons"].append(c[0])
+                    self.cable_props[f.name]["lats"].append(c[1])
+                    self.cable_props[f.name]["alts"].append(c[2])
+        return
+    
+    def get_ocean_depth_data(self, fname="data/LITHO1.0.nc"):
+        nc = Dataset(fname)
+        latitude, longitude = nc.variables["latitude"][:], nc.variables["longitude"][:]
+        ocean_thickness = nc.variables["water_bottom_depth"][:] - nc.variables["water_top_depth"][:]
+        thickness = []
+        for c in self.cables:
+            cprops = self.cable_props[c]
+            clats, clons = np.array(cprops["lats"]), np.array(cprops["lons"])
+            for lat, lon in zip(clats, clons):
+                i, j = np.argmin(np.abs(latitude-lat)), np.argmin(np.abs(longitude-lon))
+                thickness.append(ocean_thickness[i, j])
+            first_index, last_index = None, None
+            for _i, t in enumerate(thickness):
+                if (not np.isnan(t)) and (first_index is None): first_index = _i
+                if (np.isnan(t)) and (first_index is not None) and (last_index is None): last_index = _i
+            self.cable_props[c]["A->E"] = {}
+            self.cable_props[c]["A->E"]["lats"] = clats[first_index-1:last_index+1]
+            self.cable_props[c]["A->E"]["lons"] = clons[first_index-1:last_index+1]
+            self.cable_props[c]["A->E"]["thickness"] = thickness[first_index-1:last_index+1]
+        nc.close()
+        return
+    
+    def create_basin_tf(self, model_name="BM1", flim=[1e-6, 1e0]):
+        for c in self.cables:
+            self.cable_props[c]["A->E"]["oceans"] = []
+            x = [(lat, lon, th) for lat, lon, th in zip(self.cable_props[c]["A->E"]["lats"], self.cable_props[c]["A->E"]["lons"],
+                                                       self.cable_props[c]["A->E"]["thickness"])]
+            for d in self.cable_props[c]["A->E"]["thickness"]:
+                o = LayeredOcean(model_name=model_name, flim=flim)
+                o.thicknesses[0] = d*1.e3
+                o.calcZ()
+                self.cable_props[c]["A->E"]["oceans"].append(o)
+        return
+    
+    def plot_cable_footprint(self, loc=None, ax=None):
+        if ax is None: ax = plt.axes(projection=ccrs.PlateCarree())
+        ax.coastlines()
+        for c in self.cables:
+            ax.plot(self.cable_props[c]["A->E"]["lons"],self.cable_props[c]["A->E"]["lats"], linewidth=1.,
+                   transform=ccrs.PlateCarree(), color="b")
+        ax.set_extent([-100, 30, 0, 80], crs=ccrs.PlateCarree())
+        ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+              linewidth=0.5, color="gray", alpha=0.3, linestyle="--")
+        if loc is not None: ax.scatter([loc[0]], [loc[1]], s=5, marker="D", color="r", transform=ccrs.PlateCarree())
+        return
+    
+    def plot_TF_location(self, ix=3, c="TAT-8"):
+        fig = plt.figure(dpi=150, figsize=(4,8))
+        ax = fig.add_subplot(211, projection=ccrs.PlateCarree())
+        loc = (self.cable_props[c]["A->E"]["lons"][ix], self.cable_props[c]["A->E"]["lats"][ix])
+        self.plot_cable_footprint(loc, ax)
+        o = self.cable_props[c]["A->E"]["oceans"][ix]
+        ax = fig.add_subplot(212)
+        _ = o.calcTF(ax=ax)
+        fig.subplots_adjust(wspace=0.2, hspace=0.2)
+        return
+    
+    
     
