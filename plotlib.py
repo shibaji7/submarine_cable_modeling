@@ -63,33 +63,33 @@ def create_pane(nrows=1, ncols=1, dpi=150, figsize=(3,3), wspace=0.2, hspace=0.2
     return fig, axes
 
 
-def plot_xy_magnetic_field(stns, frames, dpi=150, wspace=0.2, hspace=0.2):
+def plot_xy_magnetic_field(stns, frames, dpi=150, wspace=0.3, hspace=0.3):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
-    fig, axes = plt.subplots(nrows=len(stns), ncols=1, dpi=dpi, figsize=(6, 3*len(stns)))
+    fig, axes = plt.subplots(nrows=len(stns), ncols=2, dpi=dpi, figsize=(12, 3*len(stns)))
     for i, stn in enumerate(stns):
         frame = frames[stn]
-        ax = axes[i]
-        ax.tick_params(axis="y", which="both", colors="b")
+        ax = axes[i,0]
+        #ax.tick_params(axis="y", which="both", colors="b")
         ax.set_xlim(frame.index.tolist()[0], frame.index.tolist()[-1]+dt.timedelta(minutes=1))
         ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
         ax.xaxis.set_major_locator(mdates.DayLocator())
         ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
         ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-        ax.plot(frame.index, frame.X, "b", ls="-", lw=1.)
+        ax.plot(frame.index, frame.X, "k", ls="-", lw=1.)
         ax.text(0.05, 0.9, stn.upper(), ha="left", va="center", transform=ax.transAxes, fontdict={"fontweight": "bold"})
-        ax.set_ylabel(r"$B_x$, nT ($\times 10^{-9}$T)", fontdict={"color": "b"})
+        ax.set_ylabel(r"$B_x$, nT ($\times 10^{-9}$T)", fontdict={"color": "k"})
         if i == len(stns)-1: ax.set_xlabel("Time, UT")
-        ax = ax.twinx()
-        ax.tick_params(axis="y", which="both", colors="r")
+        ax = axes[i,1]
+        #ax.tick_params(axis="y", which="both", colors="r")
         ax.set_xlim(frame.index.tolist()[0], frame.index.tolist()[-1]+dt.timedelta(minutes=1))
         ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
         ax.xaxis.set_major_locator(mdates.DayLocator())
         ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
         ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-        ax.plot(frame.index, frame.Y, "r", ls="-", lw=1.)
-        ax.set_ylabel(r"$B_y$, nT ($\times 10^{-9}$T)", fontdict={"color": "r"})
-        ax.spines["left"].set_color("b")
-        ax.spines["right"].set_color("r")
+        ax.plot(frame.index, frame.Y, "k", ls="-", lw=1.)
+        ax.set_ylabel(r"$B_y$, nT ($\times 10^{-9}$T)", fontdict={"color": "k"})
+        #ax.spines["left"].set_color("b")
+        #ax.spines["right"].set_color("r")
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     fig.savefig("docs/Bxy.Field.png", bbox_inches="tight")
     return
