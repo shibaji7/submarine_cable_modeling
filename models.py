@@ -19,7 +19,6 @@ from scipy import constants as C
 import pandas as pd
 
 from multiprocessing import Pool
-from fastkml import kml
 from netCDF4 import Dataset
 
 import plotlib
@@ -79,3 +78,48 @@ class OceanModel(object):
         TFs = self.calcTF()
         plotlib.plotTF(TFs, self.freqs, self.ocean_model["rho"], self.ocean_model["depth"])
         return
+    
+class BFieldAnalysis(object):
+    """
+    Analyze B-fields for various radar stations
+    1. Read data using bezpy.read_iaga
+    2. Convert WDC to XYZ format
+    3. Plot as a stack
+    """
+    
+    def __init__(self, stns=["FRD", "STJ", "HAD"]):
+        """
+        Initialize the parameters
+        """
+        self.stns = stns
+        
+        self.files = dict(
+            FRD = ["FRD_19890312_XYZ.txt", "FRD_19890313_XYZ.txt", "FRD_19890314_XYZ.txt"],
+            STJ = ["STJ_19890312_XYZ.txt", "STJ_19890313_XYZ.txt", "STJ_19890314_XYZ.txt"],
+            HAD = ["HAD_19890312_HDZ.txt", "HAD_19890313_HDZ.txt", "HAD_19890314_HDZ.txt"],
+        )
+        self.frames = dict()
+        self.read_dataset()
+        return
+    
+    def read_dataset(self):
+        """
+        Read dataset 
+        """
+        base = "data/1989/"
+        for stn in self.stns:
+            o = pd.DataFrame()
+            for f in self.files[stn]:
+                fname = base + f
+                if os.path.exists(fname): o = pd.concat([o, bezpy.mag.read_iaga(fname)])
+            self.frames[stn] = o
+        self.stack_plots()
+        return
+    
+    def stack_plots(self, kind="xy"):
+        if kind == "xy": plotlib.plot_xy_magnetic_field(self.stns, self.frames)
+        return
+    
+if __name__ == "__main__":
+    BFieldAnalysis()
+    pass
