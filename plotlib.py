@@ -13,6 +13,7 @@ import os
 os.system("rm -rf `find -type d -name .ipynb_checkpoints`:")
 
 import datetime as dt
+import numpy as np
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -41,15 +42,15 @@ def plotZ(Z, freqs, ax, model_name=None, layer=None,
     ax.set_xlim(self.freqs[0], self.freqs[-1])
     return ax
 
-def plotTF(TFs, freqs, rs, th, ylims=[1e-2, 1e0]):
+def plotTF(ax, TFs, freqs, rs, th, ylims=[1e-2, 1e0]):
     """
     Plot transfer function frequency plot
     """
     if freqs is None: freqs = np.copy(self.freqs)
     ax.text(0.99, 1.05, r"$\rho_s (\Omega-m)$: %.2f"%(rs), ha="right", va="center", transform=ax.transAxes)
-    ax.text(1.05, 0.99, r"$D_{Ocean} (km)$: %d"%(th/1e3), ha="center", va="top", transform=ax.transAxes, rotation=90)
+    ax.text(1.05, 0.99, r"$D_{Ocean} (km)$: %.2f"%(th/1e3), ha="center", va="top", transform=ax.transAxes, rotation=90)
     ax.loglog(freqs, np.absolute(TFs["Ef2Bs"]), "r", lw=0.8, label=r"$\left|\frac{E_f}{B_s}\right|$")
-    ax.loglog(freqs, np.absolute(TFs["Ef2Bs"]), "b", lw=0.8, label=r"$\left|\frac{B_f}{B_s}\right|$")
+    ax.loglog(freqs, np.absolute(TFs["Bf2Bs"]), "b", lw=0.8, label=r"$\left|\frac{B_f}{B_s}\right|$")
     ax.set_xlabel(r"$f_0$, (Hz)")
     ax.set_ylabel("Amplitude Ratio")
     ax.set_ylim(ylims)
@@ -92,4 +93,156 @@ def plot_xy_magnetic_field(stns, frames, dpi=150, wspace=0.3, hspace=0.3):
         #ax.spines["right"].set_color("r")
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     fig.savefig("docs/Bxy.Field.png", bbox_inches="tight")
+    return
+
+def plot_xy_magnetic_field_oneplot(stns, frames, dpi=150, wspace=0.2, hspace=0.1):
+    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
+    fig, axes = plt.subplots(nrows=1, ncols=2, dpi=dpi, figsize=(12, len(stns)))
+    multiplier, colors = [1, 0, -1], ["r", "k", "b"]
+    base=1000
+    for i, stn in enumerate(stns):
+        frame = frames[stn]
+        ax = axes[0]
+        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
+        ax.plot(frame.index, (base*multiplier[i])+frame.X-np.mean(frame.X), colors[i], ls="-", lw=1., label=stn.upper())
+        ax.set_ylabel(r"$B_x$, nT", fontdict={"color": "k"})
+        ax.set_ylim(-3000,3000)
+        ax.axvline(frame.index.tolist()[-1000], ymin=4/6, ymax=5/6, color = "darkgreen", drawstyle="steps-mid")
+        ax.axhline(2000, xmin=0.86, xmax=0.86+2e-2, color = "darkgreen")
+        ax.axhline(1000, xmin=0.86, xmax=0.86+2e-2, color = "darkgreen")
+        ax.text(frame.index.tolist()[-970], 1500, "1000 nT", ha="left", va="center", fontdict={"color": "darkgreen", "size":10})
+        ax.set_yticklabels([])
+        ax.legend(loc=2)
+        ax = axes[1]
+        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
+        ax.plot(frame.index, (base*multiplier[i])+frame.Y-np.mean(frame.Y), colors[i], ls="-", lw=1., label=stn.upper())
+        ax.set_ylabel(r"$B_y$, nT", fontdict={"color": "k"})
+        ax.axvline(frame.index.tolist()[2000], ymin=4/6, ymax=5/6, color = "darkgreen", drawstyle="steps-mid")
+        ax.axhline(2000, xmin=0.25, xmax=0.25+2e-2, color = "darkgreen")
+        ax.axhline(1000, xmin=0.25, xmax=0.25+2e-2, color = "darkgreen")
+        ax.text(frame.index.tolist()[1970], 1500, "1000 nT", ha="right", va="center", fontdict={"color": "darkgreen", "size":10})
+        ax.set_ylim(-3000,3000)
+        ax.set_yticklabels([])
+    axes[0].set_xlabel("Time, UT")
+    axes[1].set_xlabel("Time, UT")
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig("docs/Bxy.Field.png", bbox_inches="tight")
+    return
+
+def plot_xy_magnetic_field_fft(stns, frames, dpi=150, wspace=0.4, hspace=0.4):
+    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
+    fig, axes = plt.subplots(nrows=len(stns), ncols=2, dpi=dpi, figsize=(12, 3*len(stns)))
+    for i, stn in enumerate(stns):
+        frame = frames[stn]
+        ax = axes[i,0]
+        ax.tick_params(axis="y", which="both", colors="b")
+        ax.loglog(frame["X"]["freq"], np.absolute(frame["X"]["Xf"]), "b", ls="-", lw=1.)
+        ax.text(0.05, 0.9, stn.upper()+"(x)", ha="left", va="center", transform=ax.transAxes, fontdict={"fontweight": "bold"})
+        ax.set_ylabel(r"$|B_x(f)|$", fontdict={"color": "b"})
+        ax.set_xlim(1e-6,1e-2)
+        if i == len(stns)-1: ax.set_xlabel(r"Frequency, $f_0$")
+        ax = ax.twinx()
+        ax.tick_params(axis="y", which="both", colors="r")
+        ax.spines["left"].set_color("b")
+        ax.spines["right"].set_color("r")
+        ax.semilogx(frame["X"]["freq"], np.rad2deg(np.angle(frame["X"]["Xf"])), "r", ls="-", lw=1., alpha=0.4)
+        ax.set_ylim(-180, 180)
+        ax.set_xlim(1e-6,1e-2)
+        ax.set_ylabel(r"$\theta[B_x(f)]$", fontdict={"color": "r"})
+        
+        ax = axes[i,1]
+        ax.tick_params(axis="y", which="both", colors="b")
+        ax.loglog(frame["Y"]["freq"], np.absolute(frame["Y"]["Xf"]), "b", ls="-", lw=1.)
+        ax.text(0.05, 0.9, stn.upper()+"(y)", ha="left", va="center", transform=ax.transAxes, fontdict={"fontweight": "bold"})
+        ax.set_ylabel(r"$|B_y(f)|$", fontdict={"color": "b"})
+        ax.set_xlim(1e-6,1e-2)
+        if i == len(stns)-1: ax.set_xlabel(r"Frequency, $f_0$")
+        ax = ax.twinx()
+        ax.tick_params(axis="y", which="both", colors="r")
+        ax.spines["left"].set_color("b")
+        ax.spines["right"].set_color("r")
+        ax.semilogx(frame["Y"]["freq"], np.rad2deg(np.angle(frame["Y"]["Xf"])), "r", ls="-", lw=1., alpha=0.4)
+        ax.set_ylim(-180, 180)
+        ax.set_xlim(1e-6,1e-2)
+        ax.set_ylabel(r"$\theta[B_y(f)]$", fontdict={"color": "r"})
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig("docs/Bxy.Field.FFT.png", bbox_inches="tight")
+    return
+
+def plot_xy_electric_field_fft(stns, frames, dpi=150, wspace=0.4, hspace=0.4):
+    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
+    fig, axes = plt.subplots(nrows=len(stns), ncols=2, dpi=dpi, figsize=(12, 3*len(stns)))
+    for i, stn in enumerate(stns):
+        frame = frames[stn]
+        ax = axes[i,0]
+        ax.tick_params(axis="y", which="both", colors="b")
+        ax.loglog(frame["X"]["freq"], np.absolute(frame["X"]["Ef"]), "b", ls="-", lw=1.)
+        ax.text(0.05, 0.9, stn.upper()+"(x)", ha="left", va="center", transform=ax.transAxes, fontdict={"fontweight": "bold"})
+        ax.set_ylabel(r"$|E_x(f)|$", fontdict={"color": "b"})
+        ax.set_xlim(1e-6,1e-2)
+        if i == len(stns)-1: ax.set_xlabel(r"Frequency, $f_0$")
+        ax = ax.twinx()
+        ax.tick_params(axis="y", which="both", colors="r")
+        ax.spines["left"].set_color("b")
+        ax.spines["right"].set_color("r")
+        ax.semilogx(frame["X"]["freq"], np.rad2deg(np.angle(frame["X"]["Ef"])), "r", ls="-", lw=1., alpha=0.4)
+        ax.set_ylim(-180, 180)
+        ax.set_xlim(1e-6,1e-2)
+        ax.set_ylabel(r"$\theta[E_x(f)]$", fontdict={"color": "r"})
+        
+        ax = axes[i,1]
+        ax.tick_params(axis="y", which="both", colors="b")
+        ax.loglog(frame["Y"]["freq"], np.absolute(frame["Y"]["Ef"]), "b", ls="-", lw=1.)
+        ax.text(0.05, 0.9, stn.upper()+"(y)", ha="left", va="center", transform=ax.transAxes, fontdict={"fontweight": "bold"})
+        ax.set_ylabel(r"$|E_y(f)|$", fontdict={"color": "b"})
+        ax.set_xlim(1e-6,1e-2)
+        if i == len(stns)-1: ax.set_xlabel(r"Frequency, $f_0$")
+        ax = ax.twinx()
+        ax.tick_params(axis="y", which="both", colors="r")
+        ax.spines["left"].set_color("b")
+        ax.spines["right"].set_color("r")
+        ax.semilogx(frame["Y"]["freq"], np.rad2deg(np.angle(frame["Y"]["Ef"])), "r", ls="-", lw=1., alpha=0.4)
+        ax.set_ylim(-180, 180)
+        ax.set_xlim(1e-6,1e-2)
+        ax.set_ylabel(r"$\theta[E_y(f)]$", fontdict={"color": "r"})
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig("docs/Exy.Field.FFT.png", bbox_inches="tight")
+    return
+
+
+def plot_xy_electric_field(stns, frames, dpi=150, wspace=0.3, hspace=0.3):
+    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
+    fig, axes = plt.subplots(nrows=len(stns), ncols=2, dpi=dpi, figsize=(12, 3*len(stns)))
+    for i, stn in enumerate(stns):
+        frame = frames[stn]
+        ax = axes[i,0]
+        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
+        ax.plot(frame.index, frame.X, "k", ls="-", lw=1.)
+        ax.set_ylim(-1000,1000)
+        ax.text(0.05, 0.9, stn.upper(), ha="left", va="center", transform=ax.transAxes, fontdict={"fontweight": "bold"})
+        ax.set_ylabel(r"$E_x$, $mV.km^{-1}$", fontdict={"color": "k"})
+        if i == len(stns)-1: ax.set_xlabel("Time, UT")
+        ax = axes[i,1]
+        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
+        ax.plot(frame.index, frame.Y, "k", ls="-", lw=1.)
+        ax.set_ylim(-1000,1000)
+        ax.set_ylabel(r"$E_y$, $mV.km^{-1}$", fontdict={"color": "k"})
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig("docs/Exy.Field.png", bbox_inches="tight")
     return
