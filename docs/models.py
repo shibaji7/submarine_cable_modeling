@@ -94,22 +94,38 @@ class BEZpyClass(object):
     def __init__(self, model_name="BM1", ocean_model={"depth":5e3, "rho":0.25}, flim=[1e-6, 1e0]):
         self.model_name = model_name
         self.ocean_model = ocean_model
-        self.site = read_1d_usgs_profile("data/ocean_model_%s.txt"%model_name)
+        self.site = read_1d_usgs_profile("../data/ocean_model_%s.txt"%model_name)
         self.freqs = np.linspace(flim[0], flim[1], int(flim[1]/flim[0])+1)
         self.functions = {"Ed2Ho": Ed2Ho, "Hd2Ho": Hd2Ho}
         return
     
-    def calcZ(self, layer="ocean"):
-        if not hasattr(self, "Z"):
-            freqs = np.copy(self.freqs)
-            omega = 2*C.pi*self.freqs
-            sigma_s = 1/self.ocean_model["rho"]
-            k2 = 1.j*omega*C.mu_0*sigma_s
-            k = np.sqrt(k2)
-            Zo = 1.j*omega*C.mu_0/k/(C.mu_0/1.e-3)
-            Kf = self.site.calcZ(freqs)[1]
-            self.Z = {"ocean": Zo, "floor": Kf}
+    def calcZ(self, layer="ocean", freqs=None):
+        freqs = np.copy(self.freqs) if freqs is None else freqs
+        omega = 2*C.pi*freqs
+        sigma_s = 1/self.ocean_model["rho"]
+        k2 = 1.j*omega*C.mu_0*sigma_s
+        k = np.sqrt(k2)
+        Zo = 1.j*omega*C.mu_0/k/(C.mu_0/1.e-3)
+        Kf = self.site.calcZ(freqs)[1]
+        self.Z = {"ocean": Zo, "floor": Kf}
         return self.Z[layer]
+    
+    def getTF(self, freqs=None, kinds=["Ed2Ho", "Hd2Ho"]):
+        freqs = self.freqs if freqs is None else freqs
+        omega = 2*C.pi*freqs
+        Zd = self.calcZ("floor", freqs=freqs)
+        Z = self.calcZ("ocean", freqs=freqs)
+        TFs = {}
+        
+        omega = 2*C.pi*freqs
+        sigma_s = 1/self.ocean_model["rho"]
+        k2 = 1.j*omega*C.mu_0*sigma_s
+        k = np.sqrt(k2)
+        kd = k*self.ocean_model["depth"]
+        
+        for kind in kinds:
+            TFs[kind] = self.functions[kind](Z, Zd, kd)
+        return TFs["Ed2Ho"]
     
     def calcTF(self, kinds=["Ed2Ho", "Hd2Ho"], ax=None, ylims=[1e-2, 1e0],):
         omega = 2*C.pi*self.freqs
@@ -137,7 +153,7 @@ class BEZpyClass(object):
             ha="right", va="center", transform=ax.transAxes)
         ax.text(1.05, 0.99, r"$D_{Ocean} (km)$: %d"%(self.ocean_model["depth"]/1e3), 
                 ha="center", va="top", transform=ax.transAxes, rotation=90)
-        ax.loglog(freqs, np.absolute(TFs["Ed2Ho"])*1e3, "r", lw=0.8, label=r"$\left|\frac{E_d}{B_o}\right|$")
+        ax.loglog(freqs, np.absolute(TFs["Ed2Ho"]), "r", lw=0.8, label=r"$\left|\frac{E_d}{B_o}\right|$")
         #ax.loglog(freqs, np.absolute(TFs["Ed2Bo"])*1e3, "r", lw=1.2, ls="--", label=r"$\frac{E_d}{B_o}$")
         ax.loglog(freqs, np.absolute(TFs["Hd2Ho"]), "b", lw=0.8, label=r"$\left|\frac{B_d}{B_o}\right|$")
         ax.set_xlabel(r"$f_0$, (Hz)")

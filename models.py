@@ -1,4 +1,4 @@
-"""bez_models.py: Module is used to implement various sea-earth models and calculate TFs"""
+"""models.py: Module is used to implement various sea-earth models and calculate TFs"""
 
 __author__ = "Chakraborty, S."
 __copyright__ = ""
@@ -73,7 +73,7 @@ class OceanModel(object):
     1D ocean.
     """
     
-    def __init__(self, site=None, model_name="BME", ocean_model={"depth":5e3, "rho":0.25}, flim=[1e-6, 1e0]):
+    def __init__(self, site=None, model_name="BME", ocean_model={"depth":5e3, "rho":0.25}, flim=[1e-4, 1e-2]):
         self.model_name = model_name
         self.ocean_model = ocean_model
         self.site = site if site else bezpy.mt.read_1d_usgs_profile("data/ocean_model_%s.txt"%model_name)
@@ -82,28 +82,28 @@ class OceanModel(object):
             "Ef2Bs": lambda Z, Zd, kd: Zd/(np.cosh(kd) + (Zd*np.sinh(kd)/Z)),
             "Bf2Bs": lambda Z, Zd, kd: 1./(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
         }
-        self.summary_plots()
+        #self.summary_plots()
         return
     
-    def calcZ(self, layer="ocean"):
-        if not hasattr(self, "Z"):
-            freqs = np.copy(self.freqs)
-            omega = 2*C.pi*self.freqs
-            sigma_s = 1/self.ocean_model["rho"]
-            k2 = 1.j*omega*C.mu_0*sigma_s
-            k = np.sqrt(k2)
-            Zo = (1.j*omega*C.mu_0/k)/(C.mu_0/1.e-3)
-            Kf = self.site.calcZ(freqs)[1]
-            self.Z = {"ocean": Zo, "floor": Kf}
+    def calcZ(self, layer="ocean", freqs=None):
+        freqs = np.copy(self.freqs) if freqs is None else freqs
+        omega = 2*C.pi*freqs
+        sigma_s = 1/self.ocean_model["rho"]
+        k2 = 1.j*omega*C.mu_0*sigma_s
+        k = np.sqrt(k2)
+        Zo = (1.j*omega*C.mu_0/k)/(C.mu_0/1.e-3)
+        Kf = self.site.calcZ(freqs)[1]
+        self.Z = {"ocean": Zo, "floor": Kf}
         return self.Z[layer]
     
-    def calcTF(self, kinds=["Ef2Bs", "Bf2Bs"]):
-        omega = 2*C.pi*self.freqs
-        Zd = self.calcZ("floor")
-        Z = self.calcZ("ocean")
+    def calcTF(self, kinds=["Ef2Bs", "Bf2Bs"], freqs=None):
+        freqs = np.copy(self.freqs) if freqs is None else freqs
+        omega = 2*C.pi*freqs
+        Zd = self.calcZ("floor", freqs=freqs)
+        Z = self.calcZ("ocean", freqs=freqs)
         TFs = {}
         
-        omega = 2*C.pi*self.freqs
+        omega = 2*C.pi*freqs
         sigma_s = 1/self.ocean_model["rho"]
         k2 = 1.j*omega*C.mu_0*sigma_s
         k = np.sqrt(k2)
@@ -113,10 +113,10 @@ class OceanModel(object):
             TFs[kind] = self.functions[kind](Z, Zd, kd)
         return TFs
     
-    def get_TFs(self, key="Ef2Bs"):
-        TFs = self.calcTF()
+    def get_TFs(self, key="Ef2Bs", freqs=None):
+        TFs = self.calcTF(freqs=freqs)
         tf = pd.DataFrame()
-        tf["freq"], tf[key] = self.freqs, TFs[key]
+        tf["freq"], tf[key] = np.copy(self.freqs) if freqs is None else freqs, TFs[key]
         return tf
     
     def summary_plots(self):
@@ -150,6 +150,11 @@ def convolve(signal_a_time, signal_b_freq, b_freq):
         signal_a_freq[i] = signal_a_freq[i]*bf
     signal_ab_time = ifft(signal_a_freq)
     return signal_ab_time
+
+def create_fft_frame(signal_a):
+    signal_a_freq = fft(signal_a)
+    frq = fftfreq(len(signal_a), 1)
+    return signal_a_freq, frq
 
 class BFieldAnalysis(object):
     """
@@ -228,8 +233,26 @@ class BFieldAnalysis(object):
         self.stack_plots(kind="Exy")
         return
     
+    def calculate_electric_field(self):
+        om = OceanModel()
+        self.E_frames = {}
+        for stn in self.stns:
+            frame, self.E_frames[stn] = self.frames[stn], {}
+            ufrm = pd.DataFrame()
+            ufrm["Time"] = frame.index.tolist()
+            for a in ["X", "Y"]:
+                signal_freq, frq = create_fft_frame(np.array(frame[a]))
+                frq[0] = 1e-6 
+                tf = om.get_TFs(freqs=frq)
+                ufrm[a] = ifft(np.array(tf.Ef2Bs)*signal_freq)
+            ufrm = ufrm.set_index("Time")
+            self.E_frames[stn] = ufrm
+        self.stack_plots(kind="Exy")
+        return
+    
 if __name__ == "__main__":
-    #om = OceanModel()
+    om = OceanModel()
     #BFieldAnalysis().calculate_Ef(om.get_TFs())
-    OceanModel.getOceanModel(2)
+    BFieldAnalysis().calculate_electric_field()
+    #OceanModel.getOceanModel(2)
     pass
