@@ -27,6 +27,16 @@ from decimal import Decimal
 
 import plotlib
 
+model_map = dict(
+        CS_W = 1,
+        DO_1 = 4,
+        DO_2 = 3,
+        DO_3 = 2,
+        DO_4 = 5,
+        MAR = 7,
+        CS_E = 9
+        )
+
 def toBEZpy(base="data/OceanModels/"):
     
     def fexp(number):
@@ -76,7 +86,7 @@ class OceanModel(object):
     def __init__(self, site=None, model_name="BME", ocean_model={"depth":5e3, "rho":0.25}, flim=[1e-4, 1e-2]):
         self.model_name = model_name
         self.ocean_model = ocean_model
-        self.site = site if site else bezpy.mt.read_1d_usgs_profile("data/ocean_model_%s.txt"%model_name)
+        self.site = bezpy.mt.read_1d_usgs_profile("data/ocean_model_%s.txt"%model_name) if site is None else site
         self.freqs = np.linspace(flim[0], flim[1], int(flim[1]/flim[0])+1)
         self.functions = {
             "Ef2Bs": lambda Z, Zd, kd: Zd/(np.cosh(kd) + (Zd*np.sinh(kd)/Z)),
