@@ -37,6 +37,34 @@ model_map = dict(
         CS_E = 9
         )
 
+bin_to_station_map = {1: "FRD", 2: "FRD", 3: "STJ",
+                      4: "STJ", 5: "STJ", 6: "STJ",
+                      7: "STJ", 8: "HAD", 9: "HAD"}
+bin_eastern_edge = {1: (38.79, -72.62), 2: (37.11, -68.94), 3: (39.80, -48.20), 
+                    4: (40.81, -45.19), 5: (43.15, -39.16), 6: (44.83, -34.48), 
+                    7: (46.51, -22.43), 8: (47.85, -9.05), 9: (50.79, -4.55)}
+bin_western_edge = {1: (39.6, -74.33), 2: (38.79, -72.62), 3: (37.11, -68.94), 
+                    4: (39.80, -48.20), 5: (40.81, -45.19), 6: (43.15, -39.16), 
+                    7: (44.83, -34.48), 8: (46.51, -22.43), 9: (47.85, -9.05)}
+bin_ocean_depth = {1: 100, 2: 4000, 3: 5200,
+                   4: 4000, 5: 4800, 6: 4000, 
+                   7: 3000, 8: 4500, 9: 100}
+
+def segmentL(binsec=1):
+    """
+    Northward (Ln) and Eastward (Le) distance (km) between the
+    ends of the cable section
+    """
+    # PARAMETERS OF THE WGS84 EARTH MODEL
+    a = 6378.137 # Equatorial radius
+    b = 6356.752 # Polar Radius
+    e = np.sqrt(0.00669437999014) # Eccentricity
+    east_edge, west_edge = bin_eastern_edge[binsec], bin_western_edge[binsec]
+    phi = 0.5*(west_edge[1]+east_edge[1])
+    Ln = (111.133-0.56*np.cos(np.deg2rad(2*phi)))*np.abs(east_edge[0]-west_edge[0])
+    Le = (111.5065-0.1872*np.cos(np.deg2rad(2*phi)))*np.cos(np.deg2rad(phi))*np.abs(east_edge[1]-west_edge[1])
+    return Ln, Le
+
 def toBEZpy(base="data/OceanModels/"):
     
     def fexp(number):
@@ -92,7 +120,6 @@ class OceanModel(object):
             "Ef2Bs": lambda Z, Zd, kd: Zd/(np.cosh(kd) + (Zd*np.sinh(kd)/Z)),
             "Bf2Bs": lambda Z, Zd, kd: 1./(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
         }
-        #self.summary_plots()
         return
     
     def calcZ(self, layer="ocean", freqs=None):
@@ -146,25 +173,7 @@ class OceanModel(object):
         site.thicknesses, site.resistivities = site.thicknesses[1:], site.resistivities[1:]
         om = OceanModel(site=site, ocean_model=ocean_model)
         return om
-    
-def intp_data(x, y, xnew):
-    f = interpolate.interp1d(x, y, fill_value = "extrapolate")
-    return f(xnew)
 
-from scipy.fft import fft, fftfreq, ifft
-def convolve(signal_a_time, signal_b_freq, b_freq):
-    signal_a_freq = fft(signal_a_time)
-    frq = fftfreq(len(signal_a_time), 1)
-    for bf, f in zip(signal_b_freq, b_freq):
-        i = np.argmin(abs(f-frq))
-        signal_a_freq[i] = signal_a_freq[i]*bf
-    signal_ab_time = ifft(signal_a_freq)
-    return signal_ab_time
-
-def create_fft_frame(signal_a):
-    signal_a_freq = fft(signal_a)
-    frq = fftfreq(len(signal_a), 1)
-    return signal_a_freq, frq
 
 class BFieldAnalysis(object):
     """
@@ -172,97 +181,78 @@ class BFieldAnalysis(object):
     1. Read data using bezpy.read_iaga
     2. Convert WDC to XYZ format
     3. Plot as a stack
-    4. Create FFT
+    4. Compute Et
     """
     
-    def __init__(self, stns=["FRD", "STJ", "HAD"]):
+    def __init__(self, dates, bin_id, db="data/{year}/", coord="XYZ", plot=True):
         """
         Initialize the parameters
         """
-        self.stns = stns
-        
-        self.files = dict(
-            FRD = ["FRD_19890312_XYZ.txt", "FRD_19890313_XYZ.txt", "FRD_19890314_XYZ.txt"],
-            STJ = ["STJ_19890312_XYZ.txt", "STJ_19890313_XYZ.txt", "STJ_19890314_XYZ.txt"],
-            HAD = ["HAD_19890312_HDZ.txt", "HAD_19890313_HDZ.txt", "HAD_19890314_HDZ.txt"],
-        )
-        self.frames = dict()
+        self.bin_id = bin_id
+        self.stn = bin_to_station_map[self.bin_id]
+        self.files = []
+        self.plot = plot
+        for d in dates:
+            f = db.format(year=d.year) + "{stn}_{date}_{coord}.txt".format(stn=self.stn, 
+                                                                           date=d.strftime("%Y%m%d"), 
+                                                                           coord=coord)
+            self.files.append(f)   
+        self.B_frame = None
         self.read_dataset()
-        #self.fft()
         return
     
     def read_dataset(self):
         """
         Read dataset 
         """
-        base = "data/1989/"
-        for stn in self.stns:
-            o = pd.DataFrame()
-            for f in self.files[stn]:
-                fname = base + f
-                if os.path.exists(fname): o = pd.concat([o, bezpy.mag.read_iaga(fname)])
-            self.frames[stn] = o
-        self.stack_plots()
+        o = pd.DataFrame()
+        for f in self.files:
+            if os.path.exists(f): o = pd.concat([o, bezpy.mag.read_iaga(f)])
+        self.B_frame = o
+        if self.plot: self.stack_plots()
         return
     
     def stack_plots(self, kind="Bxy"):
-        if kind == "Bxy": plotlib.plot_xy_magnetic_field_oneplot(self.stns, self.frames)
-        if kind == "Bxyfft": plotlib.plot_xy_magnetic_field_fft(self.stns, self.fft_frames)
-        if kind == "Exyfft": plotlib.plot_xy_electric_field_fft(self.stns, self.Efft_frames)
-        if kind == "Exy": plotlib.plot_xy_electric_field(self.stns, self.E_frames)
+        if kind == "Bxy": plotlib.plot_Bxy(self.stn, self.B_frame, fname="docs/Bxy.Field.B%02d.png"%self.bin_id)
+        if kind == "Exy": plotlib.plot_Exy(self.stn, self.E_frame, fname="docs/Exy.Field.B%02d.png"%self.bin_id)
+        if kind == "BExy": plotlib.plot_BExy(self.stn, self.B_frame, self.E_frame, 
+                                            fname="docs/BExy.Field.B%02d.png"%self.bin_id)
         return
     
-    def fft(self):
-        self.fft_frames = {}
-        for stn in self.stns:
-            self.fft_frames[stn] = {}
-            for a in ["X", "Y"]:
-                sig = np.array(self.frames[stn][a])
-                N = len(sig)
-                Xf = np.fft.fftshift(np.fft.fft(sig))
-                Fs = 1/60. # in Hz
-                freq = np.arange(-Fs/2, Fs/2, Fs/N)
-                self.fft_frames[stn][a] = {"Fs": Fs, "Xf": Xf[N//2:], "freq": freq[N//2:], "N": N}
-        self.stack_plots(kind="Bxyfft")
+    def compute_Et(self):
+        """
+        Compute Et via RFFT and IRFFT block 
+        om: Ocean Model
+        """
+        om = OceanModel.getOceanModel(self.bin_id)
+        o = pd.DataFrame()
+        n = len(self.B_frame)
+        dT = (self.B_frame.index.tolist()[1]-self.B_frame.index.tolist()[0]).total_seconds()
+        for a in ["X", "Y"]:
+            Baf = 2.0/n * np.fft.rfft(self.B_frame[a])
+            frq = np.fft.rfftfreq(len(self.B_frame[a]))/dT
+            frq[0] = frq[1]
+            tx = om.get_TFs(freqs=frq)
+            Eaf = Baf*np.array(tx.Ef2Bs)
+            o[a] = np.fft.irfft(Eaf)
+        o["Time"] = self.B_frame.index.tolist()
+        self.E_frame = o.set_index("Time")
+        if self.plot: self.stack_plots("BExy")
+        self.compute_Vj()
         return
     
-    def calculate_Ef(self, tf, key="Ef2Bs", flim=[1e-6, 8e-3]):
-        freqs = np.linspace(flim[0], flim[1], int(flim[1]/flim[0])+1)
-        tf = tf[(tf.freq>=flim[0]) & (tf.freq<=flim[1])]
-        ntf = pd.DataFrame()
-        ntf["freq"], ntf[key] = freqs, intp_data(np.array(tf.freq), np.array(tf[key]), freqs)
-        self.E_frames = {}
-        for stn in self.stns:
-            frame, self.E_frames[stn] = self.frames[stn], {}
-            ufrm = pd.DataFrame()
-            ufrm["Time"] = frame.index.tolist()
-            for a in ["X", "Y"]:
-                ufrm[a] = convolve(np.array(frame[a]), ntf[key], ntf.freq)
-            ufrm = ufrm.set_index("Time")
-            self.E_frames[stn] = ufrm
-        self.stack_plots(kind="Exy")
-        return
-    
-    def calculate_electric_field(self):
-        om = OceanModel()
-        self.E_frames = {}
-        for stn in self.stns:
-            frame, self.E_frames[stn] = self.frames[stn], {}
-            ufrm = pd.DataFrame()
-            ufrm["Time"] = frame.index.tolist()
-            for a in ["X", "Y"]:
-                signal_freq, frq = create_fft_frame(np.array(frame[a]))
-                frq[0] = 1e-6 
-                tf = om.get_TFs(freqs=frq)
-                ufrm[a] = ifft(np.array(tf.Ef2Bs)*signal_freq)
-            ufrm = ufrm.set_index("Time")
-            self.E_frames[stn] = ufrm
-        self.stack_plots(kind="Exy")
+    def compute_Vj(self):
+        """
+        Calculate total electric potential induced along the cable segment.
+        Vj = Ej_n(t)Lj_n + Ej_e(t)Lj_e
+        """
+        Ln, Le = segmentL(self.bin_id)
+        self.Vj = np.array(self.E_frame.X)*Ln + np.array(self.E_frame.Y)*Le
+        self.E_frame["Vj"] = self.Vj
         return
     
 if __name__ == "__main__":
-    om = OceanModel()
-    #BFieldAnalysis().calculate_Ef(om.get_TFs())
-    BFieldAnalysis().calculate_electric_field()
-    #OceanModel.getOceanModel(2)
+    for b, c in zip(range(1,10), ["XYZ"]*7 + ["HDZ"]*2):
+        BFieldAnalysis([dt.datetime(1989,3,12),dt.datetime(1989,3,13),dt.datetime(1989,3,14)],
+                       b, coord=c).compute_Et()
     pass

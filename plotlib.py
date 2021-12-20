@@ -95,6 +95,161 @@ def plot_xy_magnetic_field(stns, frames, dpi=150, wspace=0.3, hspace=0.3):
     fig.savefig("docs/Bxy.Field.png", bbox_inches="tight")
     return
 
+def plot_Bxy(stn, frame, fname, dpi=150, wspace=0.2, hspace=0.1):
+    fig, ax = plt.subplots(nrows=1, ncols=1, dpi=dpi, figsize=(5,3))
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+    ax.set_ylabel(r"$B_{x}$, nT", fontdict={"color": "b"})
+    ax.set_xlabel(r"Time, UT", fontdict={"color": "k"})
+    ax.text(0.05, 0.9, stn.upper(), ha="left", va="center", transform=ax.transAxes, 
+            fontdict={"fontweight": "bold"})
+    col = "darkblue"
+    ax.plot(frame.index, frame.X, col, ls="-", lw=1.)
+    ax.spines["left"].set_color(col)
+    ax.tick_params(axis="y", which="both", colors=col)
+    ax.yaxis.label.set_color(col)
+    ax = ax.twinx()
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+    col = "darkred"
+    ax.plot(frame.index, frame.Y, col, ls="-", lw=1.)
+    ax.set_ylabel(r"$B_{y}$, nT", fontdict={"color": col})
+    ax.spines["right"].set_color(col)
+    ax.tick_params(axis="y", which="both", colors=col)
+    ax.yaxis.label.set_color(col)
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig(fname, bbox_inches="tight")
+    return
+
+def plot_Exy(stn, frame, fname, dpi=150, wspace=0.2, hspace=0.1):
+    fig, ax = plt.subplots(nrows=1, ncols=1, dpi=dpi, figsize=(5,3))
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+    ax.set_ylabel(r"$E_{x}$, $mV.km^{-1}$", fontdict={"color": "b"})
+    ax.set_xlabel(r"Time, UT", fontdict={"color": "k"})
+    ax.text(0.05, 0.9, stn.upper(), ha="left", va="center", transform=ax.transAxes, 
+            fontdict={"fontweight": "bold"})
+    col = "darkblue"
+    ax.plot(frame.index, frame.X, col, ls="-", lw=1.)
+    ax.spines["left"].set_color(col)
+    ax.tick_params(axis="y", which="both", colors=col)
+    ax.yaxis.label.set_color(col)
+    ax = ax.twinx()
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+    col = "darkred"
+    ax.plot(frame.index, frame.Y, col, ls="-", lw=1.)
+    ax.set_ylabel(r"$E_{y}$, $mV.km^{-1}$", fontdict={"color": col})
+    ax.spines["right"].set_color(col)
+    ax.tick_params(axis="y", which="both", colors=col)
+    ax.yaxis.label.set_color(col)
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig(fname, bbox_inches="tight")
+    return
+
+def plot_BExy(stn, Bframe, Eframe, fname, dpi=150, wspace=0.2, hspace=0.1):
+    fig, axes = plt.subplots(nrows=2, ncols=1, dpi=dpi, figsize=(4,5))
+    ax = axes[0]
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+    ax.set_ylabel(r"$B_{x}$, nT", fontdict={"color": "k"})
+    ax.text(0.05, 0.9, stn.upper(), ha="left", va="center", transform=ax.transAxes, 
+            fontdict={"fontweight": "bold"})
+    col = "darkblue"
+    ax.plot(Bframe.index, Bframe.X, col, ls="-", lw=1.)
+    ax.spines["left"].set_color(col)
+    ax.tick_params(axis="y", which="both", colors=col)
+    ax.yaxis.label.set_color(col)
+    ax = ax.twinx()
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+    col = "darkred"
+    ax.plot(Eframe.index, Eframe.X, col, ls="-", lw=1.)
+    ax.set_ylabel(r"$E_{x}$, $mV.km^{-1}$", fontdict={"color": col})
+    ax.spines["right"].set_color(col)
+    ax.tick_params(axis="y", which="both", colors=col)
+    ax.yaxis.label.set_color(col)
+    
+    ax = axes[1]
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+    ax.set_ylabel(r"$B_{y}$, nT", fontdict={"color": "k"})
+    ax.set_xlabel(r"Time, UT", fontdict={"color": "k"})
+    col = "darkblue"
+    ax.plot(Bframe.index, Bframe.Y, col, ls="-", lw=1.)
+    ax.spines["left"].set_color(col)
+    ax.tick_params(axis="y", which="both", colors=col)
+    ax.yaxis.label.set_color(col)
+    ax = ax.twinx()
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+    col = "darkred"
+    ax.plot(Eframe.index, Eframe.Y, col, ls="-", lw=1.)
+    ax.set_ylabel(r"$E_{y}$, $mV.km^{-1}$", fontdict={"color": col})
+    ax.spines["right"].set_color(col)
+    ax.tick_params(axis="y", which="both", colors=col)
+    ax.yaxis.label.set_color(col)
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig(fname, bbox_inches="tight")
+    return
+
+def plot_Exy_Stack(frames, fname, dpi=150, wspace=0.2, hspace=0.1):
+    fig, axes = plt.subplots(nrows=len(frames), ncols=1, dpi=dpi, figsize=(4,2.5*len(frames)))
+    for ax, k in zip(axes, frames.keys()):
+        frame = frames[k]
+        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+        col = "darkblue"
+        ax.plot(frame.index, frame.X, col, ls="-", lw=1.)
+        ax.set_ylabel(r"$E_{x}$, $mV.km^{-1}$", fontdict={"color": col})
+        ax.spines["left"].set_color(col)
+        ax.tick_params(axis="y", which="both", colors=col)
+        ax.yaxis.label.set_color(col)
+        ax = ax.twinx()
+        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
+        col = "darkred"
+        ax.plot(frame.index, frame.Y, col, ls="-", lw=1.)
+        ax.set_ylabel(r"$E_{y}$, $mV.km^{-1}$", fontdict={"color": col})
+        ax.spines["right"].set_color(col)
+        ax.tick_params(axis="y", which="both", colors=col)
+        ax.yaxis.label.set_color(col)
+        pass
+    ax.set_xlabel(r"Time, UT", fontdict={"color": "k"})
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig(fname, bbox_inches="tight")
+    return
+
 def plot_xy_magnetic_field_oneplot(stns, frames, dpi=150, wspace=0.2, hspace=0.1):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
     fig, axes = plt.subplots(nrows=1, ncols=2, dpi=dpi, figsize=(12, len(stns)))
@@ -218,31 +373,61 @@ def plot_xy_electric_field_fft(stns, frames, dpi=150, wspace=0.4, hspace=0.4):
     return
 
 
-def plot_xy_electric_field(stns, frames, dpi=150, wspace=0.3, hspace=0.3):
+def plot_xy_electric_field(stns, frames, dpi=150, wspace=0.1, hspace=0.1):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
-    fig, axes = plt.subplots(nrows=len(stns), ncols=2, dpi=dpi, figsize=(12, 3*len(stns)))
-    for i, stn in enumerate(stns):
-        frame = frames[stn]
-        ax = axes[i,0]
-        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-        ax.plot(frame.index, frame.X, "k", ls="-", lw=1.)
-        #ax.set_ylim(-10,10)
-        ax.text(0.05, 0.9, stn.upper(), ha="left", va="center", transform=ax.transAxes, fontdict={"fontweight": "bold"})
-        ax.set_ylabel(r"$E_x$, $mV.km^{-1}$", fontdict={"color": "k"})
-        if i == len(stns)-1: ax.set_xlabel("Time, UT")
-        ax = axes[i,1]
-        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-        ax.plot(frame.index, frame.Y, "k", ls="-", lw=1.)
-        #ax.set_ylim(-10,10)
-        ax.set_ylabel(r"$E_y$, $mV.km^{-1}$", fontdict={"color": "k"})
+    fig, axes = plt.subplots(nrows=2, ncols=1, dpi=dpi, figsize=(6, 6), 
+                             sharex="all", sharey="all")
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
+              "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+    for i, frame in enumerate(frames):
+        col = colors[i]
+        for j, lab in zip(range(2), ["x", "y"]):
+            ax = axes[j]
+            if i==0:
+                ax.set_ylabel(r"$E_{%s}$, $mV.km^{-1}$"%lab)
+                ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+                ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+                ax.xaxis.set_major_locator(mdates.DayLocator())
+                ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+                ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 8)))
+                ax.set_ylim(-0.1,.2)
+            txt = r"$Bin_{%d}[%s]$"%(i+1, stns[i].upper())
+            ax.plot(frame.index, frame[lab.upper()], col, ls="-", lw=1., label=txt)
+        if i == len(stns)-1: 
+            ax.set_xlabel("Time, UT")
+            ax.legend(bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=8)
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     fig.savefig("docs/Exy.Field.png", bbox_inches="tight")
+    return
+
+def plot_induced_potential(stns, frames, dpi=150, wspace=0.1, hspace=0.1):
+    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
+    fig, axes = plt.subplots(nrows=1, ncols=1, dpi=dpi, figsize=(6, 3), 
+                             sharex="all", sharey="all")
+    ax = axes
+    number = len(stns)
+    cmap = plt.get_cmap("gnuplot")
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
+              "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+    for i, frame in enumerate(frames):
+        #ax = axes[i]
+        col = "k"
+        ax.set_ylabel(r"$V_j(t)=E_j^N(t)L_i^N+E_j^E(t)L_j^E$, $mV$", fontdict={"color": col})
+        ax.spines["left"].set_color(col)
+        ax.tick_params(axis="y", which="both", colors=col)
+        ax.yaxis.label.set_color(col)
+        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 8)))
+        
+        #ax.set_ylim(-0.1,.2)
+        txt = r"$Bin_{%d}[%s]$"%(i+1, stns[i].upper())
+        ax.plot(frame.index, frame.Vj, color=colors[i], ls="-", lw=1., label=txt)
+        if i == len(stns)-1: 
+            ax.set_xlabel("Time, UT")
+            ax.legend(bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=8)
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig("docs/EField.png", bbox_inches="tight")
     return

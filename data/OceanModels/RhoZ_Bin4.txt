@@ -1,24 +1,24 @@
 * Lines starting with * are just comments.
 * Text after the numbers is ignored 
 * BM ocean conductivity model
-*/ 4.52, 1.84, 9.59, 138.78, 255.27, 250.0, 340.0, INF,/ ! layer thicknesses in m
+*/ 4.27, 2.0, 9.7, 137.68, 256.35, 250.0, 340.0, INF,/ ! layer thicknesses in m
 */ 0.3, 3.0, 3000.0, 1000.0, 100.0, 10.0, 1.0, 0.891 ,/ !Resistivities in Ohm-m
 7                             Number of layers from surface
 
 3.3333333                      Conductivity in S/m (layer 1)
-4.520e+03                      Layer thickness in m (layer 1)
+4.270e+03                      Layer thickness in m (layer 1)
 
 0.3333333                      Conductivity in S/m (layer 2)
-1.840e+03                      Layer thickness in m (layer 2)
+2.000e+03                      Layer thickness in m (layer 2)
 
 0.0003333                      Conductivity in S/m (layer 3)
-9.590e+03                      Layer thickness in m (layer 3)
+9.700e+03                      Layer thickness in m (layer 3)
 
 0.0010000                      Conductivity in S/m (layer 4)
-1.388e+05                      Layer thickness in m (layer 4)
+1.377e+05                      Layer thickness in m (layer 4)
 
 0.0100000                      Conductivity in S/m (layer 5)
-2.553e+05                      Layer thickness in m (layer 5)
+2.564e+05                      Layer thickness in m (layer 5)
 
 0.1000000                      Conductivity in S/m (layer 6)
 2.500e+05                      Layer thickness in m (layer 6)
