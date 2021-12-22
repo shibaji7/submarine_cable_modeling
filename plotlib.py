@@ -390,7 +390,7 @@ def plot_xy_electric_field(stns, frames, dpi=150, wspace=0.1, hspace=0.1):
                 ax.xaxis.set_major_locator(mdates.DayLocator())
                 ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
                 ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 8)))
-                ax.set_ylim(-0.1,.2)
+                #ax.set_ylim(-0.1,.2)
             txt = r"$Bin_{%d}[%s]$"%(i+1, stns[i].upper())
             ax.plot(frame.index, frame[lab.upper()], col, ls="-", lw=1., label=txt)
         if i == len(stns)-1: 

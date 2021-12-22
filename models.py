@@ -78,29 +78,34 @@ def toBEZpy(base="data/OceanModels/"):
         (sign, digits, exponent) = Decimal(number).as_tuple()
         return "+" if sign==0 else "-"
     
-    files = glob.glob(base+"*.csv")
+    files = glob.glob(base+"*Bin*.csv")
     files.sort()
     header = "* Lines starting with * are just comments.\n"+\
                 "* Text after the numbers is ignored \n"+\
                 "* BM ocean conductivity model\n"+\
-                "*/ %s, INF,/ ! layer thicknesses in m\n"+\
+                "*/ %s, INF,/ ! layer thicknesses in km\n"+\
                 "*/ %s ,/ !Resistivities in Ohm-m\n"+\
                 "%d                             Number of layers from surface\n"
     eachline = "\n%.7f                      Conductivity in S/m (layer %d)"+\
                 "\n%.3fe%s%02d                      Layer thickness in m (layer %d)\n"
     lastline = "\n1.1220100                      Semi-infinite earth conductivity"
+    ocean_layer = []
     for f in files:
         o = pd.read_csv(f)
-        thks, rhos = ", ".join([str(x) for x in o["Thk(km)"]]), ", ".join([str(x) for x in o["Rho(ohm-m)"]])
+        bname = f.split("_")[-1].replace(".csv","")
+        ocean_layer.append({"bin": bname, "depth": o["Thk(km)"][0]*1e3, "rho": o["Rho(ohm-m)"][0]})
+        thks, rhos = ", ".join([str(x) for x in o["Thk(km)"][1:]]),\
+                ", ".join([str(x) for x in o["Rho(ohm-m)"][1:]])
         rhos += (", %.3f"%(1./1.1220100))
-        body = header%(thks, rhos, len(o))
+        body = header%(thks, rhos, (len(o)-1))
         for i, row in o.iterrows():
-            th = row["Thk(km)"]*1e3
-            body += eachline%(1/row["Rho(ohm-m)"], i+1, fman(th), sign(th), fexp(th), i+1)
-            #print(row["Rho(ohm-m)"], row["Thk(km)"])
-            pass
+            if i > 0:
+                th = row["Thk(km)"]*1e3
+                body += eachline%(1/row["Rho(ohm-m)"], i, fman(th), sign(th), fexp(th), i)
         body += lastline
         with open(f.replace(".csv", ".txt"), "w") as f: f.writelines(body)
+    ocean_layer = pd.DataFrame.from_records(ocean_layer)
+    ocean_layer.to_csv("data/OceanModels/OceanLayers.csv", header=True, index=False)
     return
 
 class OceanModel(object):
@@ -111,7 +116,9 @@ class OceanModel(object):
     1D ocean.
     """
     
-    def __init__(self, site=None, model_name="BME", ocean_model={"depth":5e3, "rho":0.25}, flim=[1e-4, 1e-2]):
+    def __init__(self, site=None, model_name="BME", 
+                 ocean_model={"depth":5e3, "rho":0.25}, 
+                 flim=[1e-4, 1e-2]):
         self.model_name = model_name
         self.ocean_model = ocean_model
         self.site = bezpy.mt.read_1d_usgs_profile("data/ocean_model_%s.txt"%model_name) if site is None else site
@@ -168,9 +175,10 @@ class OceanModel(object):
     
     @staticmethod
     def getOceanModel(bin_num=1):
+        ocean_info = pd.read_csv("data/OceanModels/OceanLayers.csv")
+        ocean_info = ocean_info[ocean_info.bin=="Bin"+str(bin_num)]
         site = bezpy.mt.read_1d_usgs_profile("data/OceanModels/RhoZ_Bin%d.txt"%bin_num)
-        ocean_model = {"depth":site.thicknesses[0], "rho":site.resistivities[0]}
-        site.thicknesses, site.resistivities = site.thicknesses[1:], site.resistivities[1:]
+        ocean_model = {"depth":ocean_info.depth.tolist()[0], "rho":ocean_info.rho.tolist()[0]}
         om = OceanModel(site=site, ocean_model=ocean_model)
         return om
 
@@ -210,6 +218,7 @@ class BFieldAnalysis(object):
             if os.path.exists(f): o = pd.concat([o, bezpy.mag.read_iaga(f)])
         self.B_frame = o
         if self.plot: self.stack_plots()
+        self.detrain_B()
         return
     
     def stack_plots(self, kind="Bxy"):
@@ -224,7 +233,7 @@ class BFieldAnalysis(object):
         Compute Et via RFFT and IRFFT block 
         om: Ocean Model
         """
-        om = OceanModel.getOceanModel(self.bin_id)
+        self.om = OceanModel.getOceanModel(self.bin_id)
         o = pd.DataFrame()
         n = len(self.B_frame)
         dT = (self.B_frame.index.tolist()[1]-self.B_frame.index.tolist()[0]).total_seconds()
@@ -232,9 +241,13 @@ class BFieldAnalysis(object):
             Baf = 2.0/n * np.fft.rfft(self.B_frame[a])
             frq = np.fft.rfftfreq(len(self.B_frame[a]))/dT
             frq[0] = frq[1]
-            tx = om.get_TFs(freqs=frq)
+            #print(f" Frequency range of the fields: {np.min(frq)}~{np.max(frq)}; dF:{1./dT}")
+            tx = self.om.get_TFs(freqs=frq)
             Eaf = Baf*np.array(tx.Ef2Bs)
-            o[a] = np.fft.irfft(Eaf)
+            #print(f" TF abs range: {np.min(np.abs(tx.Ef2Bs))}~{np.max(np.abs(tx.Ef2Bs))}")
+            #print(f" Bf abs range: {np.min(np.abs(Baf))}~{np.max(np.abs(Baf))}")
+            #print(f" Ef abs range: {np.min(np.abs(Eaf))}~{np.max(np.abs(Eaf))}")
+            o[a] = np.fft.irfft(Eaf)*n/2
         o["Time"] = self.B_frame.index.tolist()
         self.E_frame = o.set_index("Time")
         if self.plot: self.stack_plots("BExy")
@@ -251,8 +264,33 @@ class BFieldAnalysis(object):
         self.E_frame["Vj"] = self.Vj
         return
     
+    def detrain_B(self, p=0.1):
+        """
+        Preprocess the B-field before the analysis
+        1. Remove mean
+        2. Detrain
+        3. Tapering the ends for removing sporious frequency leakage
+        """
+        start = self.B_frame.index.tolist()[0]
+        self.B_frame = self.B_frame.reset_index()
+        self.B_frame["Tm"] = self.B_frame.Time.apply(lambda x: (x-start).total_seconds())
+        tm = np.array(self.B_frame["Tm"])
+        self.B_frame = self.B_frame.set_index("Time")
+        T = len(self.B_frame)
+        P, P2 = int(T*p), int(T*p/2)
+        wp = np.zeros(T)
+        wp[:P2] = 0.5*(1 - np.cos(2*np.pi*tm[:P2]/P))
+        wp[P2:T-P2] = 1.
+        wp[T-P2:] = 0.5*(1 - np.cos(2*np.pi*(tm[-1]-tm[T-P2:])/P))
+        for a in ["X", "Y"]:
+            dat = self.B_frame[a]
+            dat = dat - np.median(dat[:120])
+            self.B_frame[a] = dat*wp
+        return
+    
 if __name__ == "__main__":
+    #toBEZpy()
     for b, c in zip(range(1,10), ["XYZ"]*7 + ["HDZ"]*2):
         BFieldAnalysis([dt.datetime(1989,3,12),dt.datetime(1989,3,13),dt.datetime(1989,3,14)],
                        b, coord=c).compute_Et()
-    pass
+        break

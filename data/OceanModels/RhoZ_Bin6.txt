@@ -1,29 +1,26 @@
 * Lines starting with * are just comments.
 * Text after the numbers is ignored 
 * BM ocean conductivity model
-*/ 4.1, 0.53, 10.76, 59.48, 335.13, 250.0, 340.0, INF,/ ! layer thicknesses in m
-*/ 0.3, 3.0, 3000.0, 1000.0, 100.0, 10.0, 1.0, 0.891 ,/ !Resistivities in Ohm-m
-7                             Number of layers from surface
+*/ 0.5, 10.0, 60.0, 335.5, 250.0, 340.0, INF,/ ! layer thicknesses in km
+*/ 3.0, 3000.0, 1000.0, 100.0, 10.0, 1.0, 0.891 ,/ !Resistivities in Ohm-m
+6                             Number of layers from surface
 
-3.3333333                      Conductivity in S/m (layer 1)
-4.100e+03                      Layer thickness in m (layer 1)
+0.3333333                      Conductivity in S/m (layer 1)
+5.000e+02                      Layer thickness in m (layer 1)
 
-0.3333333                      Conductivity in S/m (layer 2)
-5.300e+02                      Layer thickness in m (layer 2)
+0.0003333                      Conductivity in S/m (layer 2)
+1.000e+04                      Layer thickness in m (layer 2)
 
-0.0003333                      Conductivity in S/m (layer 3)
-1.076e+04                      Layer thickness in m (layer 3)
+0.0010000                      Conductivity in S/m (layer 3)
+6.000e+04                      Layer thickness in m (layer 3)
 
-0.0010000                      Conductivity in S/m (layer 4)
-5.948e+04                      Layer thickness in m (layer 4)
+0.0100000                      Conductivity in S/m (layer 4)
+3.355e+05                      Layer thickness in m (layer 4)
 
-0.0100000                      Conductivity in S/m (layer 5)
-3.351e+05                      Layer thickness in m (layer 5)
+0.1000000                      Conductivity in S/m (layer 5)
+2.500e+05                      Layer thickness in m (layer 5)
 
-0.1000000                      Conductivity in S/m (layer 6)
-2.500e+05                      Layer thickness in m (layer 6)
-
-1.0000000                      Conductivity in S/m (layer 7)
-3.400e+05                      Layer thickness in m (layer 7)
+1.0000000                      Conductivity in S/m (layer 6)
+3.400e+05                      Layer thickness in m (layer 6)
 
 1.1220100                      Semi-infinite earth conductivity
