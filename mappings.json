@@ -4,11 +4,65 @@
         "file": "data/1989/{stn}_{y}{m}{d}_{cord}.txt",
         "dates": ["1989-03-12","1989-03-13","1989-03-14"],
         "coords": "XYZ",
-        "stations": ["FRD", "HAD", "STJ"],
+        "stations": ["FRD", "HAD", "STJ"]
     },    
-    "Bin2Stn": {
-        
+    "bin_details": {
+        "1": {
+            "stn": "FRD",
+            "eastern_edge": [38.79, -72.62],
+            "western_edge": [39.6, -74.33],
+            "ocean_depth": 100
+        }, 
+        "2": {
+            "stn": "FRD",
+            "eastern_edge": [37.11, -68.94],
+            "western_edge": [38.79, -72.62],
+            "ocean_depth": 4000
+        },
+        "3": {
+            "stn": "STJ",
+            "eastern_edge": [39.80, -48.20],
+            "western_edge": [37.11, -68.94],
+            "ocean_depth": 5200
+        },
+        "4": {
+            "stn": "STJ",
+            "eastern_edge": [40.81, -45.19],
+            "western_edge": [39.80, -48.20],
+            "ocean_depth": 4000
+        },
+        "5": {
+            "stn": "STJ",
+            "eastern_edge": [43.15, -39.16],
+            "western_edge": [40.81, -45.19],
+            "ocean_depth": 4800
+        },
+        "6": {
+            "stn": "STJ",
+            "eastern_edge": [44.83, -34.48],
+            "western_edge": [43.15, -39.16],
+            "ocean_depth": 4000
+        },
+        "7": {
+            "stn": "STJ",
+            "eastern_edge": [46.51, -22.43],
+            "western_edge": [44.83, -34.48],
+            "ocean_depth": 3000
+        }, 
+        "8": {
+            "stn": "HAD",
+            "eastern_edge": [47.85, -9.05],
+            "western_edge": [46.51, -22.43],
+            "ocean_depth": 4500
+        }, 
+        "9": {
+            "stn": "HAD",
+            "eastern_edge": [50.79, -4.55],
+            "western_edge": [47.85, -9.05],
+            "ocean_depth": 100
+        }
     },
+    "model_location": "data/OceanModels/",
     "plots": true,
-    "save": true,
+    "save": true
 }

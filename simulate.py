@@ -16,9 +16,11 @@ import datetime as dt
 import argparse
 from dateutil import parser as prs
 from loguru import logger
+import json
 
 import utility
 from OM import SynB
+from cable import EventAnalysis
 
 class Simulation(object):
     """
@@ -39,6 +41,30 @@ class Simulation(object):
         synb.run()
         return
     
+    def analyze_event_data(self):
+        """
+        Create and invoke event based analysis.
+        Stucture of the code follows:
+        a. Any cable can be sub-devided multiple segment along the path
+        b. Data and Ocean models will be provided in data/OceanModels/ dirs
+        c. Calculate TF and E(t) for floor and surface.
+        d. Calculate induced V(t) along the cable section and total voltage (sum).
+        e. DSTL voltage calculation
+        f. Total voltage calculation
+        
+        Preprocessings:
+        ---------------
+        1. Read mapping file
+        2. To Ben's csv file to BEZpy reaable .txt
+        """
+        logger.info(f"Load mapping {self.in_file}")
+        with open(self.in_file, "r") as f: o = json.load(f)
+        logger.info(f"Convert to BEZpy")
+        utility.toBEZpy(o["model_location"])
+        logger.info(f"Start simulation....")
+        event = EventAnalysis(o, self.verbose)
+        return
+    
     @staticmethod
     def run(args):
         """
@@ -47,6 +73,7 @@ class Simulation(object):
         """
         sim = Simulation(args)
         if sim.syn: sim.synthetic_B_field_simulation()
+        sim.analyze_event_data()
         return
             
 
@@ -60,8 +87,7 @@ if __name__ == "__main__":
     logger.info(f"Simulation run using fitacf_amgeo.__main__")
     if args.verbose:
         logger.info("Parameter list for simulation ")
-        for k in vars(args).keys():
-            print("     ", k, "->", vars(args)[k])
+        utility.print_rec(args)
     logger.info(f"Loading parameters from cfg_prm.json")
     args = utility.load_params(args)
     logger.info(f"Fork folder structure to save data/figs.")

@@ -12,6 +12,10 @@ __status__ = "Research"
 import numpy as np
 import json
 import os
+import glob
+from decimal import Decimal
+import pandas as pd
+import types
 
 def create_synthetic_B_field(Am, Phim, Tm, t=None):
     """
@@ -80,9 +84,22 @@ def set_dict(x, o):
     Checks if o is dictionary or not and set the associaed values
     """
     for k in o.keys():
-        if isinstance(o[k], dict): x = set_dict(x, o[k])
+        if isinstance(o[k], dict): 
+            setattr(x, k, types.SimpleNamespace())
+            setattr(x, k, set_dict(getattr(x, k), o[k]))
         else: setattr(x, k, o[k])
     return x
+
+def print_rec(x, spc="\t {key}->{val}"):
+    """
+    Print recursive attributes
+    """
+    for k in vars(x).keys():
+        if isinstance(getattr(x, k), types.SimpleNamespace): 
+            print(spc.format(key=k, val=""))
+            print_rec(getattr(x, k), spc="\t"+spc)
+        else: print(spc.format(key=k, val=vars(x)[k]))
+    return
 
 def get_tapering_function(t, p=0.1):
     """
@@ -97,3 +114,50 @@ def get_tapering_function(t, p=0.1):
     w[P2:T-P2] = 1.
     w[T-P2:] = 0.5*(1 - np.cos(2*np.pi*(t[-1]-t[T-P2:])/P))
     return w
+
+def toBEZpy(base="data/OceanModels/"):
+    """
+    This method is dedicated to convert the csv file to 
+    BEZpy readable text files. All the .csv files under this 
+    base location will be converted. 
+    """
+    def fexp(number):
+        (sign, digits, exponent) = Decimal(number).as_tuple()
+        return len(digits) + exponent - 1
+    
+    def fman(number):
+        return Decimal(number).scaleb(-fexp(number)).normalize()
+    
+    def sign(number):
+        (sign, digits, exponent) = Decimal(number).as_tuple()
+        return "+" if sign==0 else "-"
+    
+    files = glob.glob(base+"*Bin*.csv")
+    files.sort()
+    header = "* Lines starting with * are just comments.\n"+\
+                "* Text after the numbers is ignored \n"+\
+                "* BM ocean conductivity model\n"+\
+                "*/ %s, INF,/ ! layer thicknesses in km\n"+\
+                "*/ %s ,/ !Resistivities in Ohm-m\n"+\
+                "%d                             Number of layers from surface\n"
+    eachline = "\n%.7f                      Conductivity in S/m (layer %d)"+\
+                "\n%.3fe%s%02d                      Layer thickness in m (layer %d)\n"
+    lastline = "\n1.1220100                      Semi-infinite earth conductivity"
+    ocean_layer = []
+    for f in files:
+        o = pd.read_csv(f)
+        bname = f.split("_")[-1].replace(".csv","")
+        ocean_layer.append({"bin": bname, "depth": o["Thk(km)"][0]*1e3, "rho": o["Rho(ohm-m)"][0]})
+        thks, rhos = ", ".join([str(x) for x in o["Thk(km)"][1:]]),\
+                ", ".join([str(x) for x in o["Rho(ohm-m)"][1:]])
+        rhos += (", %.3f"%(1./1.1220100))
+        body = header%(thks, rhos, (len(o)-1))
+        for i, row in o.iterrows():
+            if i > 0:
+                th = row["Thk(km)"]*1e3
+                body += eachline%(1/row["Rho(ohm-m)"], i, fman(th), sign(th), fexp(th), i)
+        body += lastline
+        with open(f.replace(".csv", ".txt"), "w") as f: f.writelines(body)
+    ocean_layer = pd.DataFrame.from_records(ocean_layer)
+    ocean_layer.to_csv(base + "OceanLayers.csv", header=True, index=False)
+    return

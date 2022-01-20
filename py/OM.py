@@ -32,29 +32,50 @@ class OceanModel(object):
     """
     
     def __init__(self, model_name, model_path, ocean_model={"depth":5e3, "rho":0.25}, 
-                 site=None, flim=[1e-4, 1e-2]):
+                 site=None, flim=[1e-4, 1e-2], kind="floor"):
+        """
+        Initialize the ocean model
+        """
+        logger.info(f"Compile Ocean Model to calculate Ocean({kind}) E- and B-Fields")
         self.model_name = model_name
         self.ocean_model = ocean_model
-        self.site = bezpy.mt.read_1d_usgs_profile(model_path) if site is None else site
+        self.kind = kind
+        if kind == "floor": self.site = bezpy.mt.read_1d_usgs_profile(model_path) if site is None else site
+        else: 
+            self.site = bezpy.mt.read_1d_usgs_profile(model_path)
+            self.site.resistivities = np.insert(self.site.resistivities, 0, ocean_model["rho"])
+            self.site.thicknesses = np.insert(self.site.thicknesses, 0, ocean_model["depth"])
         self.freqs = np.linspace(flim[0], flim[1], int(flim[1]/flim[0])+1)
         self.functions = {
-            "Ef2Bs": lambda Z, Zd, kd: Zd/(np.cosh(kd) + (Zd*np.sinh(kd)/Z)),
-            "Bf2Bs": lambda Z, Zd, kd: 1./(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
+            "E2B": lambda Z, Zd, kd: Zd/(np.cosh(kd) + (Zd*np.sinh(kd)/Z)),
+            "B2B": lambda Z, Zd, kd: 1./(np.cosh(kd) + (Zd*np.sinh(kd)/Z))
         }
         return
     
     def calcZ(self, layer="ocean", freqs=None):
+        """
+        Compute the Km(f) for different layers
+        """
         freqs = np.copy(self.freqs) if freqs is None else freqs
         omega = 2*C.pi*freqs
-        sigma_s = 1/self.ocean_model["rho"]
-        k2 = 1.j*omega*C.mu_0*sigma_s
-        k = np.sqrt(k2)
-        Zo = (1.j*omega*C.mu_0/k)/(C.mu_0/1.e-3)
-        Kf = self.site.calcZ(freqs)[1]
-        self.Z = {"ocean": Zo, "floor": Kf}
+        if self.kind == "floor":    
+            sigma_s = 1/self.ocean_model["rho"]
+            k2 = 1.j*omega*C.mu_0*sigma_s
+            k = np.sqrt(k2)
+            Zo = (1.j*omega*C.mu_0/k)/(C.mu_0/1.e-3)
+            Kf = self.site.calcZ(freqs)[1]
+            self.Z = {"ocean": Zo, "floor": Kf}
+        else:
+            self.Z = {
+                "ocean": self.site.calcZ(freqs, lev=0)[1],
+                "floor": self.site.calcZ(freqs, lev=1)[1]
+            }
         return self.Z[layer]
     
-    def calcTF(self, kinds=["Ef2Bs", "Bf2Bs"], freqs=None):
+    def calcTF(self, kinds=["E2B", "B2B"], freqs=None):
+        """
+        Calculate the transfer functions.
+        """
         freqs = np.copy(self.freqs) if freqs is None else freqs
         omega = 2*C.pi*freqs
         Zd = self.calcZ("floor", freqs=freqs)
@@ -71,7 +92,11 @@ class OceanModel(object):
             TFs[kind] = self.functions[kind](Z, Zd, kd)
         return TFs
     
-    def get_TFs(self, key="Ef2Bs", freqs=None):
+    def get_TFs(self, key="E2B", freqs=None):
+        """
+        Fetch the transfer function based on key 
+        and frequency.
+        """
         TFs = self.calcTF(freqs=freqs)
         tf = pd.DataFrame()
         tf["freq"], tf[key] = np.copy(self.freqs) if freqs is None else freqs, TFs[key]
@@ -88,11 +113,10 @@ class SynB(object):
         self.tp = tp
         self.v = v
         self.bdir = bdir
-        if self.v: logger.info(f"Synthetic B-field run parameters")
         self = utility.set_dict(self, o)
-        if self.v:
-            for k in vars(self).keys():
-                print("     ", k, "->", vars(self)[k])
+        if self.v: 
+            logger.info(f"Synthetic B-field run parameters")
+            utility.print_rec(self)
         return
     
     def run(self):
@@ -102,9 +126,9 @@ class SynB(object):
         self.Am, self.Tm, self.Phim = np.array(self.Am), np.array(self.Tm_min)*60, np.array(self.Phim)
         self.Bt, self.t = utility.create_synthetic_B_field(self.Am, self.Phim, self.Tm)
         self.w = utility.get_tapering_function(self.t)
-        for m in self.earth_models: # run for each earth model
-            for d in self.ocean_depths: # run for each ocean depth 
-                for r in self.ocean_resistivities: # run for each ocean resistivity
+        for m in self.ocean_model.earth_models: # run for each earth model
+            for d in self.ocean_model.ocean_depths: # run for each ocean depth 
+                for r in self.ocean_model.ocean_resistivities: # run for each ocean resistivity
                     prep = "h-%d.r-%.2f"%(d,r)
                     mpath = self.model_path%"BME" if "uniform" in m else self.model_path%m
                     om = OceanModel(m, mpath, ocean_model={"depth":d, "rho":r})
@@ -148,9 +172,9 @@ class SynB(object):
         """
         fm = 1./self.Tm
         o = qx.get_TFs(freqs=fm)
-        o["Amplitude (mV/km/nT)"], o["Phase (deg)"] = np.absolute(o.Ef2Bs),\
-                        np.angle(o.Ef2Bs, deg=True)
-        o = o.rename(columns={"freq":"fm (Hz)"}).drop(columns=["Ef2Bs"])
+        o["Amplitude (mV/km/nT)"], o["Phase (deg)"] = np.absolute(o.E2B),\
+                        np.angle(o.E2B, deg=True)
+        o = o.rename(columns={"freq":"fm (Hz)"}).drop(columns=["E2B"])
         o.index.name = "m"
         return o.copy()
     
@@ -174,8 +198,8 @@ class SynB(object):
         """
         Bt, dT = self.Bt * self.w, self.t[1]-self.t[0]
         Bf, f = utility.fft(Bt, dT)
-        Ef2Bs = np.array(om.get_TFs(freqs=f).Ef2Bs)
-        Et = utility.ifft(Ef2Bs*Bf)
+        E2B = np.array(om.get_TFs(freqs=f).E2B)
+        Et = utility.ifft(E2B*Bf)
         o = pd.DataFrame()
         o["t"], o["Et"] = self.t, Et
         return o.copy()

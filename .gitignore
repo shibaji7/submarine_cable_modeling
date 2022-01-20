@@ -9,7 +9,7 @@ __pycache__/
 *.png
 *.pickle
 *tmp*
-*docs*
+*bezpy*
 
 # Distribution / packaging
 .Python
