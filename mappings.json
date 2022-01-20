@@ -1,0 +1,14 @@
+{
+    "bins": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "data": {
+        "file": "data/1989/{stn}_{y}{m}{d}_{cord}.txt",
+        "dates": ["1989-03-12","1989-03-13","1989-03-14"],
+        "coords": "XYZ",
+        "stations": ["FRD", "HAD", "STJ"],
+    },    
+    "Bin2Stn": {
+        
+    },
+    "plots": true,
+    "save": true,
+}
