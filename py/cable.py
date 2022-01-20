@@ -14,6 +14,9 @@ import pandas as pd
 import numpy as np
 from loguru import logger
 
+import bezpy
+
+from OM import OceanModel
 import utility
 
 class CableSection(object):
@@ -26,25 +29,35 @@ class CableSection(object):
     5. Total voltage drop calculation
     """
     
-    def __init__(self, model_name, model_path, stn_name, 
+    def __init__(self, model_num, model_path, stn_name, ocean_model,
                  east_edge, west_edge, data_files):
-        self.model_name = model_name
+        self.model_num = model_num
         self.model_path = model_path
         self.stn_name = stn_name
-        self.eastern_edge = eastern_edge
-        self.western_edge = western_edge
+        self.ocean_model = ocean_model
+        self.eastern_edge = east_edge
+        self.western_edge = west_edge
         self.data_files = data_files
+        self.load_om()
         self.load_dataset()
+        self.components = ["X", "Y"]
+        return
+    
+    def load_om(self, kind="floor"):
+        """
+        Load Ocean Model with base parameters
+        """
+        name = "Bin%02d"%self.model_num
+        self.om = OceanModel(name, self.model_path, ocean_model=self.ocean_model, kind=kind)
         return
     
     def load_dataset(self):
         """
         Load dataset from given data files
         """
-        o = pd.DataFrame()
+        self.B = pd.DataFrame()
         for f in self.data_files:
-            if os.path.exists(f): o = pd.concat([o, bezpy.mag.read_iaga(f)])
-        self.B = o.copy()
+            if os.path.exists(f): self.B = pd.concat([self.B, bezpy.mag.read_iaga(f)])
         return
     
     def compute_Vj(self):
@@ -54,15 +67,25 @@ class CableSection(object):
         """
         Ln, Le = self.segmentL()
         self.V = pd.DataFrame()
+        self.V["Time"] = self.B.index.tolist()
         self.V["Vj"] = np.array(self.E.X)*Ln + np.array(self.E.Y)*Le
-        self.V["Date"] = self.E.index.tolist()
-        self.V = self.V.set_index("Date")
+        self.V = self.V.set_index("Time")
         return
     
     def compute_numerical_Et(self):
         """
         Compute Et using numerical FFT and IFFT block 
         """
+        self.E = pd.DataFrame()
+        self.E["Time"] = self.B.index.tolist()
+        for a in self.components:
+            Bt = np.array(self.B[a])
+            dT = (self.B.index.tolist()[1]-self.B.index.tolist()[0]).total_seconds()
+            Bf, f = utility.fft(Bt, dT)
+            E2B = np.array(self.om.get_TFs(freqs=f).E2B)
+            Et = utility.ifft(E2B*Bf)
+            self.E[a] = Et
+        self.E = self.E.set_index("Time")
         return
     
     def segmentL(self):
@@ -91,4 +114,26 @@ class EventAnalysis(object):
         if self.v: 
             logger.info(f"Event analysis and cable parameters")
             utility.print_rec(self)
+        ol = pd.read_csv(self.ocean_layers_csv)
+        for b, depth, rho in zip(self.bins, ol.depth, ol.rho):
+            om = {"depth":depth, "rho":rho}
+            bd = vars(self.bin_details)[str(b)]
+            model_path = self.model_location%b
+            data_files = []
+            for date in self.data.dates:
+                date = date.split("-")
+                fn = self.data.file.format(stn=bd.stn, coord=bd.coord, 
+                                           y=date[0], m=date[1], d=date[2])
+                data_files.append(fn)
+            cs = CableSection(b, model_path, bd.stn, om, bd.eastern_edge, 
+                              bd.western_edge, data_files)
+            cs.compute_numerical_Et()
+            setattr(vars(self.bin_details)[str(b)], "cable_sec", cs)
+        return
+    
+    def calclulate_total_parameters(self):
+        """
+        Method is responsible for total E-field, V, and 
+        V[e-e] caclulations
+        """
         return

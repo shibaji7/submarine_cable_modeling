@@ -60,9 +60,11 @@ class Simulation(object):
         logger.info(f"Load mapping {self.in_file}")
         with open(self.in_file, "r") as f: o = json.load(f)
         logger.info(f"Convert to BEZpy")
-        utility.toBEZpy(o["model_location"])
+        utility.toBEZpy("/".join(o["model_location"].split("/")[:-1]))
         logger.info(f"Start simulation....")
-        event = EventAnalysis(o, self.verbose)
+        e = EventAnalysis(o, self.verbose)
+        e.calclulate_total_parameters()
+        logger.info(f"Simulation end!")
         return
     
     @staticmethod

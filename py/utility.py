@@ -115,6 +115,16 @@ def get_tapering_function(t, p=0.1):
     w[T-P2:] = 0.5*(1 - np.cos(2*np.pi*(t[-1]-t[T-P2:])/P))
     return w
 
+def detrend_magnetic_field(B, t, p=0.1):
+    """
+    This method is resposible for detrend
+    magnetic field data and taper it to reduce
+    spurious frequency components.
+    """
+    w = get_tapering_function(t, p)
+    B = B*w
+    return B
+
 def toBEZpy(base="data/OceanModels/"):
     """
     This method is dedicated to convert the csv file to 
@@ -132,7 +142,7 @@ def toBEZpy(base="data/OceanModels/"):
         (sign, digits, exponent) = Decimal(number).as_tuple()
         return "+" if sign==0 else "-"
     
-    files = glob.glob(base+"*Bin*.csv")
+    files = glob.glob(base+"/*Bin*.csv")
     files.sort()
     header = "* Lines starting with * are just comments.\n"+\
                 "* Text after the numbers is ignored \n"+\
@@ -159,5 +169,5 @@ def toBEZpy(base="data/OceanModels/"):
         body += lastline
         with open(f.replace(".csv", ".txt"), "w") as f: f.writelines(body)
     ocean_layer = pd.DataFrame.from_records(ocean_layer)
-    ocean_layer.to_csv(base + "OceanLayers.csv", header=True, index=False)
+    ocean_layer.to_csv(base + "/OceanLayers.csv", header=True, index=False)
     return

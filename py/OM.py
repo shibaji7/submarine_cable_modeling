@@ -36,7 +36,7 @@ class OceanModel(object):
         """
         Initialize the ocean model
         """
-        logger.info(f"Compile Ocean Model to calculate Ocean({kind}) E- and B-Fields")
+        logger.info(f"Compile OM[{model_name}] to calc O({kind}) E- and B-Fields")
         self.model_name = model_name
         self.ocean_model = ocean_model
         self.kind = kind
@@ -125,7 +125,7 @@ class SynB(object):
         """
         self.Am, self.Tm, self.Phim = np.array(self.Am), np.array(self.Tm_min)*60, np.array(self.Phim)
         self.Bt, self.t = utility.create_synthetic_B_field(self.Am, self.Phim, self.Tm)
-        self.w = utility.get_tapering_function(self.t)
+        self.w = utility.get_tapering_function(self.t, self.tp)
         for m in self.ocean_model.earth_models: # run for each earth model
             for d in self.ocean_model.ocean_depths: # run for each ocean depth 
                 for r in self.ocean_model.ocean_resistivities: # run for each ocean resistivity
