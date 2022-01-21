@@ -19,7 +19,7 @@ from loguru import logger
 import json
 
 import utility
-from OM import SynB
+from oml import SynB
 from cable import EventAnalysis
 
 class Simulation(object):
@@ -62,7 +62,7 @@ class Simulation(object):
         logger.info(f"Convert to BEZpy")
         utility.toBEZpy("/".join(o["model_location"].split("/")[:-1]))
         logger.info(f"Start simulation....")
-        e = EventAnalysis(o, self.verbose)
+        e = EventAnalysis(o, self.out_dirs["base"], self.verbose)
         e.calclulate_total_parameters()
         logger.info(f"Simulation end!")
         return

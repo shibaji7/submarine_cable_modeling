@@ -121,8 +121,9 @@ def detrend_magnetic_field(B, t, p=0.1):
     magnetic field data and taper it to reduce
     spurious frequency components.
     """
+    Bmed = np.median(B[:120])
     w = get_tapering_function(t, p)
-    B = B*w
+    B = (B-Bmed) * w
     return B
 
 def toBEZpy(base="data/OceanModels/"):

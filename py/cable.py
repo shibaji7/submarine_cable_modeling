@@ -16,8 +16,9 @@ from loguru import logger
 
 import bezpy
 
-from OM import OceanModel
+from oml import OceanModel
 import utility
+import plotlib
 
 class CableSection(object):
     """
@@ -35,8 +36,8 @@ class CableSection(object):
         self.model_path = model_path
         self.stn_name = stn_name
         self.ocean_model = ocean_model
-        self.eastern_edge = east_edge
-        self.western_edge = west_edge
+        self.east_edge = east_edge
+        self.west_edge = west_edge
         self.data_files = data_files
         self.load_om()
         self.load_dataset()
@@ -78,14 +79,17 @@ class CableSection(object):
         """
         self.E = pd.DataFrame()
         self.E["Time"] = self.B.index.tolist()
+        stime = self.E.Time.tolist()[0]
+        t = np.array(self.E.Time.apply(lambda x: (x-stime).total_seconds()))
         for a in self.components:
-            Bt = np.array(self.B[a])
+            Bt = utility.detrend_magnetic_field(np.array(self.B[a]), t)
             dT = (self.B.index.tolist()[1]-self.B.index.tolist()[0]).total_seconds()
             Bf, f = utility.fft(Bt, dT)
             E2B = np.array(self.om.get_TFs(freqs=f).E2B)
-            Et = utility.ifft(E2B*Bf)
+            Et = 2*utility.ifft(E2B*Bf)
             self.E[a] = Et
         self.E = self.E.set_index("Time")
+        self.compute_Vj()
         return
     
     def segmentL(self):
@@ -108,7 +112,8 @@ class EventAnalysis(object):
     This model is dedicated to run an event analsys (e.g., 1989 Dec 13)
     """
     
-    def __init__(self, o, v):
+    def __init__(self, o, bdir, v):
+        self.bdir = bdir
         self.v = v
         self = utility.set_dict(self, o)
         if self.v: 
@@ -136,4 +141,50 @@ class EventAnalysis(object):
         Method is responsible for total E-field, V, and 
         V[e-e] caclulations
         """
+        self.tot_params = pd.DataFrame()
+        self.tot_params["Time"] = vars(self.bin_details)["1"].cable_sec.B.index.tolist()
+        Ex, Ey, V = np.zeros(len(self.tot_params)), np.zeros(len(self.tot_params)),\
+                    np.zeros(len(self.tot_params))
+        for b in self.bins:
+            cs = vars(self.bin_details)[str(b)].cable_sec
+            Ex += np.array(cs.E.X)
+            Ey += np.array(cs.E.Y)
+            V += np.array(cs.V.Vj)
+        self.tot_params["Ex(mv/km)"], self.tot_params["Ey(mv/km)"],\
+                self.tot_params["V(V)"] = Ex, Ey, V/1000.
+        self.tot_params = self.tot_params.set_index("Time")
+        if self.save: self.save_data()
+        return
+    
+    def save_data(self):
+        """
+        Save the data into .csv files
+        """
+        self.stns = []
+        self.Eframes = []
+        self.Bframes = {}
+        for b in self.bins:
+            bd = vars(self.bin_details)[str(b)]
+            cs = bd.cable_sec
+            cs.E.to_csv(self.bdir + "Et-Bin%02d.csv"%b, float_format="%g")
+            cs.B.to_csv(self.bdir + "Bt.csv", float_format="%g")
+            cs.V.to_csv(self.bdir + "Vt-Bin%02d.csv"%b, float_format="%g")
+            self.Bframes[bd.stn] = cs.B
+            self.Eframes.append(cs.E)
+            self.stns.append(bd.stn)
+        self.tot_params.to_csv(self.bdir + "sim-params.csv", float_format="%g")
+        if self.plot: self.plot_data()
+        return
+    
+    def plot_data(self):
+        """
+        Plot the corresponding figures.
+        """
+        plotlib.plot_Bxy_stack(list(set(self.stns)), self.Bframes)
+        plotlib.plot_Exy_stack(self.stns, self.Eframes)
+        for b in self.bins:
+            fname = "prev/BExy.Field.B%d.png"%b
+            bd = vars(self.bin_details)[str(b)]
+            cs = bd.cable_sec
+            plotlib.plot_BExy(bd.stn, cs.B, cs.E, fname)
         return

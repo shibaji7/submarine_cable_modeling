@@ -63,6 +63,6 @@
     },
     "model_location": "data/OceanModels/RhoZ_Bin%d.txt",
     "ocean_layers_csv": "data/OceanModels/OceanLayers.csv",
-    "plots": true,
+    "plot": true,
     "save": true
 }
