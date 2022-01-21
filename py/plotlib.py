@@ -169,3 +169,35 @@ def plot_BExy(stn, Bframe, Eframe, fname, dpi=150, wspace=0.2, hspace=0.1):
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     fig.savefig(fname, bbox_inches="tight")
     return
+
+def plot_induced_potential(stns, frames, dpi=150, wspace=0.1, hspace=0.1):
+    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
+    fig, axes = plt.subplots(nrows=1, ncols=1, dpi=dpi, figsize=(6, 3), 
+                             sharex="all", sharey="all")
+    ax = axes
+    number = len(stns)
+    cmap = plt.get_cmap("gnuplot")
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
+              "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+    for i, frame in enumerate(frames):
+        #ax = axes[i]
+        col = "k"
+        ax.set_ylabel(r"$V_j(t)=E_j^N(t)L_i^N+E_j^E(t)L_j^E$, $mV$", fontdict={"color": col})
+        ax.spines["left"].set_color(col)
+        ax.tick_params(axis="y", which="both", colors=col)
+        ax.yaxis.label.set_color(col)
+        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 8)))
+        
+        #ax.set_ylim(-0.1,.2)
+        txt = r"$Bin_{%d}[%s]$"%(i+1, stns[i].upper())
+        ax.plot(frame.index, frame.Vj, color=colors[i], ls="-", lw=1., label=txt)
+        if i == len(stns)-1: 
+            ax.set_xlabel("Time, UT")
+            ax.legend(bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=8)
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig("prev/EFieldx.png", bbox_inches="tight")
+    return

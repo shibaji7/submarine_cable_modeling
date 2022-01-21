@@ -163,6 +163,7 @@ class EventAnalysis(object):
         self.stns = []
         self.Eframes = []
         self.Bframes = {}
+        self.Vframes = []
         for b in self.bins:
             bd = vars(self.bin_details)[str(b)]
             cs = bd.cable_sec
@@ -172,6 +173,7 @@ class EventAnalysis(object):
             self.Bframes[bd.stn] = cs.B
             self.Eframes.append(cs.E)
             self.stns.append(bd.stn)
+            self.Vframes.append(cs.V)
         self.tot_params.to_csv(self.bdir + "sim-params.csv", float_format="%g")
         if self.plot: self.plot_data()
         return
@@ -182,6 +184,7 @@ class EventAnalysis(object):
         """
         plotlib.plot_Bxy_stack(list(set(self.stns)), self.Bframes)
         plotlib.plot_Exy_stack(self.stns, self.Eframes)
+        plotlib.plot_induced_potential(self.stns, self.Vframes)
         for b in self.bins:
             fname = "prev/BExy.Field.B%d.png"%b
             bd = vars(self.bin_details)[str(b)]
