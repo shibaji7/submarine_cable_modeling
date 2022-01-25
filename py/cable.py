@@ -17,6 +17,7 @@ from loguru import logger
 import bezpy
 
 from oml import OceanModel
+from dstl import TransmissionLine, NodalAnalysis
 import utility
 import plotlib
 
@@ -120,6 +121,7 @@ class EventAnalysis(object):
             logger.info(f"Event analysis and cable parameters")
             utility.print_rec(self)
         ol = pd.read_csv(self.ocean_layers_csv)
+        self.tx_lines = []
         for b, depth, rho in zip(self.bins, ol.depth, ol.rho):
             om = {"depth":depth, "rho":rho}
             bd = vars(self.bin_details)[str(b)]
@@ -134,13 +136,24 @@ class EventAnalysis(object):
                               bd.western_edge, data_files)
             cs.compute_numerical_Et()
             setattr(vars(self.bin_details)[str(b)], "cable_sec", cs)
+            tx = TransmissionLine(b, cs.om.site, bd, om)
+            tx.compiles(cs.E)
+            setattr(vars(self.bin_details)[str(b)], "tx_line", tx)
+            self.tx_lines.append(tx)
         return
     
     def calclulate_total_parameters(self):
         """
         Method is responsible for total E-field, V, and 
-        V[e-e] caclulations
+        V[e-e] caclulations and nodal analysis
         """
+        # Nodal analysis
+        self.nodal_analysis = NodalAnalysis(self.tx_lines, self.bdir)
+        self.nodal_analysis.equivalent_nodel_analysis()
+        self.nodal_analysis.solve_admitance_matrix()
+        self.nodal_analysis.consolidate_final_result()
+        U0, U1 = self.nodal_analysis.get_voltage_ends_of_cable("Y")
+        # Toral parameter calculations
         self.tot_params = pd.DataFrame()
         self.tot_params["Time"] = vars(self.bin_details)["1"].cable_sec.B.index.tolist()
         Ex, Ey, V = np.zeros(len(self.tot_params)), np.zeros(len(self.tot_params)),\
@@ -151,7 +164,8 @@ class EventAnalysis(object):
             Ey += np.array(cs.E.Y)
             V += np.array(cs.V.Vj)
         self.tot_params["Ex(mv/km)"], self.tot_params["Ey(mv/km)"],\
-                self.tot_params["V(V)"] = Ex, Ey, V/1000.
+                self.tot_params["Vc(V)"] = Ex, Ey, V/1000.
+        self.tot_params["Vt(V)"] = U0-U1+(V/1000.)
         self.tot_params = self.tot_params.set_index("Time")
         if self.save: self.save_data()
         return
@@ -167,9 +181,9 @@ class EventAnalysis(object):
         for b in self.bins:
             bd = vars(self.bin_details)[str(b)]
             cs = bd.cable_sec
-            cs.E.to_csv(self.bdir + "Et-Bin%02d.csv"%b, float_format="%g")
+            cs.E.to_csv(self.bdir + "iEt-Bin%02d.csv"%b, float_format="%g")
             cs.B.to_csv(self.bdir + "Bt.csv", float_format="%g")
-            cs.V.to_csv(self.bdir + "Vt-Bin%02d.csv"%b, float_format="%g")
+            cs.V.to_csv(self.bdir + "iVt-Bin%02d.csv"%b, float_format="%g")
             self.Bframes[bd.stn] = cs.B
             self.Eframes.append(cs.E)
             self.stns.append(bd.stn)
@@ -182,11 +196,14 @@ class EventAnalysis(object):
         """
         Plot the corresponding figures.
         """
-        plotlib.plot_Bxy_stack(list(set(self.stns)), self.Bframes)
-        plotlib.plot_Exy_stack(self.stns, self.Eframes)
-        plotlib.plot_induced_potential(self.stns, self.Vframes)
+        base = self.bdir + "/plots/"
+        os.makedirs(base, exist_ok=True)
+        plotlib.plot_Bxy_stack(list(set(self.stns)), self.Bframes, fbase=base)
+        plotlib.plot_Exy_stack(self.stns, self.Eframes, fbase=base)
+        plotlib.plot_induced_potential(self.stns, self.Vframes, fbase=base)
+        plotlib.plot_total_potential(self.tot_params, fbase=base)
         for b in self.bins:
-            fname = "prev/BExy.Field.B%d.png"%b
+            fname = self.bdir + "/plots/BExy.Field.B%d.png"%b
             bd = vars(self.bin_details)[str(b)]
             cs = bd.cable_sec
             plotlib.plot_BExy(bd.stn, cs.B, cs.E, fname)

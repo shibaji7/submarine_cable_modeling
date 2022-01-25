@@ -19,7 +19,7 @@ import matplotlib.dates as mdates
 from matplotlib.dates import DateFormatter
 
 
-def plot_Bxy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1):
+def plot_Bxy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1, fbase=""):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
     fig, axes = plt.subplots(nrows=1, ncols=2, dpi=dpi, figsize=(12, len(stns)))
     multiplier, colors = [1, 0, -1], ["r", "k", "b"]
@@ -58,10 +58,10 @@ def plot_Bxy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1):
     axes[0].set_xlabel("Time, UT")
     axes[1].set_xlabel("Time, UT")
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    fig.savefig("prev/Bxy.Field.png", bbox_inches="tight")
+    fig.savefig(fbase + "Bxy.Field.png", bbox_inches="tight")
     return
 
-def plot_Exy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1):
+def plot_Exy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1, fbase=""):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
     fig, axes = plt.subplots(nrows=1, ncols=2, dpi=dpi, figsize=(12, 4))
     multiplier, colors = [4,3,2,1,0,-1,-2,-3,-4], ["r", "k", "b"]
@@ -109,7 +109,7 @@ def plot_Exy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1):
     axes[1].set_xlabel("Time, UT")
     axes[1].legend(bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=8)
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    fig.savefig("prev/Exy.png", bbox_inches="tight")
+    fig.savefig(fbase + "Exy.png", bbox_inches="tight")
     return
 
 def plot_BExy(stn, Bframe, Eframe, fname, dpi=150, wspace=0.2, hspace=0.1):
@@ -170,7 +170,7 @@ def plot_BExy(stn, Bframe, Eframe, fname, dpi=150, wspace=0.2, hspace=0.1):
     fig.savefig(fname, bbox_inches="tight")
     return
 
-def plot_induced_potential(stns, frames, dpi=150, wspace=0.1, hspace=0.1):
+def plot_induced_potential(stns, frames, dpi=150, wspace=0.1, hspace=0.1, fbase=""):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
     fig, axes = plt.subplots(nrows=1, ncols=1, dpi=dpi, figsize=(6, 3), 
                              sharex="all", sharey="all")
@@ -199,5 +199,24 @@ def plot_induced_potential(stns, frames, dpi=150, wspace=0.1, hspace=0.1):
             ax.set_xlabel("Time, UT")
             ax.legend(bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=8)
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    fig.savefig("prev/EFieldx.png", bbox_inches="tight")
+    fig.savefig(fbase + "EFieldx.png", bbox_inches="tight")
+    return
+
+def plot_total_potential(dx, dpi=150, wspace=0.1, hspace=0.1, fbase=""):
+    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
+    fig, axes = plt.subplots(nrows=1, ncols=1, dpi=dpi, figsize=(6, 3), 
+                             sharex="all", sharey="all")
+    ax = axes
+    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
+    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator())
+    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
+    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 8)))
+    ax.plot(dx.index, dx["Vc(V)"], color="r", ls="-", lw=1., label=r"$\epsilon_c$")
+    ax.plot(dx.index, dx["Vt(V)"], color="b", ls="-", lw=1., label=r"$V_c$")
+    ax.set_xlabel("Time, UT")
+    ax.set_ylabel("Voltage, V")
+    ax.legend(loc=1)
+    fig.subplots_adjust(wspace=wspace, hspace=hspace)
+    fig.savefig(fbase + "Pot.png", bbox_inches="tight")
     return
