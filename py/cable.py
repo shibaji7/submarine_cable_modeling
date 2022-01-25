@@ -12,6 +12,7 @@ __status__ = "Research"
 import os
 import pandas as pd
 import numpy as np
+import datetime as dt
 from loguru import logger
 
 import bezpy
@@ -113,15 +114,23 @@ class EventAnalysis(object):
     This model is dedicated to run an event analsys (e.g., 1989 Dec 13)
     """
     
-    def __init__(self, o, bdir, v):
+    def __init__(self, o, bdir, v, syne=False, E_syn=None, syn_dir=""):
         self.bdir = bdir
         self.v = v
+        self.syne = syne
+        self.E_syn = E_syn
+        self.syn_dir = syn_dir
         self = utility.set_dict(self, o)
         if self.v: 
             logger.info(f"Event analysis and cable parameters")
             utility.print_rec(self)
         ol = pd.read_csv(self.ocean_layers_csv)
         self.tx_lines = []
+        if self.syne:
+            dE = pd.DataFrame()
+            dE["X"], dE["Y"], dE["Time"] = [self.E_syn["E"]["X"]], [self.E_syn["E"]["Y"]], [dt.datetime.now()]
+            dE = dE.set_index("Time")
+            self.tx_syn_lines = []
         for b, depth, rho in zip(self.bins, ol.depth, ol.rho):
             om = {"depth":depth, "rho":rho}
             bd = vars(self.bin_details)[str(b)]
@@ -140,6 +149,11 @@ class EventAnalysis(object):
             tx.compiles(cs.E)
             setattr(vars(self.bin_details)[str(b)], "tx_line", tx)
             self.tx_lines.append(tx)
+            if self.syne:
+                tx_syn = TransmissionLine(b, cs.om.site, bd, om)
+                tx_syn.compiles(dE)
+                self.tx_syn_lines.append(tx_syn)
+        if self.syne: self.synthetic_E_field_simulation()
         return
     
     def calclulate_total_parameters(self):
@@ -168,6 +182,28 @@ class EventAnalysis(object):
         self.tot_params["Vt(V)"] = U0-U1+(V/1000.)
         self.tot_params = self.tot_params.set_index("Time")
         if self.save: self.save_data()
+        return
+    
+    def synthetic_E_field_simulation(self, comp="Y"):
+        """
+        Create and invoke synthetic E-field simulation only
+        """
+        pdir = self.syn_dir + "plot/"
+        os.makedirs(pdir, exist_ok=True)
+        # Nodal analysis
+        self.node_syn_anl = NodalAnalysis(self.tx_syn_lines, self.syn_dir)
+        self.node_syn_anl.equivalent_nodel_analysis()
+        self.node_syn_anl.solve_admitance_matrix()
+        self.node_syn_anl.consolidate_final_result()
+        Va, La = [], []
+        for l, tx in enumerate(self.tx_syn_lines):
+            pname = pdir + "VCable%02d.png"%l
+            U0, U1 = self.node_syn_anl.get_voltage_ends_of_cable_section(l, comp)
+            V, Lx = tx.calculate_potential_along_cable_section(U0, U1, comp=comp, plot=True, pname=pname)
+            Va.extend(V.tolist())
+            if l==0: La = Lx.tolist()
+            else: La.extend((Lx+La[-1]).tolist())
+        plotlib.cable_potential(Va, La, pdir + "VCable.png", comp)
         return
     
     def save_data(self):

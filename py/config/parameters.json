@@ -13,6 +13,12 @@
         "save": true,
         "model_path": "py/config/ocean_models/ocean_model_%s.txt"
     },
+    "E_syn": {
+        "E": {
+            "X": 3.0,
+            "Y": 2.0
+        }
+    },
     "tp": 0.1,
     "out_dirs": {
         "base": "tmp/out/{sim_id}/",

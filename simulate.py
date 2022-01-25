@@ -36,8 +36,7 @@ class Simulation(object):
         """
         Create and invoke synthetic B-field simulation only
         """
-        synb = SynB(self.B_syn, self.tp, self.verbose, 
-                    self.out_dirs["synthetic"])
+        synb = SynB(self.B_syn, self.tp, self.verbose, self.out_dirs["synthetic"])
         synb.run()
         return
     
@@ -62,7 +61,8 @@ class Simulation(object):
         logger.info(f"Convert to BEZpy")
         utility.toBEZpy("/".join(o["model_location"].split("/")[:-1]))
         logger.info(f"Start simulation....")
-        e = EventAnalysis(o, self.out_dirs["base"], self.verbose)
+        e = EventAnalysis(o, self.out_dirs["base"], self.verbose, 
+                          self.syne, self.E_syn, self.out_dirs["synthetic"])
         e.calclulate_total_parameters()
         logger.info(f"Simulation end!")
         return
@@ -74,7 +74,7 @@ class Simulation(object):
         the simulation step-by-step manner
         """
         sim = Simulation(args)
-        if sim.syn: sim.synthetic_B_field_simulation()
+        if sim.synb: sim.synthetic_B_field_simulation()
         sim.analyze_event_data()
         return
             
@@ -83,7 +83,8 @@ class Simulation(object):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-sid", "--sim_id", default=None, help="Simulation ID, default in params.json")
-    parser.add_argument("-sy", "--syn", action="store_true", help="Run synthetic B-field analysis")
+    parser.add_argument("-syb", "--synb", action="store_true", help="Run synthetic B-field analysis")
+    parser.add_argument("-sye", "--syne", action="store_true", help="Run synthetic E-field analysis")
     parser.add_argument("-v", "--verbose", action="store_false", help="Increase output verbosity (default True)")
     args = parser.parse_args()
     logger.info(f"Simulation run using fitacf_amgeo.__main__")

@@ -17,6 +17,10 @@ import json
 
 from loguru import logger
 
+from oml import OceanModel
+import utility
+import plotlib
+
 class TransmissionLine(object):
     """
     This class is dedicated to calculate the Earth's 
@@ -84,6 +88,19 @@ class TransmissionLine(object):
         self.calc_tx_parameters()
         self.compute_eqv_pi_circ_model(dE)
         return
+    
+    def calculate_potential_along_cable_section(self, Vi, Vk, comp="X", ln=1000,
+                                                plot=True, pname=""):
+        """
+        Caclulate potentials along the cable section
+        """
+        L = self.Le if comp=="Y" else self.Ln
+        x = np.linspace(0, L, ln+1)
+        V = ( (Vk*np.exp(self.gma*L)-Vi)*np.exp(-self.gma*(L-x))/(np.exp(self.gma*L)-np.exp(-self.gma*L)) ) +\
+            ( (Vi*np.exp(self.gma*L)-Vk)*np.exp(-self.gma*x)/(np.exp(self.gma*L)-np.exp(-self.gma*L)) )
+        if plot: plotlib.potential_along_section(V, x, pname, self.model_num, 
+                                                 comp, Vi, Vk, self.gma, self.Z0)
+        return V, x
 
 class NodalAnalysis(object):
     """
@@ -195,6 +212,16 @@ class NodalAnalysis(object):
         u = 1.e-3 if unit == "V" else 1.
         U0, U1 = np.round(self.V[comp][0,:]*u,2), np.round(self.V[comp][-1,:]*u,2)
         logger.info(f"Max(V) at the end (Component-{comp}), {np.max(U0)} {np.max(U1)}")
+        return U0, U1
+    
+    def get_voltage_ends_of_cable_section(self, b=0, comp="X", unit="V"):
+        """
+        Provide the voltage at the ends of the 
+        cable to calculate total voltage
+        """
+        u = 1.e-3 if unit == "V" else 1.
+        U0, U1 = np.round(self.V[comp][b,:]*u,2), np.round(self.V[comp][b+1,:]*u,2)
+        logger.info(f"Max(V) at the end of Section-{b}(Component-{comp}), {np.max(U0)} {np.max(U1)}")
         return U0, U1
     
     
