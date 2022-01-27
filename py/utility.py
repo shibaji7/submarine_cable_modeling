@@ -16,6 +16,24 @@ import glob
 from decimal import Decimal
 import pandas as pd
 import types
+import math
+
+
+def frexp10(x):
+    """
+    Convert to mantesa exponent form
+    """
+    exp = int(math.log10(x))
+    if exp <= 0: exp -= 1
+    return (x/10**exp, exp)
+
+def frexp102str(x):
+    """
+    Convert to mantesa exponent form in txt
+    """
+    m, exp = frexp10(x)
+    txt = r"%.2f$\times 10^{%d}$"%(m, exp)
+    return txt
 
 def create_synthetic_B_field(Am, Phim, Tm, t=None):
     """

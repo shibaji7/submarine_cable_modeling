@@ -99,7 +99,7 @@ class TransmissionLine(object):
         V = ( (Vk*np.exp(self.gma*L)-Vi)*np.exp(-self.gma*(L-x))/(np.exp(self.gma*L)-np.exp(-self.gma*L)) ) +\
             ( (Vi*np.exp(self.gma*L)-Vk)*np.exp(-self.gma*x)/(np.exp(self.gma*L)-np.exp(-self.gma*L)) )
         if plot: plotlib.potential_along_section(V, x, pname, self.model_num, 
-                                                 comp, Vi, Vk, self.gma, self.Z0)
+                                                 comp, Vi, Vk, self.Z, self.Y, self.gma, self.Z0)
         return V, x
 
 class NodalAnalysis(object):

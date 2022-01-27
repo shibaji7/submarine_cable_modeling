@@ -18,6 +18,8 @@ plt.style.use(["science", "ieee"])
 import matplotlib.dates as mdates
 from matplotlib.dates import DateFormatter
 
+import utility
+
 
 def plot_Bxy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1, fbase=""):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
@@ -221,7 +223,7 @@ def plot_total_potential(dx, dpi=150, wspace=0.1, hspace=0.1, fbase=""):
     fig.savefig(fbase + "Pot.png", bbox_inches="tight")
     return
 
-def potential_along_section(V, x, pname, sec=None, comp=None, Vi=None, Vk=None, gma=None, Z0=None):
+def potential_along_section(V, x, pname, sec=None, comp=None, Vi=None, Vk=None, Z=None, Y=None, gma=None, Z0=None):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
     fig, axes = plt.subplots(nrows=1, ncols=1, dpi=150, figsize=(6, 3), 
                              sharex="all", sharey="all")
@@ -229,10 +231,13 @@ def potential_along_section(V, x, pname, sec=None, comp=None, Vi=None, Vk=None, 
     ax.set_ylabel("Voltage, V")
     ax.set_xlabel("Cable Length, km")
     ax.plot(x, V, "k", lw=0.8, ls="-")
+    if (Z is not None): Z *= 1e3
+    if (Y is not None): Y *= 1e3
     txt = ""
     if (sec is not None) and (comp is not None): txt += "Along: Bin%02d, %s\n"%(sec, str(comp))
-    if (Vi is not None) and (Vk is not None): txt += (r"$V_i,V_k\sim %.1f,%.1f$"%(Vi,Vk) + "\n")
-    if (gma is not None) and (Z0 is not None): txt += (r"$\frac{1}{\gamma},Z_0\sim %.1f,%.1f$"%(1/gma,Z0) + "\n")
+    if (Vi is not None) and (Vk is not None): txt += (r"$V_i,V_k\sim %.1f V, %.1f V$"%(Vi,Vk) + "\n")
+    if (Z is not None) and (Y is not None): txt += (r"$Z,Y\sim$ %s $\Omega/km$, %s $\mho/km$"%(utility.frexp102str(Z),utility.frexp102str(Y)) + "\n")
+    if (gma is not None) and (Z0 is not None): txt += (r"$\gamma,Z_0\sim$ %s /m, %s $\Omega$"%(utility.frexp102str(gma),utility.frexp102str(Z0)) + "\n")
     ax.text(0.05,0.95, txt, ha="left",va="top", transform=ax.transAxes, fontsize="small")
     ax.set_xlim(x[0], x[-1])
     fig.savefig(pname, bbox_inches="tight")

@@ -184,7 +184,7 @@ class EventAnalysis(object):
         if self.save: self.save_data()
         return
     
-    def synthetic_E_field_simulation(self, comp="Y"):
+    def synthetic_E_field_simulation(self, comp="X"):
         """
         Create and invoke synthetic E-field simulation only
         """
