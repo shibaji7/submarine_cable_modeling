@@ -74,6 +74,7 @@ class TransmissionLine(object):
         self.Ln, self.Le = self.segmentL()
         self.Ye, self.Yp2, self.Ie = {}, {}, {}
         for a, L in zip(self.components, [self.Ln, self.Le]):
+            L *= 1000. # Convert km to m
             E = np.array(dE[a])
             self.Ye[a] = 1./( self.Z0*np.sinh(self.gma*L) )
             self.Yp2[a] = ( np.cosh(self.gma*L)-1 ) * self.Ye[a]
@@ -90,17 +91,18 @@ class TransmissionLine(object):
         return
     
     def calculate_potential_along_cable_section(self, Vi, Vk, comp="X", ln=1000,
-                                                plot=True, pname=""):
+                                                plot=True, pname="", L=None):
         """
         Caclulate potentials along the cable section
         """
-        L = self.Le if comp=="Y" else self.Ln
+        if L is None: L = self.Le if comp=="Y" else self.Ln
+        L *= 1000.
         x = np.linspace(0, L, ln+1)
         V = ( (Vk*np.exp(self.gma*L)-Vi)*np.exp(-self.gma*(L-x))/(np.exp(self.gma*L)-np.exp(-self.gma*L)) ) +\
             ( (Vi*np.exp(self.gma*L)-Vk)*np.exp(-self.gma*x)/(np.exp(self.gma*L)-np.exp(-self.gma*L)) )
-        if plot: plotlib.potential_along_section(V, x, pname, self.model_num, 
-                                                 comp, Vi, Vk, self.Z, self.Y, self.gma, self.Z0)
-        return V, x
+        if plot: plotlib.potential_along_section(V, x/1.e3, pname, self.model_num, 
+                                                 comp, Vi, Vk, self.Z, self.Y, self.gma, self.Z0, L/1.e3)
+        return V, x/1.e3
 
 class NodalAnalysis(object):
     """
@@ -131,7 +133,7 @@ class NodalAnalysis(object):
             logger.info(f"Node:{nid}")
             for a in self.components:
                 node = Node()
-                Yii = np.zeros_like(self.node_ids)
+                Yii = np.zeros_like(self.node_ids, dtype=float)
                 if nid == self.left_edge: 
                     Ji = -1.*self.tx_lines[nid].Ie[a]
                     Yii[nid:nid+2] = np.array([self.tx_lines[nid].Ye[a]+\

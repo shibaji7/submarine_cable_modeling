@@ -184,7 +184,7 @@ class EventAnalysis(object):
         if self.save: self.save_data()
         return
     
-    def synthetic_E_field_simulation(self, comp="X"):
+    def synthetic_E_field_simulation(self, comp="Y"):
         """
         Create and invoke synthetic E-field simulation only
         """
@@ -199,7 +199,8 @@ class EventAnalysis(object):
         for l, tx in enumerate(self.tx_syn_lines):
             pname = pdir + "VCable%02d.png"%l
             U0, U1 = self.node_syn_anl.get_voltage_ends_of_cable_section(l, comp)
-            V, Lx = tx.calculate_potential_along_cable_section(U0, U1, comp=comp, plot=True, pname=pname)
+            V, Lx = tx.calculate_potential_along_cable_section(U0, U1, comp=comp, plot=True, 
+                                                               pname=pname, L=self.E_syn["length"])
             Va.extend(V.tolist())
             if l==0: La = Lx.tolist()
             else: La.extend((Lx+La[-1]).tolist())
