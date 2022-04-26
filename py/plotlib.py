@@ -1,4 +1,4 @@
-"""plotlib.py: Module is used to implement plotting functions"""
+"""plotlib.py: Module is used to plotting tools"""
 
 __author__ = "Chakraborty, S."
 __copyright__ = ""
@@ -9,221 +9,109 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
-import datetime as dt
-import numpy as np
-
 import matplotlib as mpl
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 plt.style.use(["science", "ieee"])
-import matplotlib.dates as mdates
-from matplotlib.dates import DateFormatter
 
+import sys
+sys.path.extend(["py/", "py/config/"])
 import utility
+import numpy as np
+from scipy.stats import pearsonr
 
-
-def plot_Bxy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1, fbase=""):
-    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
-    fig, axes = plt.subplots(nrows=1, ncols=2, dpi=dpi, figsize=(12, len(stns)))
-    multiplier, colors = [1, 0, -1], ["r", "k", "b"]
-    base=1000
-    for i, stn in enumerate(stns):
-        frame = frames[stn]
-        ax = axes[0]
-        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-        ax.plot(frame.index, (base*multiplier[i])+frame.X-np.mean(frame.X), colors[i], ls="-", lw=1., label=stn.upper())
-        ax.set_ylabel(r"$B_x$, nT", fontdict={"color": "k"})
-        ax.set_ylim(-3000,3000)
-        ax.axvline(frame.index.tolist()[-1000], ymin=4/6, ymax=5/6, color = "darkgreen", drawstyle="steps-mid")
-        ax.axhline(2000, xmin=0.86, xmax=0.86+2e-2, color = "darkgreen")
-        ax.axhline(1000, xmin=0.86, xmax=0.86+2e-2, color = "darkgreen")
-        ax.text(frame.index.tolist()[-970], 1500, "1000 nT", ha="left", va="center", fontdict={"color": "darkgreen", "size":10})
-        ax.set_yticklabels([])
-        ax.legend(loc=2)
-        ax = axes[1]
-        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-        ax.plot(frame.index, (base*multiplier[i])+frame.Y-np.mean(frame.Y), colors[i], ls="-", lw=1., label=stn.upper())
-        ax.set_ylabel(r"$B_y$, nT", fontdict={"color": "k"})
-        ax.axvline(frame.index.tolist()[2000], ymin=4/6, ymax=5/6, color = "darkgreen", drawstyle="steps-mid")
-        ax.axhline(2000, xmin=0.25, xmax=0.25+2e-2, color = "darkgreen")
-        ax.axhline(1000, xmin=0.25, xmax=0.25+2e-2, color = "darkgreen")
-        ax.text(frame.index.tolist()[1970], 1500, "1000 nT", ha="right", va="center", fontdict={"color": "darkgreen", "size":10})
-        ax.set_ylim(-3000,3000)
-        ax.set_yticklabels([])
-    axes[0].set_xlabel("Time, UT")
-    axes[1].set_xlabel("Time, UT")
-    fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    fig.savefig(fbase + "Bxy.Field.png", bbox_inches="tight")
-    return
-
-def plot_Exy_stack(stns, frames, dpi=150, wspace=0.2, hspace=0.1, fbase=""):
-    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
-    fig, axes = plt.subplots(nrows=1, ncols=2, dpi=dpi, figsize=(12, 4))
-    multiplier, colors = [4,3,2,1,0,-1,-2,-3,-4], ["r", "k", "b"]
-    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
-              "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
-    base=100
-    for i, frame in enumerate(frames):
-        ax = axes[0]
-        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-        ax.plot(frame.index, (base*multiplier[i])+frame.X-np.mean(frame.X), colors[i], ls="-", lw=1.)
-        ax.set_ylabel(r"$E_x$, mV/km", fontdict={"color": "k"})
-        ax.set_ylim(-600,600)
-        if i==0:
-            ax.axvline(frame.index.tolist()[-1100], ymin=10/12, ymax=11/12, 
-                       color = "darkgreen", drawstyle="steps-mid")
-            ax.axhline(400, xmin=0.815, xmax=0.815+2e-2, color = "darkgreen")
-            ax.axhline(500, xmin=0.815, xmax=0.815+2e-2, color = "darkgreen")
-            ax.text(frame.index.tolist()[-1070], 450, "100 mv/km", ha="left", va="center", 
-                    fontdict={"color": "darkgreen", "size":10})
-        ax.set_yticklabels([])
-        ax.legend(loc=2)
-        ax = axes[1]
-        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-        txt = r"$Bin_{%d}[%s]$"%(i+1, stns[i].upper())
-        ax.plot(frame.index, (base*multiplier[i])+frame.Y-np.mean(frame.Y), colors[i], ls="-", lw=1., label=txt)
-        ax.set_ylabel(r"$E_y$, mV/km", fontdict={"color": "k"})
-        if i==0:
-            ax.axvline(frame.index.tolist()[2000], ymin=10/12, ymax=11/12, 
-                       color = "darkgreen", drawstyle="steps-mid")
-            ax.axhline(400, xmin=0.25, xmax=0.25+2e-2, color = "darkgreen")
-            ax.axhline(500, xmin=0.25, xmax=0.25+2e-2, color = "darkgreen")
-            ax.text(frame.index.tolist()[1970], 450, "100 mv/km", ha="right", va="center", 
-                    fontdict={"color": "darkgreen", "size":10})
-        ax.set_ylim(-600,600)
-        ax.set_yticklabels([])
-    axes[0].set_xlabel("Time, UT")
-    axes[1].set_xlabel("Time, UT")
-    axes[1].legend(bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=8)
-    fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    fig.savefig(fbase + "Exy.png", bbox_inches="tight")
-    return
-
-def plot_BExy(stn, Bframe, Eframe, fname, dpi=150, wspace=0.2, hspace=0.1):
-    fig, axes = plt.subplots(nrows=2, ncols=1, dpi=dpi, figsize=(4,5))
-    ax = axes[0]
-    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-    ax.xaxis.set_major_locator(mdates.DayLocator())
-    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
-    ax.set_ylabel(r"$B_{x}$, nT", fontdict={"color": "k"})
-    ax.text(0.05, 0.9, stn.upper(), ha="left", va="center", transform=ax.transAxes, 
-            fontdict={"fontweight": "bold"})
-    col = "darkblue"
-    ax.plot(Bframe.index, Bframe.X, col, ls="-", lw=1.)
-    ax.spines["left"].set_color(col)
-    ax.tick_params(axis="y", which="both", colors=col)
-    ax.yaxis.label.set_color(col)
-    ax = ax.twinx()
-    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-    ax.xaxis.set_major_locator(mdates.DayLocator())
-    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
-    col = "darkred"
-    ax.plot(Eframe.index, Eframe.X, col, ls="-", lw=1.)
-    ax.set_ylabel(r"$E_{x}$, $mV.km^{-1}$", fontdict={"color": col})
-    ax.spines["right"].set_color(col)
-    ax.tick_params(axis="y", which="both", colors=col)
-    ax.yaxis.label.set_color(col)
+class Summary(object):
+    """
+    Summary plots for the analysis data
+    """
     
-    ax = axes[1]
-    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-    ax.xaxis.set_major_locator(mdates.DayLocator())
-    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
-    ax.set_ylabel(r"$B_{y}$, nT", fontdict={"color": "k"})
-    ax.set_xlabel(r"Time, UT", fontdict={"color": "k"})
-    col = "darkblue"
-    ax.plot(Bframe.index, Bframe.Y, col, ls="-", lw=1.)
-    ax.spines["left"].set_color(col)
-    ax.tick_params(axis="y", which="both", colors=col)
-    ax.yaxis.label.set_color(col)
-    ax = ax.twinx()
-    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-    ax.xaxis.set_major_locator(mdates.DayLocator())
-    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6)))
-    col = "darkred"
-    ax.plot(Eframe.index, Eframe.Y, col, ls="-", lw=1.)
-    ax.set_ylabel(r"$E_{y}$, $mV.km^{-1}$", fontdict={"color": col})
-    ax.spines["right"].set_color(col)
-    ax.tick_params(axis="y", which="both", colors=col)
-    ax.yaxis.label.set_color(col)
-    fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    fig.savefig(fname, bbox_inches="tight")
-    return
-
-def plot_induced_potential(stns, frames, dpi=150, wspace=0.1, hspace=0.1, fbase=""):
-    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
-    fig, axes = plt.subplots(nrows=1, ncols=1, dpi=dpi, figsize=(6, 3), 
-                             sharex="all", sharey="all")
-    ax = axes
-    number = len(stns)
-    cmap = plt.get_cmap("gnuplot")
-    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
-              "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
-    for i, frame in enumerate(frames):
-        #ax = axes[i]
-        col = "k"
-        ax.set_ylabel(r"$V_j(t)=E_j^N(t)L_i^N+E_j^E(t)L_j^E$, $mV$", fontdict={"color": col})
-        ax.spines["left"].set_color(col)
-        ax.tick_params(axis="y", which="both", colors=col)
-        ax.yaxis.label.set_color(col)
-        ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-        ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 8)))
-        
-        #ax.set_ylim(-0.1,.2)
-        txt = r"$Bin_{%d}[%s]$"%(i+1, stns[i].upper())
-        ax.plot(frame.index, frame.Vj, color=colors[i], ls="-", lw=1., label=txt)
-        if i == len(stns)-1: 
-            ax.set_xlabel("Time, UT")
-            ax.legend(bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=8)
-    fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    fig.savefig(fbase + "EFieldx.png", bbox_inches="tight")
-    return
-
-def plot_total_potential(dx, dpi=150, wspace=0.1, hspace=0.1, fbase=""):
-    mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
-    fig, axes = plt.subplots(nrows=1, ncols=1, dpi=dpi, figsize=(6, 3), 
-                             sharex="all", sharey="all")
-    ax = axes
-    ax.set_xlim(dt.datetime(1989,3,13), dt.datetime(1989,3,14,12))
-    ax.xaxis.set_major_formatter(DateFormatter("%b.%d"))
-    ax.xaxis.set_major_locator(mdates.DayLocator())
-    ax.xaxis.set_minor_formatter(DateFormatter("%H UT"))
-    ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 8)))
-    ax.plot(dx.index, dx["Vc(V)"], color="r", ls="-", lw=1., label=r"$\epsilon_c$")
-    ax.plot(dx.index, dx["Vt(V)"], color="b", ls="-", lw=1., label=r"$V_c$")
-    ax.set_xlabel("Time, UT")
-    ax.set_ylabel("Voltage, V")
-    ax.legend(loc=1)
-    fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    fig.savefig(fbase + "Pot.png", bbox_inches="tight")
-    return
-
-def potential_along_section(V, x, pname, sec=None, comp=None, Vi=None, Vk=None, Z=None, Y=None, gma=None, Z0=None, L=None):
+    def __init__(self, nrows=1, ncols=1, dpi=180, size=(5, 5)):
+        self.nrows = nrows
+        self.ncols = ncols
+        self.dpi = dpi
+        self.size = (size[0]*self.ncols, size[1]*self.nrows)
+        self.fig = plt.figure(dpi=dpi, figsize=size)
+        self.fnum = 0
+        return
+    
+    def add_axes(self):
+        self.fnum += 1
+        ax = self.fig.add_subplot(self.nrows, self.ncols, self.fnum)
+        return ax
+    
+    def save(self, fname):
+        self.fig.subplots_adjust(wspace=0.7, hspace=0.7)
+        self.fig.savefig(fname, bbox_inches="tight")
+        return
+    
+    def close(self):
+        plt.close()
+        return
+    
+class BfieldSummary(Summary):
+    """
+    B-Field summary plot
+    """
+    
+    def __init__(self, nrows=2, ncols=2, dpi=180, size=(5, 5)):
+        super().__init__(nrows, ncols, dpi, size)
+        return
+    
+    def add_Bfield_Seq(self, B, E):
+        """
+        Add synthetic B-field data
+        """
+        ylim = [(int(np.min(B.X/10))-1)*10, (int(np.max(B.X/10))+1)*10]
+        xlim = [np.min(B.dTime/3600.), np.max(B.dTime/3600.)]
+        ax = self.add_axes()
+        ax.plot(B.dTime/3600., B.X, ls="-", lw=0.8)
+        ax.set_xlabel("Time, Hours")
+        ax.set_ylabel("B-Field, nT")
+        ax.set_ylim(ylim)
+        ax.set_xlim(xlim)
+        ax = ax.twinx()
+        ax.plot(E.dTime/3600., E.X, color="r", ls="-", lw=0.8)
+        ax.set_ylabel("E-Field, mv/km", color="r")
+        ylim = [(int(np.min(E.X/10))-1)*10, (int(np.max(E.X/10))+1)*10]
+        ax.set_ylim(ylim)
+        ax.set_xlim(xlim)
+        return ax
+    
+    def add_Es(self, Ea, En):
+        ax = self.add_axes()
+        ax.plot(Ea, En, "ko", ms=0.2, alpha=0.4)
+        ax.set_xlabel(r"$E^{anl}(t)$")
+        ax.set_ylabel(r"$E^{fft}(t)$")
+        ax.plot([0,1],[0,1], transform=ax.transAxes, color="r", ls="--", lw=0.8)
+        r, _ = pearsonr(Ea, En)
+        ax.text(0.1, 0.9, r"$\rho=$%.10f"%r, va="center", ha="left", transform=ax.transAxes)
+        ax.set_xlim([-15,15])
+        ax.set_ylim([-15,15])
+        return ax
+    
+    def add_TK_param(self, tf):
+        ax = self.add_axes()
+        ax.semilogx(tf.freq, np.abs(tf.E2B), "k", lw=0.4)
+        ax.set_xlim(1e-4, 1e-2)
+        ax.set_ylabel(r"$|X(f)|$")
+        ax.set_xlabel(r"$f_0$, Hz")
+        ax = ax.twinx()
+        ax.semilogx(tf.freq, np.angle(tf.E2B, deg=True), "r", lw=0.4)
+        ax.set_xlim(1e-4, 1e-2)
+        ax.set_ylabel(r"$\theta[X(f)]$", color="r")
+        return ax
+    
+class AnalysisSummary(Summary):
+    """
+    Simulation summary plots
+    """
+    
+    def __init__(self, nrows=2, ncols=2, dpi=180, size=(5, 5)):
+        super().__init__(nrows, ncols, dpi, size)
+        return
+    
+def potential_along_section(V, x, pname, sec=None, Vi=None, Vk=None, Z=None, Y=None, gma=None, Z0=None):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
     fig, axes = plt.subplots(nrows=1, ncols=1, dpi=150, figsize=(6, 3), 
                              sharex="all", sharey="all")
@@ -235,17 +123,17 @@ def potential_along_section(V, x, pname, sec=None, comp=None, Vi=None, Vk=None, 
     if (Y is not None): Y *= 1e3
     if (gma is not None): gma *= 1e3
     txt = ""
-    if (sec is not None) and (comp is not None): txt += "Along: Bin%02d, %s\n"%(sec, str(comp))
+    if (sec is not None): txt += "Along: Bin%02d\n"%(sec)
     if (Vi is not None) and (Vk is not None): txt += (r"$V_i,V_k\sim %.1f V, %.1f V$"%(Vi,Vk) + "\n")
     if (Z is not None) and (Y is not None): txt += (r"$Z,Y\sim$ %s $\Omega/km$, %s $\mho/km$"%(utility.frexp102str(Z),utility.frexp102str(Y)) + "\n")
     if (gma is not None) and (Z0 is not None): txt += (r"$\gamma,Z_0\sim$ %s /km, %s $\Omega$"%(utility.frexp102str(gma),utility.frexp102str(Z0)) + "\n")
-    if (L is not None): txt += "L=%d km"%L
+    txt += "L=%d km"%np.max(x)
     ax.text(0.05,0.95, txt, ha="left",va="top", transform=ax.transAxes, fontsize="small")
     ax.set_xlim(x[0], x[-1])
     fig.savefig(pname, bbox_inches="tight")
     return
 
-def cable_potential(V, x, pname, comp="X"):
+def cable_potential(V, x, pname):
     mpl.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize":12, "font.size":12})
     fig, axes = plt.subplots(nrows=1, ncols=1, dpi=150, figsize=(6, 3), 
                              sharex="all", sharey="all")
@@ -255,7 +143,6 @@ def cable_potential(V, x, pname, comp="X"):
     ax.plot(x, V, "k", lw=0.8, ls="-")
     ax.set_xlim(x[0], x[-1])
     txt = ""
-    if comp: txt += "Along: %s\n"%(str(comp))
     ax.text(0.05,0.95, txt, ha="left",va="top", transform=ax.transAxes, fontsize="small")
     fig.savefig(pname, bbox_inches="tight")
     return

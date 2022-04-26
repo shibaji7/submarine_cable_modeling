@@ -1,0 +1,246 @@
+{
+  "properties": {
+    "sid": {
+      "description": "Simulation ID number",
+      "type": "integer"
+    },
+    "opcode": {
+      "description": "Operation code",
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "opname": {
+      "description": "Operation name",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "Efield": {
+      "description": "This subsection provides the data source for E-field",
+      "type": "object",
+      "properties": {
+        "structure": {
+          "description": "This provides the structure of synthetic E-field",
+          "type": "object",
+          "properties": {
+            "X": {
+              "description": "Northward E-field",
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            },
+            "Y": {
+              "description": "Eastward E-field",
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 1
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "X"
+              ]
+            },
+            {
+              "required": [
+                "Y"
+              ]
+            }
+          ]
+        },
+        "data_sources": {
+          "description": "Path of CSV files containing B-field, and station names",
+          "type": "object",
+          "properties": {
+            "stns": {
+              "description": "List of station names",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "sources": {
+              "description": "List of CSV file name, format: {path/<stn>_[YYYYMMDD]_<cord>.txt}",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "stns",
+            "sources"
+          ]
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "structure"
+          ]
+        },
+        {
+          "required": [
+            "data_sources"
+          ]
+        }
+      ]
+    },
+    "cable": {
+      "description": "Holds number of cable sections and details about their physical and electrical properties",
+      "type": "object",
+      "properties": {
+        "cable_pot_plot_index": {
+          "description": "",
+          "type": "integer",
+          "minimum": 0
+        },
+        "cable_sections": {
+          "description": "Describe the cable physical and electrical properties",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sec_id": {
+                "description": "Sequence numbers of the cable section",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "station": {
+                "description": "Name of the station data assign to this section",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "len_km": {
+                "description": "Length of the cable section in km",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "elec_params": {
+                "description": "Electrical parameters within cable section",
+                "type": "object",
+                "properties": {
+                  "earth_model": {
+                    "description": "Earth Conductivity model",
+                    "type": "string"
+                  },
+                  "ocean_depth": {
+                    "description": "Depth of the ocean in km",
+                    "type": "number"
+                  },
+                  "ocean_resistivity": {
+                    "description": "Resistivity of the ocean",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "earth_model",
+                  "ocean_depth",
+                  "ocean_resistivity"
+                ]
+              },
+              "edge_loc": {
+                "description": "Cable edge location [lat, lon]",
+                "type": "object",
+                "properties": {
+                  "ini": {
+                    "description": "Initial lat, lon of the cable section",
+                    "type": "object",
+                    "properties": {
+                      "lat": {
+                        "description": "Latitude",
+                        "type": "number"
+                      },
+                      "lon": {
+                        "description": "Longitude",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "lat",
+                      "lon"
+                    ]
+                  },
+                  "fin": {
+                    "description": "Final lat, lon of the cable section",
+                    "type": "object",
+                    "properties": {
+                      "lat": {
+                        "description": "Latitude",
+                        "type": "number"
+                      },
+                      "lon": {
+                        "description": "Longitude",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "lat",
+                      "lon"
+                    ]
+                  }
+                },
+                "required": [
+                  "ini",
+                  "fin"
+                ]
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "elec_params",
+                  "len_km"
+                ]
+              },
+              {
+                "required": [
+                  "elec_params",
+                  "edge_loc"
+                ]
+              }
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "model_dir_path": {
+          "description": "Directory path of the model above",
+          "type": "string"
+        }
+      },
+      "required": [
+        "model_dir_path",
+        "cable_sections"
+      ]
+    },
+    "out_dir": {
+      "description": "Path of the directory to store outputs",
+      "type": "string"
+    }
+  },
+  "required": [
+    "sid",
+    "opcode",
+    "Efield",
+    "out_dir"
+  ]
+}

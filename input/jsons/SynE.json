@@ -1,0 +1,27 @@
+{
+  "sid": 3,
+  "opcode": 1,
+  "Efield": {
+    "structure": {
+      "X": [1],
+      "Y": [1]
+    }
+  },
+  "out_dir": "tmp/out/{sid}/",
+  "opname": "Synthetic-E",
+  "cable": {
+    "cable_pot_plot_index": 0,
+    "model_dir_path": "input/ocean_models/ocean_model_%s.txt",
+    "cable_sections": [
+      {
+        "sec_id": null,
+        "len_km": 1000,
+        "elec_params": {
+          "earth_model": "DB1",
+          "ocean_depth": 100.0,
+          "ocean_resistivity": 0.25
+        }
+      }
+    ]
+  }
+}

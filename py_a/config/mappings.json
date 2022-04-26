@@ -1,0 +1,68 @@
+{
+    "bins": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "data": {
+        "file": "data/1989/{stn}_{y}{m}{d}_{coord}.txt",
+        "dates": ["1989-03-12","1989-03-13","1989-03-14"],
+        "stations": ["FRD", "HAD", "STJ"]
+    },    
+    "bin_details": {
+        "1": {
+            "stn": "FRD",
+            "eastern_edge": [38.79, -72.62],
+            "western_edge": [39.6, -74.33],
+            "coord": "XYZ"
+        }, 
+        "2": {
+            "stn": "FRD",
+            "eastern_edge": [37.11, -68.94],
+            "western_edge": [38.79, -72.62],
+            "coord": "XYZ"
+        },
+        "3": {
+            "stn": "STJ",
+            "eastern_edge": [39.80, -48.20],
+            "western_edge": [37.11, -68.94],
+            "coord": "XYZ"
+        },
+        "4": {
+            "stn": "STJ",
+            "eastern_edge": [40.81, -45.19],
+            "western_edge": [39.80, -48.20],
+            "coord": "XYZ"
+        },
+        "5": {
+            "stn": "STJ",
+            "eastern_edge": [43.15, -39.16],
+            "western_edge": [40.81, -45.19],
+            "coord": "XYZ"
+        },
+        "6": {
+            "stn": "STJ",
+            "eastern_edge": [44.83, -34.48],
+            "western_edge": [43.15, -39.16],
+            "coord": "XYZ"
+        },
+        "7": {
+            "stn": "STJ",
+            "eastern_edge": [46.51, -22.43],
+            "western_edge": [44.83, -34.48],
+            "coord": "XYZ"
+        }, 
+        "8": {
+            "stn": "HAD",
+            "eastern_edge": [47.85, -9.05],
+            "western_edge": [46.51, -22.43],
+            "coord": "HDZ"
+        }, 
+        "9": {
+            "stn": "HAD",
+            "eastern_edge": [50.79, -4.55],
+            "western_edge": [47.85, -9.05],
+            "coord": "HDZ"
+        }
+    },
+    "model_location": "data/OceanModels/RhoZ_Bin%d.txt",
+    "ocean_layers_csv": "data/OceanModels/OceanLayers.csv",
+    "plot": true,
+    "save": true
+}

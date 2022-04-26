@@ -1,0 +1,188 @@
+{
+  "sid": 4,
+  "opcode": 2,
+  "Bfield": {
+    "data_sources": {
+      "stns": [
+        "FRD",
+        "STJ",
+        "HAD"
+      ],
+      "sources": [
+        "input/data/1989/FRD_19890312_XYZ.txt",
+        "input/data/1989/FRD_19890313_XYZ.txt",
+        "input/data/1989/FRD_19890314_XYZ.txt",
+        "input/data/1989/STJ_19890312_XYZ.txt",
+        "input/data/1989/STJ_19890313_XYZ.txt",
+        "input/data/1989/STJ_19890314_XYZ.txt",
+        "input/data/1989/HAD_19890312_HDZ.txt",
+        "input/data/1989/HAD_19890313_HDZ.txt",
+        "input/data/1989/HAD_19890314_HDZ.txt"
+      ]
+    },
+    "tapering": 0.1
+  },
+  "cable": {
+    "model_dir_path": "input/data/OceanModels/RhoZ_Bin%s.txt",
+    "model_dir_location": "input/data/OceanModels/RhoZ_Bin%d.txt",
+    "ocean_layers_csv": "input/data/OceanModels/OceanLayers.csv",
+    "cable_sections": [
+      {
+        "station": "FRD",
+        "elec_params": {
+          "earth_model": "1",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 39.6,
+            "lon": -74.33
+          },
+          "fin": {
+            "lat": 38.79,
+            "lon": -72.62
+          }
+        }
+      },
+      {
+        "station": "FRD",
+        "elec_params": {
+          "earth_model": "2",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 38.79,
+            "lon": -72.62
+          },
+          "fin": {
+            "lat": 37.11,
+            "lon": -68.94
+          }
+        }
+      },
+      {
+        "station": "STJ",
+        "elec_params": {
+          "earth_model": "3",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 37.11,
+            "lon": -68.94
+          },
+          "fin": {
+            "lat": 39.80,
+            "lon": -48.20
+          }
+        }
+      },
+      {
+        "station": "STJ",
+        "elec_params": {
+          "earth_model": "4",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 39.80,
+            "lon": -48.20
+          },
+          "fin": {
+            "lat": 40.81,
+            "lon": -45.19
+          }
+        }
+      },
+      {
+        "station": "STJ",
+        "elec_params": {
+          "earth_model": "5",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 40.81,
+            "lon": -45.19
+          },
+          "fin": {
+            "lat": 43.15,
+            "lon": -39.16
+          }
+        }
+      },
+      {
+        "station": "STJ",
+        "elec_params": {
+          "earth_model": "6",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 43.15,
+            "lon": -39.16
+          },
+          "fin": {
+            "lat": 44.83,
+            "lon": -34.48
+          }
+        }
+      },
+      {
+        "station": "STJ",
+        "elec_params": {
+          "earth_model": "7",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 44.83,
+            "lon": -34.48
+          },
+          "fin": {
+            "lat": 46.51,
+            "lon": -22.43
+          }
+        }
+      },
+      {
+        "station": "HAD",
+        "elec_params": {
+          "earth_model": "8",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 46.51,
+            "lon": -22.43
+          },
+          "fin": {
+            "lat": 47.85,
+            "lon": -9.05
+          }
+        }
+      },
+      {
+        "station": "HAD",
+        "elec_params": {
+          "earth_model": "9",
+          "load_param": true
+        },
+        "edge_loc": {
+          "ini": {
+            "lat": 47.85,
+            "lon": -9.05
+          },
+          "fin": {
+            "lat": 50.79,
+            "lon": -4.55
+          }
+        }
+      }
+    ],
+    "cable_pot_plot_index": 0
+  },
+  "out_dir": "tmp/out/{sid}/",
+  "opname": "Cable-Experiment"
+}

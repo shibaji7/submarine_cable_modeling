@@ -17,6 +17,13 @@ from decimal import Decimal
 import pandas as pd
 import types
 import math
+import shutil
+
+from loguru import logger
+import jsonschema
+from jsonschema import validate
+import traceback
+from types import SimpleNamespace
 
 
 def frexp10(x):
@@ -34,25 +41,6 @@ def frexp102str(x):
     m, exp = frexp10(x)
     txt = r"%.2f$\times 10^{%d}$"%(m, exp)
     return txt
-
-def create_synthetic_B_field(Am, Phim, Tm, t=None):
-    """
-    This function is responsible for creating a 
-    synthetic magnetic (B) field with following sets 
-    of parameters.
-    
-    Parameter:
-    ----------
-    Am (list) - Magntitue at different freuency components (m)
-    Phim (list) - Phase at different freuency components (m)
-    Tm (list) - Periods of different freuency components (m)
-    t (list) - Total time
-    """
-    t = np.linspace(0,60*60*72,60*60*72,endpoint=False) if t == None else t
-    Bt = np.zeros(len(t))
-    for A, Phi, T in zip(Am, Phim, Tm):
-        Bt += A*np.sin(2*np.pi*t/T + np.deg2rad(Phi))
-    return Bt, t
 
 def fft(X, dT, remove_zero_frequency=True):
     """
@@ -74,7 +62,7 @@ def ifft(Y):
     X = np.fft.irfft(Y)*n/2
     return X
 
-def load_params(args, cfg_fname="py/config/parameters.json"):
+def load_params(args, cfg_fname):
     """
     This method runs at initialization reads config file
     loads to argument
@@ -84,17 +72,15 @@ def load_params(args, cfg_fname="py/config/parameters.json"):
         if (not hasattr(args, k)) or (vars(args)[k] is None): setattr(args, k, o[k])
     args.sim_id = "%03d"%args.sim_id
     args.out_dirs["base"] = args.out_dirs["base"].format(sim_id=args.sim_id)
-    args.out_dirs["synthetic"] = args.out_dirs["base"] + args.out_dirs["synthetic"]
     return args
 
-def create_structures(args):
+def create_structures(args, param_file):
     """
     This method is resposible for creating 
     folder structres
     """
-    os.makedirs(args.out_dirs["base"], exist_ok=True)
-    os.makedirs(args.out_dirs["synthetic"], exist_ok=True)
-    os.makedirs("/".join(args.in_file.split("/")[:-1]), exist_ok=True)
+    os.makedirs(args.out_dir, exist_ok=True)
+    shutil.copy2(param_file, args.out_dir)
     return
 
 def set_dict(x, o):
@@ -116,6 +102,11 @@ def print_rec(x, spc="\t {key}->{val}"):
         if isinstance(getattr(x, k), types.SimpleNamespace): 
             print(spc.format(key=k, val=""))
             print_rec(getattr(x, k), spc="\t"+spc)
+        elif isinstance(getattr(x, k), list) and isinstance(getattr(x, k)[0], types.SimpleNamespace):
+            print(spc.format(key=k, val=""))
+            for ox in getattr(x, k):
+                print_rec(ox, spc="\t"+spc)
+                print("")
         else: print(spc.format(key=k, val=vars(x)[k]))
     return
 
@@ -168,7 +159,7 @@ def toBEZpy(base="data/OceanModels/"):
                 "* BM ocean conductivity model\n"+\
                 "*/ %s, INF,/ ! layer thicknesses in km\n"+\
                 "*/ %s ,/ !Resistivities in Ohm-m\n"+\
-                "%d                             Number of layers from surface\n"
+                "%d                             Number of layers from Ocean floor/Earth surface\n"
     eachline = "\n%.7f                      Conductivity in S/m (layer %d)"+\
                 "\n%.3fe%s%02d                      Layer thickness in m (layer %d)\n"
     lastline = "\n1.1220100                      Semi-infinite earth conductivity"
@@ -190,3 +181,24 @@ def toBEZpy(base="data/OceanModels/"):
     ocean_layer = pd.DataFrame.from_records(ocean_layer)
     ocean_layer.to_csv(base + "/OceanLayers.csv", header=True, index=False)
     return
+
+def validate_jsons(json_file, schema_folder, opcode):
+    """
+    Validate input json against the schema.
+    """
+    isValid, o = True, None
+    with open(schema_folder + "Schema%d.json"%opcode, "r") as f: schema = json.load(f)
+    try:
+        with open(json_file, "r") as f: jdata = json.load(f)
+        validate(instance=jdata, schema=schema)
+    except Exception as e:
+        traceback_str = traceback.format_exc()
+        isValid = False
+    if isValid: 
+        with open(json_file, "r") as f: 
+            o = json.loads("\n".join(f.readlines()), object_hook=lambda d: SimpleNamespace(**d))
+            o.sid = "%03d"%o.sid
+            o.out_dir = o.out_dir.format(sid=o.sid)
+        logger.info(f"Given JSON data is Valid")
+    else: logger.error(f"Given JSON data is InValid: {traceback_str}")
+    return isValid, o

@@ -1,0 +1,59 @@
+{
+    "sim_id": "I [O]: Simulation ID, any random number that will be used to generate output folder structure",
+    "sim_name": "S [O]: Name of the simulation",
+    "sim_desc": "S [O]: Detailed description of the simulation",
+    "run_type": "I [R]: What operations needed to be run",
+    "Bfield": {
+        "__desc__": "This subsection provides the data source for B-field and associated pre-processing",
+        "structure": {
+            "__desc__": "This provides the structure of synthetic B-field",
+            "Am": "L<F> [R]: Amplitudes in nT for each components",
+            "Tm_min": "L<F> [R]: Period in minutes for each components",
+            "Phim": "L<F> [R]: Phases in degrees for each components",
+            "T_hours": "F [R]: Hours of data needs to be generated"
+        },
+        "models": {
+            "__desc__": "Provides access detailes of the conductivity models",
+            "model_list": [
+                {
+                    "earth_model": "S [R]: Earth Conductivity model",
+                    "ocean_depth": "F [O]: Depth of the ocean in meters", 
+                    "ocean_resistivity": "F [O]: Resistivity of the ocean layer"
+                }
+            ],
+            "model_dir_path": "S [O]: Directory path of the model listing above"
+        },
+        "data_sources": "L<S> [O]: Path of CSV files containing B-field",
+        "tapering": "F [O]: Percantege tapering for remove B-field souprious frequencies."
+    },
+    "cable": {
+        "__desc__": "Holds number of cable sections and details about their physical and electrical properties",
+        "cable_sections":[
+            {
+                "__desc__": "Describe the cable physical and electrical properties",
+                "sec_id": "I [O]: Sequence numbers of the cable section",
+                "len_km": "F [O]: Length of the cable section in km", 
+                "elec_params": {
+                    "earth_model": "S [R]: Earth Conductivity model",
+                    "ocean_depth": "F [O]: Depth of the ocean in meters", 
+                    "ocean_resistivity": "F [O]: Resistivity of the ocean layer"
+                },
+                "loc_i": "L<F> [O]: Latitude and longitude of initial end of cable",
+                "loc_f": "L<F> [O]: Latitude and longitude of final end of cable"
+            }
+        ],
+        "model_dir_path": "S [O]: Directory path of the model listing above"
+    },
+    "Efield": {
+        "__desc__": "This subsection provides the data source for E-field",
+        "structure": {
+            "__desc__": "This provides the structure of synthetic E-field",
+            "X": "L<F> [O]: List of electric field X-component Data",
+            "Y": "L<F> [O]: List of electric field Y-component Data",
+        },
+        "data_sources": "L<S> [O]: Path of CSV files containing E-field",
+    },
+    "out_dirs": {
+        "base": "S [R]: Path of the directory to store outputs"
+    }
+}

@@ -1,0 +1,50 @@
+{
+  "sid": 2,
+  "opcode": 0,
+  "Bfield": {
+    "data_sources": {
+      "stns": [
+        "FRD"
+      ],
+      "sources": [
+        "input/data/1989/FRD_19890312_XYZ.txt",
+        "input/data/1989/FRD_19890313_XYZ.txt",
+        "input/data/1989/FRD_19890314_XYZ.txt"
+      ]
+    },
+    "tapering": 0.1,
+    "models": {
+      "model_list": [
+        {
+          "earth_model": "DB1",
+          "ocean_depth": 5000,
+          "ocean_resistivity": 0.25
+        },
+        {
+          "earth_model": "uniform.10",
+          "ocean_depth": 5000,
+          "ocean_resistivity": 0.25
+        }
+      ],
+      "model_dir_path": "input/ocean_models/ocean_model_%s.txt"
+    }
+  },
+  "cable": {
+    "model_dir_path": "input/ocean_models/ocean_model_%s.txt",
+    "cable_sections": [
+      {
+        "sec_id": null,
+        "station": "FRD",
+        "len_km": 1000,
+        "elec_params": {
+          "earth_model": "DB1",
+          "ocean_depth": 100,
+          "ocean_resistivity": 0.25
+        }
+      }
+    ],
+    "cable_pot_plot_index": 0
+  },
+  "out_dir": "tmp/out/{sid}/",
+  "opname": "Synthetic-B"
+}
