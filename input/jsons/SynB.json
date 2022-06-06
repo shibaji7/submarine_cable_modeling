@@ -29,25 +29,9 @@
       ],
       "T_hours": 72
     },
-    "tapering": 0.1,
-    "models": {
-      "model_list": [
-        {
-          "earth_model": "DB1",
-          "ocean_depth": 5000,
-          "ocean_resistivity": 0.25
-        },
-        {
-          "earth_model": "uniform.10",
-          "ocean_depth": 5000,
-          "ocean_resistivity": 0.25
-        }
-      ],
-      "model_dir_path": "input/ocean_models/ocean_model_%s.txt"
-    }
+    "tapering": 0.1
   },
   "cable": {
-    "model_dir_path": "input/ocean_models/ocean_model_%s.txt",
     "cable_sections": [
       {
         "sec_id": null,

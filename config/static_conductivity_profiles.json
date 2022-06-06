@@ -1,0 +1,38 @@
+{
+    "units": {
+        "conductivity": "siemens/m",
+        "thickness": "m"
+    },
+    "profiles": {
+        "OM": {
+            "name": "Ocean Model",
+            "desciption": "This model is modified BM model. An 1km thick ocean on top of BM model.",
+            "thickness": [1000, 2000, 75000, 332000, 250000],
+            "conductivity": [3.3333333, 0.2, 0.0003333, 0.02, 0.1, 1.12201]
+        },
+        "DB1": {
+            "name": "David's Model",
+            "desciption": "Used in previous studies",
+            "thickness": [15000, 10000, 125000, 200000],
+            "conductivity": [0.00005, 0.005, 0.001, 0.01, 0.3333333]
+        },
+        "BM": {
+            "name": "",
+            "desciption": "",
+            "thickness": [2000, 75000, 332000, 250000],
+            "conductivity": [0.2, 0.0003333, 0.02, 0.1, 1.12201]
+        },
+        "U": {
+            "name": "Uniform Conductivity Model",
+            "desciption": "Assuming uniform conductivity across all the layers.",
+            "thickness": [1000, 2000, 75000, 332000, 250000],
+            "conductivity": [4.0, 0.2, 0.2, 0.2, 0.2, 1.12201]
+        },
+        "FT1": {
+            "name": "Forntier Paper Model1",
+            "desciption": "Used in Forntier study",
+            "thickness": [2000,10000,140000,254000,250000,340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        }
+    }
+}

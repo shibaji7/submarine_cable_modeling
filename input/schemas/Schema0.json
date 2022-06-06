@@ -8,7 +8,7 @@
       "description": "Operation code",
       "type": "integer",
       "enum": [
-        0
+        0, 1
       ]
     },
     "opname": {
@@ -97,60 +97,16 @@
             "null"
           ],
           "description": "Percantege tapering for remove B-field souprious frequencies"
-        },
-        "models": {
-          "type": "object",
-          "description": "Provides access detailes of the conductivity models",
-          "properties": {
-            "model_list": {
-              "description": "Array of conductivity models",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "earth_model": {
-                    "description": "Earth Conductivity model",
-                    "type": "string"
-                  },
-                  "ocean_depth": {
-                    "description": "Depth of the ocean in meters",
-                    "type": "number"
-                  },
-                  "ocean_resistivity": {
-                    "description": "Resistivity of the ocean layer",
-                    "type": "number"
-                  }
-                },
-                "required": [
-                  "earth_model",
-                  "ocean_depth",
-                  "ocean_resistivity"
-                ]
-              },
-              "minItems": 1,
-              "uniqueItems": true
-            },
-            "model_dir_path": {
-              "description": "Directory path of the model listing above",
-              "type": "string"
-            }
-          },
-          "required": [
-            "model_list",
-            "model_dir_path"
-          ]
         }
       },
       "anyOf": [
         {
           "required": [
-            "models",
             "structure"
           ]
         },
         {
           "required": [
-            "models",
             "data_sources"
           ]
         }
@@ -207,12 +163,25 @@
                   "ocean_resistivity": {
                     "description": "Resistivity of the ocean",
                     "type": "number"
+                  },
+                  "mtc_model": {
+                    "description": "",
+                    "type": "string"
                   }
                 },
-                "required": [
-                  "earth_model",
-                  "ocean_depth",
-                  "ocean_resistivity"
+                "anyOf": [
+                  {
+                    "required": [
+                      "earth_model",
+                      "ocean_depth",
+                      "ocean_resistivity"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mtc_model"
+                    ]
+                  }
                 ]
               },
               "edge_loc": {
@@ -279,14 +248,9 @@
           },
           "minItems": 1,
           "uniqueItems": true
-        },
-        "model_dir_path": {
-          "description": "Directory path of the model above",
-          "type": "string"
         }
       },
       "required": [
-        "model_dir_path",
         "cable_sections"
       ]
     },

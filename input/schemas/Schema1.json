@@ -149,12 +149,25 @@
                   "ocean_resistivity": {
                     "description": "Resistivity of the ocean",
                     "type": "number"
+                  },
+                  "mtc_model": {
+                    "description": "",
+                    "type": "string"
                   }
                 },
-                "required": [
-                  "earth_model",
-                  "ocean_depth",
-                  "ocean_resistivity"
+                "anyOf": [
+                  {
+                    "required": [
+                      "earth_model",
+                      "ocean_depth",
+                      "ocean_resistivity"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mtc_model"
+                    ]
+                  }
                 ]
               },
               "edge_loc": {
@@ -221,14 +234,9 @@
           },
           "minItems": 1,
           "uniqueItems": true
-        },
-        "model_dir_path": {
-          "description": "Directory path of the model above",
-          "type": "string"
         }
       },
       "required": [
-        "model_dir_path",
         "cable_sections"
       ]
     },

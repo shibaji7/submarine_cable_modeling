@@ -1,0 +1,19 @@
+{
+    "units": {
+        "resistivity": "ohm-m",
+        "zones": "km"
+    },
+    "earth_model": "LITHO1.0.nc",
+    "grid_interpolation_method": "nearest",
+    "seawater_resistivity": 0.3,
+    "sediment_resistivity": 3.0,
+    "crust_resistivity": 3000.0,
+    "lithosphere_resistivity": 1000.0,
+    "asthenosphere_resistivity": 100.0,
+    "transition_zone_resistivity": 10.0,
+    "lower_mantle_resistivity": 1.0,
+    "transition_zone_top": 410.0,
+    "transition_zone_bot": 660.0,
+    "profile_max_depth": 1000.0,
+    "uri": "http://ds.iris.edu/files/products/emc/emc-files/LITHO1.0.nc"
+}

@@ -1,0 +1,8 @@
+conda env create -f cable.yml
+git clone https://github.com/greglucas/bezpy
+cd bezpy
+python setup.py build
+python setup.py install
+
+conda activate cable
+ipython kernel install --user --name cable

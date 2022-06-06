@@ -173,6 +173,10 @@
                     "description": "Resistivity of the ocean",
                     "type": "number"
                   },
+                  "mtc_model": {
+                    "description": "",
+                    "type": "string"
+                  },
                   "load_param": {
                     "description": "If true load ocean parameters from csv",
                     "type": "boolean"
@@ -190,6 +194,11 @@
                       "earth_model",
                       "ocean_depth",
                       "ocean_resistivity"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "mtc_model"
                     ]
                   }
                 ]
