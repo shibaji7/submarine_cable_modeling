@@ -100,7 +100,10 @@ class SytheticCableAnalysis(object):
                     Enum = self.solve_numerical_Et(om, stn)
                     Km, Tf = self.draw_Km_table(om), self.draw_TF_table(om)
                     Eanl = self.solve_analytical_Et(Tf, stn)
+                    setattr(self.cable.cable_sections[i], "cs_Eanl_%s"%stn, Eanl)
+                    setattr(self.cable.cable_sections[i], "cs_Enum_%s"%stn, Enum)
                     r = self.check_analytical_numerical(Eanl, Enum)
+                    setattr(self.cable.cable_sections[i], "cs_r_%s"%stn, r)
                     pname = bdir + "summary_plot_%s_%s_%s.png" % (
                         earth_model,
                         prep,
@@ -218,7 +221,7 @@ class SytheticCableAnalysis(object):
         L = int(len(Eanl) / 3)
         for c in self.ds.components:
             r, _ = pearsonr(Eanl[c].tolist()[L:-L], Enum[c].tolist()[L:-L])
-            logger.info(f"Corr(Eanl,Enum){': %.10f'%r})")
+            logger.info(f"Corr(Eanl,Enum){': %.10f'%r}")
         return r
 
     def summary_plot(self, om, Eanl, Enum, pname, stn):

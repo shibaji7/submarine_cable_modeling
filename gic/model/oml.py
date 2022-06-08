@@ -37,7 +37,7 @@ class OceanModel(object):
         model_name="",
         ocean_model={"depth": 5e3, "rho": 0.25},
         site=None,
-        flim=[1e-4, 1e-2],
+        flim=[1e-6, 1e0],
         kind="floor",
     ):
         """

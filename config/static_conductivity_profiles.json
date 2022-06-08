@@ -25,8 +25,8 @@
         "U": {
             "name": "Uniform Conductivity Model",
             "desciption": "Assuming uniform conductivity across all the layers.",
-            "thickness": [1000, 2000, 75000, 332000, 250000],
-            "conductivity": [4.0, 0.2, 0.2, 0.2, 0.2, 1.12201]
+            "thickness": [2000, 75000, 332000, 250000],
+            "conductivity": [0.2, 0.2, 0.2, 0.2, 1.12201]
         },
         "FT1": {
             "name": "Forntier Paper Model1",
