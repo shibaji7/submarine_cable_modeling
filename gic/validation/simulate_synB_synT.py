@@ -56,6 +56,7 @@ class SytheticCableAnalysis(object):
         """
         Run all the steps
         """
+        self.ocean_model_list =[]
         self.syn = False
         # Genarting / reading all B-field dataset
         if hasattr(self.Bfield, "structure"):
@@ -93,6 +94,7 @@ class SytheticCableAnalysis(object):
                     model_name=earth_model,
                     ocean_model=ocean_model,
                 )
+                self.ocean_model_list.append(om)
                 logger.info(f"Synthetic B {earth_model}->OM({om.model_name})")
                 setattr(self.cable.cable_sections[i], "cs_oml", om)
                 prep = "h-%d.r-%.2f" % (ocean_depth, ocean_resistivity)

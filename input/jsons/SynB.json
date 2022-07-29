@@ -29,7 +29,7 @@
       ],
       "T_hours": 72
     },
-    "tapering": 0.1
+    "tapering": 0.0
   },
   "cable": {
     "cable_sections": [
@@ -37,9 +37,9 @@
         "sec_id": null,
         "len_km": 1000,
         "elec_params": {
-          "earth_model": "DB1",
-          "ocean_depth": 100,
-          "ocean_resistivity": 0.25
+          "earth_model": "FT1",
+          "ocean_depth": 4000,
+          "ocean_resistivity": 0.3
         }
       }
     ],
