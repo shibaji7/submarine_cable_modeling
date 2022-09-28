@@ -24,7 +24,6 @@ from loguru import logger
 
 from .oml import OceanModel
 from .plotlib import BfieldSummary
-import siunits as u
 
 
 class Preprocess(object):
@@ -163,9 +162,6 @@ class CreateDataSet(object):
                         for x in Bf.reset_index().Time.tolist()
                     ]
                 )
-                * u.s
             )
-            self.field[stn] = Bf * u.DerivedUnit(
-                "nanotesla", "nT", [(u.t, 1e-9)], "magnetic flux density"
-            )
+            self.field[stn] = Bf
         return

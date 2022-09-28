@@ -233,3 +233,16 @@ def validate_jsons(json_file, schema_folder, opcode):
     else:
         logger.error(f"Given JSON data is InValid: {traceback_str}")
     return isValid, o
+
+def component_mappings(field="B2E", comp="X"):
+    """
+    This method holds components mapping from (i) B2E
+    """
+    _map_ = {
+        "B2E": {
+            "X": "Y",
+            "Y": "X"
+        }
+    }
+    return _map_[field][comp]
+    

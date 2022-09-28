@@ -114,13 +114,13 @@ class CableSection(object):
             a = 6378.137  # Equatorial radius
             b = 6356.752  # Polar Radius
             e = np.sqrt(0.00669437999014)  # Eccentricity
-            phi = 0.5 * (self.loc_i.lon + self.loc_f.lon)
-            self.ln = (111.133 - 0.56 * np.cos(np.deg2rad(2 * phi))) * np.abs(
+            lamb = 0.5 * (self.loc_i.lat + self.loc_f.lat)
+            self.ln = (111.133 - 0.56 * np.cos(np.deg2rad(2 * lamb))) * np.abs(
                 self.loc_f.lat - self.loc_i.lat
             )
             self.le = (
-                (111.5065 - 0.1872 * np.cos(np.deg2rad(2 * phi)))
-                * np.cos(np.deg2rad(phi))
+                (111.5065 - 0.1872 * np.cos(np.deg2rad(2 * lamb)))
+                * np.cos(np.deg2rad(lamb))
                 * np.abs(self.loc_i.lon - self.loc_f.lon)
             )
             self.len_km = np.sqrt(self.ln**2 + self.le**2)
@@ -251,15 +251,15 @@ class TransmissionLine(CableSection):
             self.C = self.W * (
                 (ep.thicknesses[1] / ep.resistivities[1])
                 + (ep.thicknesses[0] / ep.resistivities[0])
-            )
+            ) # in m/ohm
             self.R = (
                 (ep.thicknesses[2] * ep.resistivities[2])
                 + (ep.thicknesses[3] * ep.resistivities[3])
-            ) / self.W
+            ) / self.W # in m*ohm
             self.Z, self.Y = 1.0 / self.C, 1.0 / self.R  # in Ohm-m and S/m
             self.gma, self.Z0 = np.sqrt(self.Z * self.Y), np.sqrt(
                 self.Z / self.Y
-            )  # in m and Ohm-m
+            )  # in /m and Ohm
         else:
             logger.warning("No electrical information available")
         return
@@ -280,13 +280,13 @@ class TransmissionLine(CableSection):
         Calculate equivalent pi circuit model.
         X component is Nort (n), Y component East (e)
         dE: Dataframe containing E-field
-        components: [X and Y]
+        components: [X and Y] for E-fields
         """
         self.Ye, self.Yp2, self.Ie = {}, {}, {}
         for a in components:
             L = self.cable_lengths[a]
             L *= 1000.0  # Convert km to m
-            E = np.array(dE[a]) * 1000.0 / 1000.0  # Assuming input mV/km convert to V/m
+            E = np.array(dE[a]) * 1.0e-3 / 1.0e3  # Assuming input mV/km convert to V/m
             self.Ye[a] = 1.0 / (self.Z0 * np.sinh(self.gma * L))
             self.Yp2[a] = (np.cosh(self.gma * L) - 1) * self.Ye[a]
             self.Ie[a] = E / self.Z
@@ -298,8 +298,9 @@ class TransmissionLine(CableSection):
     def compute_numerical_Et(self, Bfield, components):
         """
         Compute Et using numerical FFT and IFFT block
+        Bfield: Dataframe containing B-field
+        components: [X and Y] for B-fields
         """
-        self.components = components
         self.Bfield = Bfield
         self.Efield = pd.DataFrame()
         self.Efield["Time"] = self.Bfield.index.tolist()
@@ -309,16 +310,18 @@ class TransmissionLine(CableSection):
             self.Efield["dTime"] = t
         else:
             t = np.array(self.Efield.Time)
-        for a in self.components:
-            Bt = utility.detrend_magnetic_field(np.array(self.Bfield[a]), t)
+        for a in components:
+            Bt = np.array(self.Bfield[a])
+            #Bt = utility.detrend_magnetic_field(np.array(self.Bfield[a]), t)
             dT = t[1] - t[0]
-            Bf, f = utility.fft(Bt, dT)
+            Bf, f = fft(Bt, dT)
             E2B = np.array(self.om.get_TFs(freqs=f).E2B)
-            Et = 2 * utility.ifft(E2B * Bf)
-            self.Efield[a] = Et
+            Et = 2 * ifft(E2B * Bf)
+            self.Efield[component_mappings("B2E", a)] = Et
         self.Efield = self.Efield.set_index("Time")
-        self.compute_eqv_pi_circuit(self.Efield, components)
-        self.compute_Vj(self.Bfield.index.tolist())
+        # Transforming to E-field components
+        self.components = [component_mappings("B2E", a) for a in components]
+        self.compute_eqv_pi_circuit(self.Efield, self.components)
         return
 
     def compute_Vj(self, time):
@@ -331,7 +334,7 @@ class TransmissionLine(CableSection):
         self.V["Vj"] = 0.0
         for a in self.components:
             lx = self.cable_lengths[a]
-            self.V["Vj"] = np.array(self.Efield[a]) * lx
+            self.V["Vj"] += np.array(self.Efield[a]) * lx # Potential in mV: E(mV/km) length: km
         self.V = self.V.set_index("Time")
         return
 
@@ -359,6 +362,10 @@ class Cable(object):
     This class holds a cable
     Parameters:
     -----------
+    cable: Cable parameters
+    Efields: Dataframe of E field
+    Bfields: Dataframe for B Field
+    components: Components for B or E fields
     """
 
     def __init__(self, cable, Efields, Bfields, components, out_dir):
@@ -433,8 +440,11 @@ class Cable(object):
             )
             if self.Efields is not None:
                 tl.compute_eqv_pi_circuit(self.Efields[stn], self.components)
+                self.eFieldComponents = self.components
             elif self.Bfields is not None:
                 tl.compute_numerical_Et(self.Bfields[stn], self.components)
+                # Converting to E field components
+                self.eFieldComponents = [component_mappings("B2E", a) for a in self.components]
             self.tx_lines.append(tl)
         return
 
@@ -442,12 +452,12 @@ class Cable(object):
         """
         Run nodal analysis for the cable
         """
-        self.nodal_analysis = NodalAnalysis(self.tx_lines, self.components)
+        self.nodal_analysis = NodalAnalysis(self.tx_lines, self.eFieldComponents)
         self.nodal_analysis.equivalent_nodel_analysis()
         self.nodal_analysis.solve_admitance_matrix()
         self.noa_result = self.nodal_analysis.consolidate_final_result()
         U0, U1 = None, None
-        for a in self.components:
+        for a in self.eFieldComponents:
             if U0 is None:
                 U0, U1 = self.nodal_analysis.get_voltage_ends_of_cable(a)
             else:
@@ -458,17 +468,19 @@ class Cable(object):
         self.tot_params = pd.DataFrame()
         self.tot_params["Time"] = self.tx_lines[0].Efield.index.tolist()
         self.tot_params["V(v)"] = 0.0
-        for a in self.components:
+        for a in self.eFieldComponents:
             self.tot_params["E." + a] = 0.0
             for i, tl in enumerate(self.tx_lines):
-                self.tot_params["E." + a] += tl.Efield[a]
+                self.tot_params["E.%s.%02d"%(a,i)] = np.array(tl.Efield[a])
+                self.tot_params["E." + a] += np.array(tl.Efield[a])
         for i, tl in enumerate(self.tx_lines):
-            self.tot_params["V(v)"] += tl.V.Vj
+            self.tot_params["V(v).%02d"%(i)] = np.array(tl.V.Vj)/1e3
+            self.tot_params["V(v)"] += np.array(tl.V.Vj)/1e3
 
-        self.tot_params["V(v)"] /= 1000.0
         self.tot_params["Vt(v)"] = (
             U0 - U1 + np.array(self.tot_params["V(v)"])
-        ) / 1000.0
+        )
+        self.tot_params["U0"], self.tot_params["U1"] = U0, U1
         self.tot_params = self.tot_params.set_index("Time")
         self.save_data()
         if ("cable_pot_plot_index" in self.cable.__dict__.keys()) and (
@@ -484,11 +496,11 @@ class Cable(object):
         for l, tx in enumerate(self.tx_lines):
             pname = bdir + "VCable%02d.png" % l
             U0, U1 = self.nodal_analysis.get_voltage_ends_of_cable_section(
-                l, self.components[0]
+                l, self.eFieldComponents[0]
             )
-            if len(self.components) == 2:
+            if len(self.eFieldComponents) == 2:
                 u0, u1 = self.nodal_analysis.get_voltage_ends_of_cable_section(
-                    l, self.components[1]
+                    l, self.eFieldComponents[1]
                 )
                 U0 += u0
                 U1 += u1
@@ -513,6 +525,7 @@ class Cable(object):
         bdir = self.out_dir
         with open(bdir + "est_cable_props.json", "w") as f:
             f.write(json.dumps(self.noa_result, sort_keys=True, indent=4))
+        
         self.tot_params.to_csv(bdir + "sim-params.csv", float_format="%g")
         return
 
@@ -641,7 +654,7 @@ class NodalAnalysis(object):
         Provide the voltage at the ends of the
         cable to calculate total voltage
         """
-        u = 1.0e-3 if unit == "V" else 1.0
+        u = 1.0 if unit == "V" else 1000.0
         U0, U1 = np.round(self.V[comp][0, :] * u, 2), np.round(
             self.V[comp][-1, :] * u, 2
         )
@@ -653,7 +666,7 @@ class NodalAnalysis(object):
         Provide the voltage at the ends of the
         cable to calculate total voltage
         """
-        u = 1.0e-3 if unit == "V" else 1.0
+        u = 1.0 if unit == "V" else 1000.0
         U0, U1 = np.round(self.V[comp][b, :] * u, 2), np.round(
             self.V[comp][b + 1, :] * u, 2
         )

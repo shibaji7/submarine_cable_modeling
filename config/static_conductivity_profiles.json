@@ -33,6 +33,60 @@
             "desciption": "Used in Forntier study",
             "thickness": [2000,10000,140000,254000,250000,340000],
             "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "CS-W": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 1",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [8000, 15000, 150000, 236900, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "DO-1": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 2",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [4000, 10000, 145000, 247000, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "DO-2": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 3",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [2000, 10000, 140000, 252800, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "DO-3": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 4",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [2000, 10000, 140000, 254000, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "DO-4": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 5",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [1000, 10000, 70000, 324200, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "DO-5": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 6",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [500, 10000, 60000, 335500, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "MAR": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 7 (MAR)",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [0, 10000, 25000, 372000, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "DO-6": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 8",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [1500, 10000, 70000, 324000, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "CS-E": {
+            "name": "Space Weather Paper: Cable (TAT-8) Section 9",
+            "desciption": "Used in SW 1989 Storm study",
+            "thickness": [3000, 20000, 120000, 266900, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
         }
     }
 }

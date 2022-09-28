@@ -11,6 +11,7 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
+import os
 import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
@@ -18,11 +19,64 @@ from loguru import logger
 
 from gic.model.synthetic import CreateDataSet
 from gic.model.oml import OceanModel
-from gic.model.cables import CableSection
+from gic.model.cables import CableSection, Cable
 from gic.model.conductivity import fetch_static_conductivity_profiles
 from gic.model import utils
 from gic.model.plotlib import BfieldSummary
 
+class CableAnalysis(object):
+    """
+    This class is dedicated to B-field simulations and
+    storing the results. Class assumes one cable section for a cable
+    containing elecetrically long or short cable / cable section.
+    This simulation considers
+    1. Read magnetic field using
+       B-field data_source information.
+    2. For each cable segment estimate physical and
+       electrical properties, Transfer function,
+       induced electric field, and voltage.
+    """
+    
+    def __init__(self, Bfield, cable, out_dir, components=None):
+        """
+        Parameter:
+        ----------
+        Bfield: Details of B-field analysis
+        p: Tapering value (0-1)
+        cable: Cable details holding cable sections
+        components: E-field components for nodal analysis and V-calculation
+        """
+        os.makedirs(out_dir, exist_ok=True)
+        self.Bfield = Bfield
+        self.cable = cable
+        self.p = Bfield.tapering
+        self.components = components
+        self.out_dir = out_dir
+        logger.info(f"B-field run parameters")
+        return
+    
+    def run(self):
+        """
+        Run all the steps
+        """
+        self.ocean_model_list =[]
+        self.syn = False
+        # Genarting / reading all B-field dataset
+        self.ds = CreateDataSet(data_sources=self.Bfield.data_sources, dtype="B", p=self.p)
+        bdir = self.out_dir
+        self.components = self.ds.components if self.components is None else self.components
+        self.cbl = Cable(
+            cable=self.cable, 
+            Efields=None, 
+            Bfields=self.ds.field, 
+            components=self.components, 
+            out_dir=self.out_dir
+        )
+        self.cbl.setup()
+        self.cbl.run_nodal_analysis()
+        return
+    
+    
 
 class SytheticCableAnalysis(object):
     """
