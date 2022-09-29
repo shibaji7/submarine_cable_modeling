@@ -9,18 +9,18 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
-import sys
-import uuid
-import numpy as np
-from loguru import logger
-from types import SimpleNamespace
-import bezpy
-import pandas as pd
 import datetime as dt
 import json
+import uuid
+from types import SimpleNamespace
 
-from .oml import OceanModel
+import bezpy
+import numpy as np
+import pandas as pd
+from loguru import logger
+
 from .conductivity import fetch_static_conductivity_profiles
+from .oml import OceanModel
 from .plotlib import *
 from .utils import *
 
@@ -251,11 +251,11 @@ class TransmissionLine(CableSection):
             self.C = self.W * (
                 (ep.thicknesses[1] / ep.resistivities[1])
                 + (ep.thicknesses[0] / ep.resistivities[0])
-            ) # in m/ohm
+            )  # in m/ohm
             self.R = (
                 (ep.thicknesses[2] * ep.resistivities[2])
                 + (ep.thicknesses[3] * ep.resistivities[3])
-            ) / self.W # in m*ohm
+            ) / self.W  # in m*ohm
             self.Z, self.Y = 1.0 / self.C, 1.0 / self.R  # in Ohm-m and S/m
             self.gma, self.Z0 = np.sqrt(self.Z * self.Y), np.sqrt(
                 self.Z / self.Y
@@ -312,11 +312,17 @@ class TransmissionLine(CableSection):
             t = np.array(self.Efield.Time)
         for a in components:
             Bt = np.array(self.Bfield[a])
-            #Bt = utility.detrend_magnetic_field(np.array(self.Bfield[a]), t)
+            # Bt = utility.detrend_magnetic_field(np.array(self.Bfield[a]), t)
             dT = t[1] - t[0]
             Bf, f = fft(Bt, dT)
             E2B = np.array(self.om.get_TFs(freqs=f).E2B)
-            Et = 2 * ifft(E2B * Bf)
+            Et = 2 * ifft(
+                component_sign_mappings(
+                    "B%sE%s" % (a.lower(), component_mappings("B2E", a).lower())
+                )
+                * E2B
+                * Bf
+            )
             self.Efield[component_mappings("B2E", a)] = Et
         self.Efield = self.Efield.set_index("Time")
         # Transforming to E-field components
@@ -334,7 +340,9 @@ class TransmissionLine(CableSection):
         self.V["Vj"] = 0.0
         for a in self.components:
             lx = self.cable_lengths[a]
-            self.V["Vj"] += np.array(self.Efield[a]) * lx # Potential in mV: E(mV/km) length: km
+            self.V["Vj"] += (
+                np.array(self.Efield[a]) * lx
+            )  # Potential in mV: E(mV/km) length: km
         self.V = self.V.set_index("Time")
         return
 
@@ -444,7 +452,9 @@ class Cable(object):
             elif self.Bfields is not None:
                 tl.compute_numerical_Et(self.Bfields[stn], self.components)
                 # Converting to E field components
-                self.eFieldComponents = [component_mappings("B2E", a) for a in self.components]
+                self.eFieldComponents = [
+                    component_mappings("B2E", a) for a in self.components
+                ]
             self.tx_lines.append(tl)
         return
 
@@ -471,15 +481,13 @@ class Cable(object):
         for a in self.eFieldComponents:
             self.tot_params["E." + a] = 0.0
             for i, tl in enumerate(self.tx_lines):
-                self.tot_params["E.%s.%02d"%(a,i)] = np.array(tl.Efield[a])
+                self.tot_params["E.%s.%02d" % (a, i)] = np.array(tl.Efield[a])
                 self.tot_params["E." + a] += np.array(tl.Efield[a])
         for i, tl in enumerate(self.tx_lines):
-            self.tot_params["V(v).%02d"%(i)] = np.array(tl.V.Vj)/1e3
-            self.tot_params["V(v)"] += np.array(tl.V.Vj)/1e3
+            self.tot_params["V(v).%02d" % (i)] = np.array(tl.V.Vj) / 1e3
+            self.tot_params["V(v)"] += np.array(tl.V.Vj) / 1e3
 
-        self.tot_params["Vt(v)"] = (
-            U0 - U1 + np.array(self.tot_params["V(v)"])
-        )
+        self.tot_params["Vt(v)"] = U0 - U1 + np.array(self.tot_params["V(v)"])
         self.tot_params["U0"], self.tot_params["U1"] = U0, U1
         self.tot_params = self.tot_params.set_index("Time")
         self.save_data()
@@ -525,7 +533,7 @@ class Cable(object):
         bdir = self.out_dir
         with open(bdir + "est_cable_props.json", "w") as f:
             f.write(json.dumps(self.noa_result, sort_keys=True, indent=4))
-        
+
         self.tot_params.to_csv(bdir + "sim-params.csv", float_format="%g")
         return
 

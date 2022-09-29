@@ -9,8 +9,8 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
-import matplotlib as mpl
 import matplotlib
+import matplotlib as mpl
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -19,10 +19,11 @@ plt.style.use(["science", "ieee"])
 
 # import sys
 
-# sys.path.extend(["py/", "py/config/"])
-from .utils import *
 import numpy as np
 from scipy.stats import pearsonr
+
+# sys.path.extend(["py/", "py/config/"])
+from .utils import *
 
 
 class Summary(object):

@@ -16,14 +16,8 @@ import os
 # Import required packages
 import bezpy
 import numpy as np
-from scipy import constants as C
-import datetime as dt
 import pandas as pd
-from scipy.stats import pearsonr
 from loguru import logger
-
-from .oml import OceanModel
-from .plotlib import BfieldSummary
 
 
 class Preprocess(object):
@@ -155,13 +149,11 @@ class CreateDataSet(object):
         for stn in self.stations:
             Bf = self.field[stn]
             t0 = Bf.index.tolist()[0].to_pydatetime()
-            Bf["dTime"] = (
-                np.array(
-                    [
-                        (x.to_pydatetime() - t0).total_seconds()
-                        for x in Bf.reset_index().Time.tolist()
-                    ]
-                )
+            Bf["dTime"] = np.array(
+                [
+                    (x.to_pydatetime() - t0).total_seconds()
+                    for x in Bf.reset_index().Time.tolist()
+                ]
             )
             self.field[stn] = Bf
         return

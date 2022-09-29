@@ -12,17 +12,19 @@ __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
 import os
+
 import numpy as np
 import pandas as pd
-from scipy.stats import pearsonr
 from loguru import logger
+from scipy.stats import pearsonr
 
-from gic.model.synthetic import CreateDataSet
-from gic.model.oml import OceanModel
-from gic.model.cables import CableSection, Cable
-from gic.model.conductivity import fetch_static_conductivity_profiles
 from gic.model import utils
+from gic.model.cables import Cable, CableSection
+from gic.model.conductivity import fetch_static_conductivity_profiles
+from gic.model.oml import OceanModel
 from gic.model.plotlib import BfieldSummary
+from gic.model.synthetic import CreateDataSet
+
 
 class CableAnalysis(object):
     """
@@ -36,7 +38,7 @@ class CableAnalysis(object):
        electrical properties, Transfer function,
        induced electric field, and voltage.
     """
-    
+
     def __init__(self, Bfield, cable, out_dir, components=None):
         """
         Parameter:
@@ -54,29 +56,32 @@ class CableAnalysis(object):
         self.out_dir = out_dir
         logger.info(f"B-field run parameters")
         return
-    
+
     def run(self):
         """
         Run all the steps
         """
-        self.ocean_model_list =[]
+        self.ocean_model_list = []
         self.syn = False
         # Genarting / reading all B-field dataset
-        self.ds = CreateDataSet(data_sources=self.Bfield.data_sources, dtype="B", p=self.p)
+        self.ds = CreateDataSet(
+            data_sources=self.Bfield.data_sources, dtype="B", p=self.p
+        )
         bdir = self.out_dir
-        self.components = self.ds.components if self.components is None else self.components
+        self.components = (
+            self.ds.components if self.components is None else self.components
+        )
         self.cbl = Cable(
-            cable=self.cable, 
-            Efields=None, 
-            Bfields=self.ds.field, 
-            components=self.components, 
-            out_dir=self.out_dir
+            cable=self.cable,
+            Efields=None,
+            Bfields=self.ds.field,
+            components=self.components,
+            out_dir=self.out_dir,
         )
         self.cbl.setup()
         self.cbl.run_nodal_analysis()
         return
-    
-    
+
 
 class SytheticCableAnalysis(object):
     """
@@ -110,7 +115,7 @@ class SytheticCableAnalysis(object):
         """
         Run all the steps
         """
-        self.ocean_model_list =[]
+        self.ocean_model_list = []
         self.syn = False
         # Genarting / reading all B-field dataset
         if hasattr(self.Bfield, "structure"):
@@ -156,10 +161,10 @@ class SytheticCableAnalysis(object):
                     Enum = self.solve_numerical_Et(om, stn)
                     Km, Tf = self.draw_Km_table(om), self.draw_TF_table(om)
                     Eanl = self.solve_analytical_Et(Tf, stn)
-                    setattr(self.cable.cable_sections[i], "cs_Eanl_%s"%stn, Eanl)
-                    setattr(self.cable.cable_sections[i], "cs_Enum_%s"%stn, Enum)
+                    setattr(self.cable.cable_sections[i], "cs_Eanl_%s" % stn, Eanl)
+                    setattr(self.cable.cable_sections[i], "cs_Enum_%s" % stn, Enum)
                     r = self.check_analytical_numerical(Eanl, Enum)
-                    setattr(self.cable.cable_sections[i], "cs_r_%s"%stn, r)
+                    setattr(self.cable.cable_sections[i], "cs_r_%s" % stn, r)
                     pname = bdir + "summary_plot_%s_%s_%s.png" % (
                         earth_model,
                         prep,

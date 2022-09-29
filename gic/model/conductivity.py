@@ -9,18 +9,19 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
+import json
+
 # import sys
 import os
-import numpy as np
-from scipy.io import netcdf_file
-from scipy.interpolate import RegularGridInterpolator
-import pyproj
-from pyproj import Geod
-import pandas as pd
-from loguru import logger
-import json
 from types import SimpleNamespace
+
+import numpy as np
+import pandas as pd
 import siunits as u
+from loguru import logger
+from pyproj import Geod
+from scipy.interpolate import RegularGridInterpolator
+from scipy.io import netcdf_file
 
 # sys.path.extend(["py/", "config/"])
 

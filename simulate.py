@@ -9,13 +9,11 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
-import os
-import datetime as dt
 import argparse
-from dateutil import parser as prs
+import os
+
 from loguru import logger
-import json
-from types import SimpleNamespace
+
 from gic.model import utils
 from gic.validation import SytheticCableAnalysis as SCA
 
@@ -124,4 +122,3 @@ if __name__ == "__main__":
     logger.info(f"Simulation end! Clear local files.")
     os.system("rm -rf `find -type d -name .ipynb_checkpoints`:")
     os.system("rm -rf __pycache__/")
-    pass

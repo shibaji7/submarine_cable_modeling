@@ -9,21 +9,20 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
-import numpy as np
-import json
-import os
 import glob
-from decimal import Decimal
-import pandas as pd
-import types
+import json
 import math
+import os
 import shutil
-
-from loguru import logger
-import jsonschema
-from jsonschema import validate
 import traceback
+import types
+from decimal import Decimal
 from types import SimpleNamespace
+
+import numpy as np
+import pandas as pd
+from jsonschema import validate
+from loguru import logger
 
 
 class RecursiveNamespace(SimpleNamespace):
@@ -234,15 +233,23 @@ def validate_jsons(json_file, schema_folder, opcode):
         logger.error(f"Given JSON data is InValid: {traceback_str}")
     return isValid, o
 
+
 def component_mappings(field="B2E", comp="X"):
     """
-    This method holds components mapping from (i) B2E
+    This method holds components mapping from
+    (i) B2E
+    """
+    _map_ = {"B2E": {"X": "Y", "Y": "X"}}
+    return _map_[field][comp]
+
+
+def component_sign_mappings(fromto="BxEy"):
+    """
+    This method holds components mapping from
+    (i) B2E sign change (Bx to Ey) and (By to Ex)
     """
     _map_ = {
-        "B2E": {
-            "X": "Y",
-            "Y": "X"
-        }
+        "BxEy": 1.0,
+        "ByEx": 1.0,
     }
-    return _map_[field][comp]
-    
+    return _map_[fromto]
