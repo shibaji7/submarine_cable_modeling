@@ -249,7 +249,7 @@ def component_sign_mappings(fromto="BxEy"):
     (i) B2E sign change (Bx to Ey) and (By to Ex)
     """
     _map_ = {
-        "BxEy": 1.0,
+        "BxEy": -1.0,
         "ByEx": 1.0,
     }
     return _map_[fromto]
