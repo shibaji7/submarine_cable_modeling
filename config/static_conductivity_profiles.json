@@ -87,6 +87,24 @@
             "desciption": "Used in SW 1989 Storm study",
             "thickness": [3000, 20000, 120000, 266900, 250000, 340000],
             "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "CS-T": {
+            "name": "Continental Shelf",
+            "desciption": "Used in IGS study",
+            "thickness": [3000, 20000, 140000, 246900, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "SO-T": {
+            "name": "Shallow Ocean",
+            "desciption": "Used in IGS study",
+            "thickness": [2000, 10000, 70000, 327000, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
+        },
+        "DO-T": {
+            "name": "Deep Ocean",
+            "desciption": "Used in IGS study",
+            "thickness": [2000, 10000, 70000, 324000, 250000, 340000],
+            "conductivity": [0.3333333,0.00033333333,0.001,0.01,0.1,1]
         }
     }
 }

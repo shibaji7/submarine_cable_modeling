@@ -17,7 +17,6 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
-import siunits as u
 from loguru import logger
 from pyproj import Geod
 from scipy.interpolate import RegularGridInterpolator
@@ -86,14 +85,7 @@ class ConductivityProfile(object):
     def __init__(self):
         self.cprop = load_conductivity_params()
         self.earth_model = self.cprop.earth_model
-
-        unit = self.cprop.units.resistivity
-        self.ohm_m = (
-            u.__dict__[self.cprop.units.resistivity.split("-")[0]]
-            * u.__dict__[self.cprop.units.resistivity.split("-")[1]]
-        )
-        self.km = u.DerivedUnit("kilometer", "km", [(u.m, 1000)], "length")
-
+        
         # NOTE these are specified in terms of resistivity, in ohm-m
         self.seawater_resistivity = self.cprop.seawater_resistivity
         self.sediment_resistivity = self.cprop.sediment_resistivity
@@ -460,8 +452,8 @@ class ConductivityProfile(object):
         )
         rf = pd.DataFrame()
         rf["thickness"], rf["resistivity"] = (
-            resistivity_profile[:, 0] * self.km,
-            resistivity_profile[:, 1] * self.ohm_m,
+            resistivity_profile[:, 0],
+            resistivity_profile[:, 1],
         )
         return rf
 
