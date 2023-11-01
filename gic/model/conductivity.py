@@ -85,7 +85,7 @@ class ConductivityProfile(object):
     def __init__(self):
         self.cprop = load_conductivity_params()
         self.earth_model = self.cprop.earth_model
-        
+
         # NOTE these are specified in terms of resistivity, in ohm-m
         self.seawater_resistivity = self.cprop.seawater_resistivity
         self.sediment_resistivity = self.cprop.sediment_resistivity

@@ -170,7 +170,7 @@ class TransmissionLine(CableSection):
         loc_f=None,
         W=1.0,
         left_at=False,
-        right_at=False
+        right_at=False,
     ):
         """
         Properties:
@@ -264,8 +264,6 @@ class TransmissionLine(CableSection):
             self.gma, self.Z0 = np.sqrt(self.Z * self.Y), np.sqrt(
                 self.Z / self.Y
             )  # in /m and Ohm
-            if self.right_at: self.Ynr = 1./self.Z0
-            if self.left_at: self.Ynl = 1./self.Z0
         else:
             logger.warning("No electrical information available")
         return
@@ -289,8 +287,10 @@ class TransmissionLine(CableSection):
         components: [X and Y] for E-fields
         """
         self.Ye, self.Yp2, self.Ie = {}, {}, {}
-        if self.right_at: self.Jnr = {}
-        if self.left_at: self.Jnl = {}
+        if self.right_at:
+            self.Jnr = {}
+        if self.left_at:
+            self.Jnl = {}
         for a in components:
             L = self.cable_lengths[a]
             L *= 1000.0  # Convert km to m
@@ -298,8 +298,12 @@ class TransmissionLine(CableSection):
             self.Ye[a] = 1.0 / (self.Z0 * np.sinh(self.gma * L))
             self.Yp2[a] = (np.cosh(self.gma * L) - 1) * self.Ye[a]
             self.Ie[a] = E / self.Z
-            if self.right_at: self.Jnr[a] = E/self.Z
-            if self.left_at: self.Jnl[a] = E/self.Z
+            if self.right_at:
+                self.Jnr[a] = E / self.Z
+                self.Ynr = 1.0 / self.Z0
+            if self.left_at:
+                self.Jnl[a] = E / self.Z
+                self.Ynl = 1.0 / self.Z0
         self.Efield = dE
         self.components = components
         self.compute_Vj(dE.index.tolist())
@@ -323,7 +327,11 @@ class TransmissionLine(CableSection):
         for a in components:
             Bt = np.array(self.Bfield[a])
             # Bt = utility.detrend_magnetic_field(np.array(self.Bfield[a]), t)
-            dT = self.Bfield.dTime.tolist()[0] if "dTime" in self.Bfield.columns else t[1] - t[0]
+            dT = (
+                self.Bfield.dTime.tolist()[1]
+                if "dTime" in self.Bfield.columns
+                else t[1] - t[0]
+            )
             Bf, f = fft(Bt, dT)
             E2B = np.array(self.om.get_TFs(freqs=f).E2B)
             Et = 2 * ifft(
@@ -403,13 +411,14 @@ class Cable(object):
             rf = fetch_static_conductivity_profiles(elec_params.earth_model)
             t, r = np.array(rf["thickness"]), np.array(rf["resistivity"])
         else:
-            t, r = np.array(elec_params.earth_model.thickness), np.array(elec_params.earth_model.resistivity)
+            t, r = np.array(elec_params.earth_model.thickness), np.array(
+                elec_params.earth_model.resistivity
+            )
         t, r = np.insert(t, 0, elec_params.ocean_depth), np.insert(
             r, 0, elec_params.ocean_resistivity
         )
         setattr(elec_params, "t", t)
         setattr(elec_params, "r", r)
-        print(elec_params)
         return elec_params
 
     def load_LITHO_model(self, loc_i, loc_f, mtc_model):
@@ -464,8 +473,8 @@ class Cable(object):
                 loc_i,
                 loc_f,
                 1.0,
-                left_at = left_at,
-                right_at = right_at
+                left_at=left_at,
+                right_at=right_at,
             )
             if self.Efields is not None:
                 tl.compute_eqv_pi_circuit(self.Efields[stn], self.components)
@@ -596,7 +605,7 @@ class NodalAnalysis(object):
                             -self.tx_lines[nid].Ye[a],
                         ]
                     )
-                    if self.tx_lines[nid].left_at: 
+                    if self.tx_lines[nid].left_at:
                         Yii[nid] = Yii[nid] + self.tx_lines[nid].Ynl
                         Ji = self.tx_lines[nid].Jnl[a] - self.tx_lines[nid].Ie[a]
                 elif nid == self.right_edge:
@@ -607,7 +616,7 @@ class NodalAnalysis(object):
                             self.tx_lines[-1].Yp2[a] + self.tx_lines[-1].Ye[a],
                         ]
                     )
-                    if self.tx_lines[-1].right_at: 
+                    if self.tx_lines[-1].right_at:
                         Yii[nid] = Yii[nid] + self.tx_lines[-1].Ynr
                         Ji = Ji - self.tx_lines[-1].Jnr[a]
                 else:
@@ -642,6 +651,7 @@ class NodalAnalysis(object):
                 Y.append(n.Yii)
             J, Y = np.array(J), np.array(Y)
             logger.info(f"Sh(J):{J.shape}, Sh(Y):{Y.shape}")
+            print(J.round(3), Y.round(3))
             iY = np.linalg.inv(Y)
             self.V[a] = np.matmul(iY, J)
             logger.info(f"Sh(V):{self.V[a].shape}")
