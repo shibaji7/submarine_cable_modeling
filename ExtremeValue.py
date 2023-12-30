@@ -222,7 +222,7 @@ os.makedirs(ELC_FOLDER, exist_ok=True)
 BASE_URL = "https://imag-data.bgs.ac.uk/GIN_V1/hapi"
 
 years, magnetometers, coord_keys = (
-    range(1997,2021), ["stj", "frd", "had"], ["X", "Y", "Z"]
+    range(1991,2021), ["stj", "frd", "had"], ["X", "Y", "Z"]
 )
 
 for mag in magnetometers:
@@ -264,14 +264,14 @@ for mag in magnetometers:
             o.to_csv(fname, header=True, index=False, float_format="%g")
 
 for year in years:            
-    FRD_files, STJ_files, HAD_files = (
+    frd_files, stj_files, had_files = (
         [MAG_FOLDER + f"FRD.{year}.csv"],
         [MAG_FOLDER + f"STJ.{year}.csv"],
         [MAG_FOLDER + f"HAD.{year}.csv"]
     )
     fname = ELC_FOLDER + f"{year}.csv"
     if not os.path.exists(fname):
-        tlines, cable = compile_cable_to_calculate_parameters(FRD_files, STJ_files, HAD_files)
+        tlines, cable = compile_cable_to_calculate_parameters(stj_files, stj_files, stj_files)
         o = cable.tot_params.copy().reset_index()
         o.to_csv(fname, header=True, float_format="%g")
     else:
