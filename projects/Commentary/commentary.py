@@ -297,7 +297,7 @@ ax.set_xticks([0, 6, 12, 18, 24])
 r = np.corrcoef(dB, Ets[0])[0,1]
 ax.text(0.1, 0.9, tag[0], ha="left", va="center", transform=ax.transAxes)
 ax.set_xticklabels([])
-ax.text(0.9, 0.9, r"$r_{E,B}=%.3f$"%r, ha="right", va="center", transform=ax.transAxes)
+ax.text(0.9, 0.9, r"$r_{E,\partial B/\partial t}=%.3f$"%r, ha="right", va="center", transform=ax.transAxes)
 ax.set_ylim(-300, 300)
 
 ax = fig.add_subplot(313)
@@ -307,7 +307,7 @@ ax.set_xlim([0, 24])
 ax.set_xticks([0, 6, 12, 18, 24])
 r = np.corrcoef(dB, Ets[1])[0,1]
 ax.text(0.1, 0.9, tag[1], ha="left", va="center", transform=ax.transAxes)
-ax.text(0.9, 0.9, r"$r_{E,B}=%.3f$"%r, ha="right", va="center", transform=ax.transAxes)
+ax.text(0.9, 0.9, r"$r_{E,\partial B/\partial t}=%.3f$"%r, ha="right", va="center", transform=ax.transAxes)
 ax.set_ylim(-300, 300)
 ax.set_xlabel("Time [UT]")
 fig.subplots_adjust(wspace=0.05,hspace=0.05)
