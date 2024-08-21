@@ -1,0 +1,102 @@
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+plt.style.use(["science", "ieee"])
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans",
+                                   "Lucida Grande", "Verdana"]
+import numpy as np
+import pandas as pd
+from scipy import constants as C
+
+from scubas.datasets import Site
+from scubas.utils import fft, ifft
+
+def calcZ(site, freqs):
+    omega = 2 * C.pi * freqs
+    sigma_s = 1 / site.layers[0].resistivity
+    k2 = 1.0j * omega * C.mu_0 * sigma_s
+    k = np.sqrt(k2)
+    Zo = (1.0j * omega * C.mu_0 / k) / (C.mu_0 / 1.0e-3)
+    return Zo
+
+def calcTF(site, freqs):
+    """
+    Calculate the transfer functions.
+    """
+    Zo = calcZ(site, freqs)
+    Zd = Zo
+    omega = 2 * C.pi * freqs
+    sigma_s = 1 / site.layers[0].resistivity
+    k2 = 1.0j * omega * C.mu_0 * sigma_s
+    k = np.sqrt(k2)
+    kd = k * 0
+
+    func = Zd / (np.cosh(kd) + (Zd * np.sinh(kd) / Zo))
+    tf = pd.DataFrame()
+    tf["freq"], tf["E2B"] = freqs, func
+    return tf
+
+def calcTFx(site, freqs):
+    """
+    Calculate the transfer functions.
+    """
+    Zo = calcZ(site, freqs)
+    Zd = site.calcZ(freqs)[1]
+    omega = 2 * C.pi * freqs
+    sigma_s = 1 / site.layers[0].resistivity
+    k2 = 1.0j * omega * C.mu_0 * sigma_s
+    k = np.sqrt(k2)
+    kd = k * 0
+
+    func = Zd / (np.cosh(kd) + (Zd * np.sinh(kd) / Zo))
+    tf = pd.DataFrame()
+    tf["freq"], tf["E2B"] = freqs, func
+    return tf
+
+def calcAppResist(site, freqs):
+    tf = calcTFx(site, freqs)
+    tf["omega"] = 2*np.pi*freqs
+    tf["rho"] = np.abs(tf.E2B)**2/(2*np.pi*freqs*C.mu_0)
+    tf["sqrt_T"] = np.sqrt(1/freqs)
+    return tf
+
+sites = [
+    Site.init(
+        conductivities=[1/3, 1/3000],
+        thicknesses=[10000, np.inf],
+        names=[
+            "Sediments",
+            "Lower Mantle",
+        ],
+        desciption="This model is modified for David's cometary paper Case A",
+        site_name="Two layer Earth model",
+    ),
+    Site.init(
+        conductivities=[1/3000, 1/3],
+        thicknesses=[100000, np.inf],
+        names=[
+            "Sediments",
+            "Lower Mantle",
+        ],
+        desciption="This model is modified for David's cometary paper Case B",
+        site_name="Two layer Earth model",
+    )
+]
+
+flim, M = [1e-10, 1e0], 1000
+freqs = np.linspace(flim[0], flim[1], int(flim[1] / (M*flim[0])) + 1)
+tfs = [
+    calcAppResist(sites[0], freqs),
+    calcAppResist(sites[1], freqs),
+]
+
+fig = plt.figure(dpi=300, figsize=(3, 3))
+ax = fig.add_subplot(111)
+ax.loglog(tfs[0].sqrt_T, np.abs(tfs[0].rho), "r", lw=1.0, ls="-", label="Case A")
+ax.loglog(tfs[1].sqrt_T, np.abs(tfs[1].rho), "b", lw=1.0, ls="-", label="Case A")
+ax.legend(loc=1)
+ax.invert_xaxis()
+ax.set_ylabel(r"$\rho_{ef}=\frac{|Z_{ef}|^2}{\omega\mu_0}$ [$\Omega-m$]")
+ax.set_xlabel(r"$\sqrt{T}$ [$s^{1/2}$]")
+ax.set_xlim([1e0, 1e3])
+fig.savefig("rho.png", bbox_inches="tight")
