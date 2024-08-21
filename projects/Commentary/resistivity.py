@@ -111,7 +111,7 @@ ax.legend(loc=1)
 ax.set_ylabel(r"$\rho_{ef}=\frac{|Z_{ef}|^2}{\omega\mu_0}$ [$\Omega-m$]")
 ax.invert_xaxis()
 ax.set_xlabel(r"$\sqrt{T}$ [$s^{1/2}$]")
-ax.set_xlim([1e0, 1e3])
+ax.set_xlim([1e0, 1e4])
 ax.set_ylim(1e6, 1e10)
 fig.savefig("rho1.png", bbox_inches="tight")
 
