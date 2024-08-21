@@ -58,6 +58,8 @@ def calcAppResist(site, freqs):
     tf["omega"] = 2*np.pi*freqs
     tf["rho"] = np.abs(tf.E2B)**2/(2*np.pi*freqs*C.mu_0)
     tf["sqrt_T"] = np.sqrt(1/freqs)
+    tf["skin_depth"] = 1/np.abs(np.sqrt(1j*tf["omega"]*C.mu_0*site.layers[0].conductivity))
+    tf["nskin_depth"] = site.layers[0].thickness/tf["skin_depth"]
     return tf
 
 sites = [
@@ -83,7 +85,7 @@ sites = [
     )
 ]
 
-flim, M = [1e-10, 1e0], 1000
+flim, M = [1e-10, 1e0], 500
 freqs = np.linspace(flim[0], flim[1], int(flim[1] / (M*flim[0])) + 1)
 tfs = [
     calcAppResist(sites[0], freqs),
@@ -92,11 +94,34 @@ tfs = [
 
 fig = plt.figure(dpi=300, figsize=(3, 3))
 ax = fig.add_subplot(111)
-ax.loglog(tfs[0].sqrt_T, np.abs(tfs[0].rho), "r", lw=1.0, ls="-", label="Case A")
-ax.loglog(tfs[1].sqrt_T, np.abs(tfs[1].rho), "b", lw=1.0, ls="-", label="Case A")
+ax.loglog(tfs[0].skin_depth/1e3, np.abs(tfs[0].rho), "r", lw=1.0, ls="-", label="Case A")
+ax.loglog(tfs[1].skin_depth/1e3, np.abs(tfs[1].rho), "b", lw=1.0, ls="-", label="Case B")
 ax.legend(loc=1)
-ax.invert_xaxis()
 ax.set_ylabel(r"$\rho_{ef}=\frac{|Z_{ef}|^2}{\omega\mu_0}$ [$\Omega-m$]")
+ax.set_xlabel(r"$p_1=|\frac{1}{\sqrt{i\omega\mu_0\sigma}}|$ [$km$]")
+ax.set_xlim(1e0, 1e4)
+ax.set_ylim(1e6, 1e10)
+fig.savefig("rho.png", bbox_inches="tight")
+
+fig = plt.figure(dpi=300, figsize=(3, 3))
+ax = fig.add_subplot(111)
+ax.loglog(tfs[0].sqrt_T, np.abs(tfs[0].rho), "r", lw=1.0, ls="-", label="Case A")
+ax.loglog(tfs[1].sqrt_T, np.abs(tfs[1].rho), "b", lw=1.0, ls="-", label="Case B")
+ax.legend(loc=1)
+ax.set_ylabel(r"$\rho_{ef}=\frac{|Z_{ef}|^2}{\omega\mu_0}$ [$\Omega-m$]")
+ax.invert_xaxis()
 ax.set_xlabel(r"$\sqrt{T}$ [$s^{1/2}$]")
 ax.set_xlim([1e0, 1e3])
-fig.savefig("rho.png", bbox_inches="tight")
+ax.set_ylim(1e6, 1e10)
+fig.savefig("rho1.png", bbox_inches="tight")
+
+fig = plt.figure(dpi=300, figsize=(3, 3))
+ax = fig.add_subplot(111)
+ax.loglog(tfs[0].nskin_depth, np.abs(tfs[0].rho), "r", lw=1.0, ls="-", label="Case A")
+ax.loglog(tfs[1].nskin_depth, np.abs(tfs[1].rho), "b", lw=1.0, ls="-", label="Case B")
+ax.legend(loc=1)
+ax.set_ylabel(r"$\rho_{ef}=\frac{|Z_{ef}|^2}{\omega\mu_0}$ [$\Omega-m$]")
+ax.set_xlabel(r"$\frac{\tau_1}{p_1}$")
+ax.set_xlim(1e-4, 1e1)
+ax.set_ylim(1e6, 1e10)
+fig.savefig("rho3.png", bbox_inches="tight")
