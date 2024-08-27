@@ -59,7 +59,7 @@ def calcAppResist(site, freqs):
     tf["rho"] = np.abs(tf.E2B)**2/(2*np.pi*freqs*C.mu_0)
     tf["sqrt_T"] = np.sqrt(1/freqs)
     tf["skin_depth"] = 1/np.abs(np.sqrt(1j*tf["omega"]*C.mu_0*site.layers[0].conductivity))
-    tf["nskin_depth"] = site.layers[0].thickness/tf["skin_depth"]
+    tf["nskin_depth"] = tf["skin_depth"]/site.layers[0].thickness
     return tf
 
 sites = [
@@ -121,7 +121,7 @@ ax.loglog(tfs[0].nskin_depth, np.abs(tfs[0].rho), "r", lw=1.0, ls="-", label="Ca
 ax.loglog(tfs[1].nskin_depth, np.abs(tfs[1].rho), "b", lw=1.0, ls="-", label="Case B")
 ax.legend(loc=1)
 ax.set_ylabel(r"$\rho_{ef}=\frac{|Z_{ef}|^2}{\omega\mu_0}$ [$\Omega-m$]")
-ax.set_xlabel(r"$\frac{\tau_1}{p_1}$")
-ax.set_xlim(1e-4, 1e1)
+ax.set_xlabel(r"$\frac{p_1}{\tau_1}$")
+ax.set_xlim(1e-1, 1e4)
 ax.set_ylim(1e6, 1e10)
 fig.savefig("rho3.png", bbox_inches="tight")
