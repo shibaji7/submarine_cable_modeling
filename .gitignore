@@ -3,7 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-ev*
+*figures/*
+*ev/*
+*.scubas_config/
+
 
 # C extensions
 *.so
