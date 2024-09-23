@@ -1,0 +1,72 @@
+thickness,resistivity,name
+0.40175723585638395,0.3,Seawater
+4.554541725048785,3.0,Sediment
+9.504839745993102,3000.0,Crust
+128.5318134243326,1000.0,Lithosphere
+265.2070066722135,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
+thickness,resistivity,name
+2.6241381797706604,0.3,Seawater
+4.1439745508588866,3.0,Sediment
+3.337708946676091,3000.0,Crust
+119.6002085758203,1000.0,Lithosphere
+279.70186220423494,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
+thickness,resistivity,name
+4.782124822215832,0.3,Seawater
+1.078501765447906,3.0,Sediment
+6.457114449763661,3000.0,Crust
+145.5261900741818,1000.0,Lithosphere
+236.50756913224475,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
+thickness,resistivity,name
+5.044140747425686,0.3,Seawater
+1.39962420725508,3.0,Sediment
+9.707579536579525,3000.0,Crust
+150.07375303579724,1000.0,Lithosphere
+263.54681898988366,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
+thickness,resistivity,name
+4.443505913511093,0.3,Seawater
+0.9950806916290351,3.0,Sediment
+9.185848832177301,3000.0,Crust
+89.94408316488956,1000.0,Lithosphere
+301.37486615229426,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
+thickness,resistivity,name
+3.9870333279066856,0.3,Seawater
+0.6443699853361612,3.0,Sediment
+10.582304772978999,3000.0,Crust
+43.60376649428014,1000.0,Lithosphere
+314.9789423871706,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
+thickness,resistivity,name
+3.9412486452379842,0.3,Seawater
+0.4807994728927091,3.0,Sediment
+9.801127759984638,3000.0,Crust
+28.158710439369067,1000.0,Lithosphere
+365.13830881625046,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
+thickness,resistivity,name
+3.8602180538978748,0.3,Seawater
+4.685779843792599,3.0,Sediment
+11.001326017384637,3000.0,Crust
+39.65780725195362,1000.0,Lithosphere
+350.8787067317698,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
+thickness,resistivity,name
+2.4801962674427305,0.3,Seawater
+4.34702893550592,3.0,Sediment
+20.753617065344454,3000.0,Crust
+150.7747128819497,1000.0,Lithosphere
+236.71175117114058,100.0,Upper Mantle
+250.0,10.0,Transition Zone
+340.0,1.0,Lower Mantle
