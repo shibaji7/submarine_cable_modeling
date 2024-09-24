@@ -60,7 +60,7 @@ def calcAppResist(site, freqs):
     tf["rho"] = np.abs(tf.E2B*1e3*C.mu_0)**2/(2*np.pi*freqs*C.mu_0)
     tf["sqrt_T"] = np.sqrt(1/freqs)
     tf["skin_depth"] = 1/np.sqrt(np.pi*freqs*C.mu_0*site.layers[0].conductivity)
-    tf["nskin_depth"] = site.layers[0].thickness/tf["skin_depth"]
+    tf["nskin_depth"] = tf["skin_depth"]/site.layers[0].thickness
     return tf
 
 sites = [
@@ -127,9 +127,10 @@ ax.loglog(tfs[1].nskin_depth, np.abs(tfs[1].rho), "b", lw=1.0, ls="-", label="Ca
 ax.legend(loc=1)
 #ax.set_ylabel(r"$\rho_{ef}=\frac{|Z_{ef}|^2}{\omega\mu_0}$ [$\Omega-m$]")
 ax.set_ylabel(r"Apparent Resistivity [$\Omega-m$]")
-ax.set_xlabel(r"$\frac{\tau_1}{\delta_1}$")
+ax.set_xlabel(r"$\frac{\delta_1}{\tau_1}$")
 ax.axhline(3, ls="--", lw=0.9, color="r")
 ax.axhline(3000, ls="--", lw=0.9, color="b")
-ax.set_xlim(1e-4, 1e2)
+ax.set_xlim(1e-1, 1e4)
+ax.set_xticks([1e-1, 1e0, 1e1, 1e2, 1e3, 1e4])
 ax.set_ylim(1e0, 1e5)
 fig.savefig("rho3.png", bbox_inches="tight")
