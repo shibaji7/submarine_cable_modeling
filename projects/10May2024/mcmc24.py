@@ -12,8 +12,9 @@ import numpy as np
 def stack_profiles_to_csv(profiles, file="figures/sample.csv"):
     import os
     os.remove(file)
+    open(file, "a").close()
     for o in profiles:
-        o.to_csv(file, mode="a+", index=False, header=True)
+        o[0].to_csv(file, mode="a+", index=False, header=True)
     return
 
 latlons = [
@@ -34,9 +35,9 @@ for l in range(len(latlons)):
         [latlons[l]["lat"], latlons[l]["lon"]]
     )
 to_site = True
-mc_profiles = CP.compile_bined_profiles(np.array(binned_lat_lon), n=10, to_site=to_site)
+mc_profiles = CP.compile_bined_profiles(np.array(binned_lat_lon), n=1, to_site=to_site)
 if not to_site:
-    stack_profiles_to_csv(mc_profiles[0])
+    stack_profiles_to_csv(mc_profiles)
 
 
 def compile_cable_to_calculate_parameters(FRD_files, STJ_files, HAD_files, profiles):
@@ -60,7 +61,7 @@ def compile_cable_to_calculate_parameters(FRD_files, STJ_files, HAD_files, profi
             ),
             active_termination=dict(
                 right=None,
-                left=None,
+                left=PROFILES.LD,
             ),
         ).compile_oml(FRD_files),
     )
@@ -219,7 +220,7 @@ def compile_cable_to_calculate_parameters(FRD_files, STJ_files, HAD_files, profi
                 flim=[1e-6, 1e0],
             ),
             active_termination=dict(
-                right=None,
+                right=land50,
                 left=None,
             ),
         ).compile_oml(HAD_files)
@@ -327,7 +328,6 @@ stns = ["FRD", "STJ", "HAD"]
 frames = dict()
 for stn, fs in zip(stns, [FRD, STJ, HAD]):
     o = pd.DataFrame()
-    print(fs)
     o = pd.concat([o, read_Bfield_data(fs)])
     # Remove Datagaps
     print("Pre-Is there any issue / nan data? (X,Y,Z)", o.X.hasnans, o.Y.hasnans, o.Z.hasnans)
@@ -342,17 +342,19 @@ for stn, fs in zip(stns, [FRD, STJ, HAD]):
     frames[stn] = o
 
 param_list = []
-for mc_profile in mc_profiles:
+for i, mc_profile in enumerate(mc_profiles):
     profiles = [
         PROFILES.CS_W, PROFILES.DO_1, PROFILES.DO_2, PROFILES.DO_3,
         PROFILES.DO_4, PROFILES.DO_5, PROFILES.MAR, PROFILES.DO_6,
         PROFILES.CS_E
     ]
-    tlines, cable = compile_cable_to_calculate_parameters(FRD, STJ, HAD, mc_profile)
-    print(cable.tot_params.head())
+    tlines, cable = compile_cable_to_calculate_parameters(FRD, STJ, HAD, profiles)
+    #cable.tot_params.to_csv(f".scubas_config/{'%03d'%i}.csv", index=False)
     param_list.append(cable.tot_params)
     del tlines, cable
-
+    break
+# param_list = np.array(param_list)
+# print(np.min(param_list[:,0]), np.max(param_list[:,0]), param_list.shape)
 
 import matplotlib.dates as mdates
 from matplotlib.dates import DateFormatter
@@ -363,23 +365,57 @@ plt.style.use(["science", "ieee"])
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans",
                                    "Lucida Grande", "Verdana"]
+size = 12
+mpl.rcParams.update(
+        {"xtick.labelsize": size, "ytick.labelsize": size, "font.size": size}
+    )
 
 
-fig, ax = plt.subplots(nrows=1, ncols=1, dpi=240, figsize=(8, 3), sharex=True)
-#for ax in axes:
-ax.set_xlim(dt.datetime(2024,5,10), dt.datetime(2024,5,12))
+fig, axes = plt.subplots(nrows=2, ncols=1, dpi=300, figsize=(6, 4), sharex=True)
+
+ax = axes[0]
+ax.xaxis.set_major_formatter(DateFormatter(r"%H UT"))
+ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
+ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 1)))
+ax.set_ylabel(r"$B_{x,y}$ [nT]")
+ax.set_ylim(-1800, 900)
+for c, stn in zip(["k", "b", "g"], ["FRD", "STJ", "HAD"]):
+    o = frames[stn]
+    o.X = o.X - np.nanmean(o.X.iloc[:60*10])
+    o.Y = o.Y - np.nanmean(o.Y.iloc[:60*10])
+    o.Z = o.Z - np.nanmean(o.Z.iloc[:60*10])
+    ax.plot(
+        o.index, o.X, 
+        color=c, ls="-", 
+        lw=0.9, alpha=0.7,
+        label=fr"$B[{stn}]$"
+    )
+    ax.plot(
+        o.index, o.Y, 
+        color=c, ls="--", 
+        lw=0.9, alpha=0.7,
+    )
+ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
+ax.legend(loc=4)
+ax.text(0.05, 1.05, "Date: 10-12 May 2024", ha="left", va="bottom", transform=ax.transAxes)
+
+
+ax = axes[1]
+ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
 ax.xaxis.set_major_formatter(DateFormatter(r"%H UT"))
 ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
 ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 1)))
 ax.set_ylabel("Potentials [Volts]")
 ax.set_ylim(-500, 500)
-
-for ix, params in enumerate(param_list):
-    if ix == 0:
-        ax.plot(params.index, params["V(v)"], ls="-", lw=0.3, label=r"$\mathcal{E}_C$", alpha=0.7)
-        ax.legend(loc=1)
-    else:
-        ax.plot(params.index, params["V(v)"], ls="-", lw=0.3)
+ax.plot(
+    param_list[0].index, 
+    param_list[0]["V(v)"], 
+    color="r",
+    ls="-", lw=1.5, 
+    label=r"$\mathcal{E}_C$", 
+    alpha=0.7
+)
+ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
+ax.legend(loc=1)
 ax.set_xlabel("Time [UT]")
-ax.text(0.05, 1.05, "Date: 10-12 May 2024", ha="left", va="bottom", transform=ax.transAxes)
 fig.savefig("figures/Pot.png", bbox_inches="tight")
