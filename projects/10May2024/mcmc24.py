@@ -35,7 +35,7 @@ for l in range(len(latlons)):
         [latlons[l]["lat"], latlons[l]["lon"]]
     )
 to_site = True
-mc_profiles = CP.compile_bined_profiles(np.array(binned_lat_lon), n=1, to_site=to_site)
+mc_profiles = CP.compile_bined_profiles(np.array(binned_lat_lon), n=1000, to_site=to_site)
 if not to_site:
     stack_profiles_to_csv(mc_profiles)
 
@@ -341,81 +341,75 @@ for stn, fs in zip(stns, [FRD, STJ, HAD]):
     o.to_csv(fs[0], header=True, index=True, float_format="%g")
     frames[stn] = o
 
-param_list = []
 for i, mc_profile in enumerate(mc_profiles):
-    profiles = [
-        PROFILES.CS_W, PROFILES.DO_1, PROFILES.DO_2, PROFILES.DO_3,
-        PROFILES.DO_4, PROFILES.DO_5, PROFILES.MAR, PROFILES.DO_6,
-        PROFILES.CS_E
-    ]
-    tlines, cable = compile_cable_to_calculate_parameters(FRD, STJ, HAD, profiles)
-    #cable.tot_params.to_csv(f".scubas_config/{'%03d'%i}.csv", index=False)
-    param_list.append(cable.tot_params)
-    del tlines, cable
-    break
+    fname = f".scubas_config/{'%03d'%i}.csv"
+    if not os.path.exists(fname):
+        tlines, cable = compile_cable_to_calculate_parameters(FRD, STJ, HAD, mc_profile)
+        cable.tot_params.to_csv(f".scubas_config/{'%03d'%i}.csv", index=False)
+        del tlines, cable
 # param_list = np.array(param_list)
 # print(np.min(param_list[:,0]), np.max(param_list[:,0]), param_list.shape)
 
-import matplotlib.dates as mdates
-from matplotlib.dates import DateFormatter
+# import matplotlib.dates as mdates
+# from matplotlib.dates import DateFormatter
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-plt.style.use(["science", "ieee"])
-plt.rcParams["font.family"] = "sans-serif"
-plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans",
-                                   "Lucida Grande", "Verdana"]
-size = 12
-mpl.rcParams.update(
-        {"xtick.labelsize": size, "ytick.labelsize": size, "font.size": size}
-    )
-
-
-fig, axes = plt.subplots(nrows=2, ncols=1, dpi=300, figsize=(6, 4), sharex=True)
-
-ax = axes[0]
-ax.xaxis.set_major_formatter(DateFormatter(r"%H UT"))
-ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 1)))
-ax.set_ylabel(r"$B_{x,y}$ [nT]")
-ax.set_ylim(-1800, 900)
-for c, stn in zip(["k", "b", "g"], ["FRD", "STJ", "HAD"]):
-    o = frames[stn]
-    o.X = o.X - np.nanmean(o.X.iloc[:60*10])
-    o.Y = o.Y - np.nanmean(o.Y.iloc[:60*10])
-    o.Z = o.Z - np.nanmean(o.Z.iloc[:60*10])
-    ax.plot(
-        o.index, o.X, 
-        color=c, ls="-", 
-        lw=0.9, alpha=0.7,
-        label=fr"$B[{stn}]$"
-    )
-    ax.plot(
-        o.index, o.Y, 
-        color=c, ls="--", 
-        lw=0.9, alpha=0.7,
-    )
-ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
-ax.legend(loc=4)
-ax.text(0.05, 1.05, "Date: 10-12 May 2024", ha="left", va="bottom", transform=ax.transAxes)
+# import matplotlib as mpl
+# import matplotlib.pyplot as plt
+# plt.style.use(["science", "ieee"])
+# plt.rcParams["font.family"] = "sans-serif"
+# plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans",
+#                                    "Lucida Grande", "Verdana"]
+# size = 12
+# mpl.rcParams.update(
+#         {"xtick.labelsize": size, "ytick.labelsize": size, "font.size": size}
+#     )
 
 
-ax = axes[1]
-ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
-ax.xaxis.set_major_formatter(DateFormatter(r"%H UT"))
-ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
-ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 1)))
-ax.set_ylabel("Potentials [Volts]")
-ax.set_ylim(-500, 500)
-ax.plot(
-    param_list[0].index, 
-    param_list[0]["V(v)"], 
-    color="r",
-    ls="-", lw=1.5, 
-    label=r"$\mathcal{E}_C$", 
-    alpha=0.7
-)
-ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
-ax.legend(loc=1)
-ax.set_xlabel("Time [UT]")
-fig.savefig("figures/Pot.png", bbox_inches="tight")
+# fig, axes = plt.subplots(nrows=2, ncols=1, dpi=300, figsize=(6, 4), sharex=True)
+
+# ax = axes[0]
+# ax.xaxis.set_major_formatter(DateFormatter(r"%H UT"))
+# ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
+# ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 1)))
+# ax.set_ylabel(r"$B_{x,y}$ [nT]")
+# ax.set_ylim(-1800, 900)
+# for c, stn in zip(["k", "b", "g"], ["FRD", "STJ", "HAD"]):
+#     o = frames[stn]
+#     o.X = o.X - np.nanmean(o.X.iloc[:60*10])
+#     o.Y = o.Y - np.nanmean(o.Y.iloc[:60*10])
+#     o.Z = o.Z - np.nanmean(o.Z.iloc[:60*10])
+#     ax.plot(
+#         o.index, o.X, 
+#         color=c, ls="-", 
+#         lw=0.9, alpha=0.7,
+#         label=fr"$B[{stn}]$"
+#     )
+#     ax.plot(
+#         o.index, o.Y, 
+#         color=c, ls="--", 
+#         lw=0.9, alpha=0.7,
+#     )
+# ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
+# ax.legend(loc=4)
+# ax.text(0.05, 1.05, "Date: 10-12 May 2024", ha="left", va="bottom", transform=ax.transAxes)
+
+
+# ax = axes[1]
+# ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
+# ax.xaxis.set_major_formatter(DateFormatter(r"%H UT"))
+# ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(0, 24, 12)))
+# ax.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 1)))
+# ax.set_ylabel("Potentials [Volts]")
+# ax.set_ylim(-500, 500)
+# ax.plot(
+#     param_list[0].index, 
+#     param_list[0]["V(v)"], 
+#     color="r",
+#     ls="-", lw=1.5, 
+#     label=r"$\mathcal{E}_C$", 
+#     alpha=0.7
+# )
+# ax.set_xlim(dt.datetime(2024,5,10,12), dt.datetime(2024,5,12))
+# ax.legend(loc=1)
+# ax.set_xlabel("Time [UT]")
+# fig.savefig("figures/Pot.png", bbox_inches="tight")
