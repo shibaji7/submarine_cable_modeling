@@ -2,12 +2,15 @@ from scubas.conductivity import ConductivityProfile as CP
 from event_runs import (
     read_bfield_frames, initialize_mag_fold, 
     run_mc, get_dates, read_mc_datasets, 
-    get_mcmc_outputs_CI
+    get_mcmc_outputs_CI,
+    extract_mc_transfer_functions_by_section
 )
-from event_plots import plot_potential
+from event_plots import (
+    plot_potential,
+    plot_transfer_functions
+)
 
 import matplotlib.dates as mdates
-import pandas as pd
 import datetime as dt
 import numpy as np
 
@@ -38,8 +41,9 @@ for l in range(len(latlons)):
     )
 mc_profiles = CP.compile_bined_profiles(np.array(binned_lat_lon), n=N)
 
+
 keys_to_store = [
-    'V(v)', 'Vt(v)', 
+    "V(v)", "Vt(v)", 
     # 'E.Y', 'E.Y.00', 'E.Y.01', 'E.Y.02', 'E.Y.03', 'E.Y.04', 'E.Y.05', 'E.Y.06',
     # 'E.Y.07', 'E.Y.08', 'E.X', 'E.X.00', 'E.X.01', 'E.X.02', 'E.X.03', 'E.X.04',
     # 'E.X.05', 'E.X.06', 'E.X.07', 'E.X.08', 'V(v).00', 'V(v).01', 'V(v).02', 'V(v).03',
@@ -69,10 +73,23 @@ plot_potential(
     linewdiths=[0.7, 0.5, 0.4, 0.4],
     colors=[["k", "b", "g"], ["k", "b", "b", "r", "r"]],
     fname="figures/Pot_mc_runs.png",
-    fig_title="Date: 12 UT 10 - 00 UT 12 May 2024",
+    fig_title="Date: 17-18 UT, 10 May 2024",
     yticks=[[-500, -100, 0, 300]],
     ylims=[[-500, 300], [-300, 100]],
     major_locator=mdates.MinuteLocator(byminute=range(0, 60, 10)),
     minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 10)),
     alphas=[1., 0.5, 0.5, 0.3, 0.3]
+)
+
+flim, M = [1e-6, 1e0], 100
+freqs = np.linspace(
+    flim[0], flim[1], 
+    int(flim[1] / (M*flim[0])) + 1
+)
+df = extract_mc_transfer_functions_by_section(
+    freqs, mc_profiles, n=N
+)
+plot_transfer_functions(
+    df, yticks=[[1e-3, 1e-0, 1e3],[0, 15, 30, 45, 60]],
+    ylims=[[1e-3,1e3],[0, 60]],
 )

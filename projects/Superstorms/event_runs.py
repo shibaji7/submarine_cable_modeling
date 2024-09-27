@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import glob
+from scipy import constants as C
 
 from scubas.datasets import PROFILES
 from scubas.cables import TransmissionLine, Cable
@@ -356,3 +357,69 @@ def get_mcmc_outputs_CI(data, ci_multipliers=[1, 1.96], dx=1):
         ]
     )
     return o
+
+def extract_mc_sites_by_section(mc_profiles, section=0, n=1000):
+    sites = [profiles[section] for profiles in mc_profiles[:n]]
+    return sites
+
+def extract_mc_transfer_functions_by_section(freqs, mc_profiles, section=0, n=1000):
+    sites = extract_mc_sites_by_section(mc_profiles, section, n)
+    tfs = []
+    for site in sites:
+        tfs.append(calcTF(site, freqs))
+    amp_val, phase_val = (
+        np.array([t.amp.tolist() for t in tfs]).T,
+        np.array([t.phase.tolist() for t in tfs]).T
+    )
+    stats = pd.DataFrame()
+    (
+        stats["freqs"], stats["amp"], 
+        stats["amp_ub_1"], stats["amp_lb_1"],
+        stats["amp_ub_2"], stats["amp_lb_2"], stats["phase"], 
+        stats["phase_ub_1"], stats["phase_lb_1"],
+        stats["phase_ub_2"], stats["phase_lb_2"]
+    ) = (
+        freqs, amp_val.mean(axis=1), 
+        amp_val.mean(axis=1) + amp_val.std(axis=1),
+        amp_val.mean(axis=1) - amp_val.std(axis=1),
+        amp_val.mean(axis=1) + 1.96*amp_val.std(axis=1),
+        amp_val.mean(axis=1) - 1.96*amp_val.std(axis=1),
+        phase_val.mean(axis=1), 
+        phase_val.mean(axis=1) + phase_val.std(axis=1),
+        phase_val.mean(axis=1) - phase_val.std(axis=1),
+        phase_val.mean(axis=1) + 1.96*phase_val.std(axis=1),
+        phase_val.mean(axis=1) - 1.96*phase_val.std(axis=1)
+    )
+    o = dict(
+        tfs=tfs,
+        stats=stats,
+    )
+    return o
+
+def calcZ(site, freqs):
+    omega = 2 * C.pi * freqs
+    sigma_s = 1 / site.layers[0].resistivity
+    k2 = 1.0j * omega * C.mu_0 * sigma_s
+    k = np.sqrt(k2)
+    Zo = (1.0j * omega * C.mu_0 / k) / (C.mu_0 / 1.0e-3)
+    return Zo
+
+def calcTF(site, freqs):
+    """
+    Calculate the transfer functions.
+    """
+    Zo = calcZ(site, freqs)
+    Zd = site.calcZ(freqs)[1]
+    omega = 2 * C.pi * freqs
+    sigma_s = 1 / site.layers[0].resistivity
+    k2 = 1.0j * omega * C.mu_0 * sigma_s
+    k = np.sqrt(k2)
+    kd = k * site.layers[0].thickness
+
+    func = Zd / (np.cosh(kd) + (Zd * np.sinh(kd) / Zo))
+    tf = pd.DataFrame()
+    tf["freq"], tf["E2B"], tf["amp"], tf["phase"] = (
+        freqs, func, np.abs(func), 
+        np.angle(func, deg=True)
+    )
+    return tf

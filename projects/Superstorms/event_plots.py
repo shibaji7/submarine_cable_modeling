@@ -89,3 +89,38 @@ def plot_potential(
     fig.savefig(fname, bbox_inches="tight")
     return
 
+def plot_transfer_functions(
+    df, xlim=[1e-6,1e0], ylims=[[1e-3,1e3],[-90,90]],
+    fname="figures/Transfer.png",
+    ylabels = [r"Amplitude [mV/km/nT]", r"Phase $[^\circ]$"],
+    yticks = [[1e-3, 1e-0, 1e3],[-90, -45, 0, 45, 90]],
+    xlabel="Frequency [Hz]",
+    xticks=[1e-6, 1e-3, 1e0],
+    dpi=300, figsize=(4, 4), text_size=10,
+):
+    setups(text_size)
+    fig, ax = plt.subplots(
+        nrows=1, ncols=1, dpi=dpi, 
+        figsize=figsize,
+    )
+    ax.loglog(df["stats"].freqs, df["stats"].amp, "k", lw=1.0, ls="-", alpha=1)
+    ax.loglog(df["stats"].freqs, df["stats"].amp_ub_1, "k", lw=0.7, ls="--", alpha=0.7)
+    ax.loglog(df["stats"].freqs, df["stats"].amp_lb_1, "k", lw=0.7, ls="--", alpha=0.7)
+    ax.loglog(df["stats"].freqs, df["stats"].amp_ub_2, "k", lw=0.5, ls=":", alpha=0.4)
+    ax.loglog(df["stats"].freqs, df["stats"].amp_lb_2, "k", lw=0.5, ls=":", alpha=0.4)
+    ax.set_ylabel(ylabels[0])
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylims[0])
+    ax.set_xlabel(xlabel)
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks[0])
+    ax = ax.twinx()
+    ax.semilogx(df["stats"].freqs, df["stats"].phase, "r", lw=1.0, ls="-", alpha=1)
+    ax.semilogx(df["stats"].freqs, df["stats"].phase_ub_1, "r", lw=0.7, ls="--", alpha=0.7)
+    ax.semilogx(df["stats"].freqs, df["stats"].phase_lb_1, "r", lw=0.7, ls="--", alpha=0.7)
+    ax.semilogx(df["stats"].freqs, df["stats"].phase_ub_2, "r", lw=0.5, ls=":", alpha=0.4)
+    ax.semilogx(df["stats"].freqs, df["stats"].phase_lb_2, "r", lw=0.5, ls=":", alpha=0.4)
+    ax.set_ylabel(ylabels[1], fontdict=dict(color="r"))
+    ax.set_ylim(ylims[1])
+    fig.savefig(fname, bbox_inches="tight")
+    return
