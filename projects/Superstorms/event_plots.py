@@ -121,6 +121,7 @@ def plot_transfer_functions(
     ax.semilogx(df["stats"].freqs, df["stats"].phase_ub_2, "r", lw=0.5, ls=":", alpha=0.4)
     ax.semilogx(df["stats"].freqs, df["stats"].phase_lb_2, "r", lw=0.5, ls=":", alpha=0.4)
     ax.set_ylabel(ylabels[1], fontdict=dict(color="r"))
+    ax.set_xlim(xlim)
     ax.set_ylim(ylims[1])
     fig.savefig(fname, bbox_inches="tight")
     return

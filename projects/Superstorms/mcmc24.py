@@ -20,9 +20,8 @@ FRD, HAD, STJ = (
     [".scubas_config/had20240510psec.sec.txt"], 
     [".scubas_config/stj20240510vsec.sec.txt"]
 )
-stns, dates, N = (
+stns, N = (
     ["FRD", "STJ", "HAD"], 
-    [dt.datetime(2024,5,10,17), dt.datetime(2024,5,10,18)],
     10
 )
 frames = read_bfield_frames(stns, [FRD, HAD, STJ])
@@ -41,6 +40,21 @@ for l in range(len(latlons)):
     )
 mc_profiles = CP.compile_bined_profiles(np.array(binned_lat_lon), n=N)
 
+# Create the Tx function for the section 0
+flim, M = [1e-6, 1e-2], 1
+freqs = np.linspace(
+    flim[0], flim[1], 
+    int(flim[1] / (M*flim[0])) + 1
+)
+for section in range(9):
+    df = extract_mc_transfer_functions_by_section(
+        freqs, mc_profiles, n=N, section=section
+    )
+    plot_transfer_functions(
+        df, xlim=[1e-6, 1e-2], yticks=[[1e-6, 1e-3, 1e0, 1e3],[0, 15, 30, 45, 90]],
+        ylims=[[1e-6,1e3],[0, 90]], fname=f"figures/Transfer{section}.png",
+    )
+
 
 keys_to_store = [
     "V(v)", "Vt(v)", 
@@ -58,6 +72,11 @@ df = get_mcmc_outputs_CI(
     read_mc_datasets(n=N)
 )
 
+# Plot specific files / dates
+dates = [
+    dt.datetime(2024,5,10,17), 
+    dt.datetime(2024,5,10,18)
+]
 plot_potential(
     frames, dates,
     get_dates(
@@ -72,24 +91,92 @@ plot_potential(
     ],
     linewdiths=[0.7, 0.5, 0.4, 0.4],
     colors=[["k", "b", "g"], ["k", "b", "b", "r", "r"]],
-    fname="figures/Pot_mc_runs.png",
-    fig_title="Date: 17-18 UT, 10 May 2024",
-    yticks=[[-500, -100, 0, 300]],
-    ylims=[[-500, 300], [-300, 100]],
+    fname=f"figures/pot_mc_dataset_analysis_{dates[0].strftime('%H')}.png",
+    fig_title=f"Date: 17-18 UT, 10 May 2024",
+    yticks=[[-600, 0, 400]],
+    ylims=[[-600, 400], [-300, 100]],
     major_locator=mdates.MinuteLocator(byminute=range(0, 60, 10)),
     minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 10)),
     alphas=[1., 0.5, 0.5, 0.3, 0.3]
 )
 
-flim, M = [1e-6, 1e0], 100
-freqs = np.linspace(
-    flim[0], flim[1], 
-    int(flim[1] / (M*flim[0])) + 1
+dates = [
+    dt.datetime(2024,5,10,12), 
+    dt.datetime(2024,5,12)
+]
+plot_potential(
+    frames, dates,
+    get_dates(
+        [dt.datetime(2024,5,10), dt.datetime(2024,5,12)]
+    ), 
+    [
+        df["mean"], 
+        df["CI"][0]["ub"],
+        df["CI"][0]["lb"],
+        df["CI"][1]["ub"],
+        df["CI"][1]["lb"],
+    ],
+    linewdiths=[0.7, 0.5, 0.4, 0.4],
+    colors=[["k", "b", "g"], ["k", "b", "b", "r", "r"]],
+    fname=f"figures/pot_mc_dataset_analysis_{dates[0].strftime('%H')}.png",
+    fig_title=f"Date: 12 UT 10 May - 00 UT 12 May, 2024",
+    yticks=[[-1800, -900, 0, 600]],
+    ylims=[[-1800, 600], [-300, 500]],
+    major_locator=mdates.HourLocator(byhour=range(0, 24, 4)),
+    minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
+    alphas=[1., 0.5, 0.5, 0.3, 0.3]
 )
-df = extract_mc_transfer_functions_by_section(
-    freqs, mc_profiles, n=N
+
+dates = [
+    dt.datetime(2024,5,11), 
+    dt.datetime(2024,5,11,4)
+]
+plot_potential(
+    frames, dates,
+    get_dates(
+        [dt.datetime(2024,5,10), dt.datetime(2024,5,12)]
+    ), 
+    [
+        df["mean"], 
+        df["CI"][0]["ub"],
+        df["CI"][0]["lb"],
+        df["CI"][1]["ub"],
+        df["CI"][1]["lb"],
+    ],
+    linewdiths=[0.7, 0.5, 0.4, 0.4],
+    colors=[["k", "b", "g"], ["k", "b", "b", "r", "r"]],
+    fname=f"figures/pot_mc_dataset_analysis_{dates[0].strftime('%H')}.png",
+    fig_title=f"Date: 00-04 UT 11 May 2024",
+    yticks=[[-1800, -900, 0, 600]],
+    ylims=[[-1800, 600], [-300, 500]],
+    major_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
+    minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 30)),
+    alphas=[1., 0.5, 0.5, 0.3, 0.3]
 )
-plot_transfer_functions(
-    df, yticks=[[1e-3, 1e-0, 1e3],[0, 15, 30, 45, 60]],
-    ylims=[[1e-3,1e3],[0, 60]],
+
+dates = [
+    dt.datetime(2024,5,11,8), 
+    dt.datetime(2024,5,11,12)
+]
+plot_potential(
+    frames, dates,
+    get_dates(
+        [dt.datetime(2024,5,10), dt.datetime(2024,5,12)]
+    ), 
+    [
+        df["mean"], 
+        df["CI"][0]["ub"],
+        df["CI"][0]["lb"],
+        df["CI"][1]["ub"],
+        df["CI"][1]["lb"],
+    ],
+    linewdiths=[0.7, 0.5, 0.4, 0.4],
+    colors=[["k", "b", "g"], ["k", "b", "b", "r", "r"]],
+    fname=f"figures/pot_mc_dataset_analysis_{dates[0].strftime('%H')}.png",
+    fig_title=f"Date: 08-12 UT 11 May 2024",
+    yticks=[[-1800, -900, 0, 600]],
+    ylims=[[-1800, 600], [-300, 500]],
+    major_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
+    minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 30)),
+    alphas=[1., 0.5, 0.5, 0.3, 0.3]
 )

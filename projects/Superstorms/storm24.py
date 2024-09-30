@@ -34,3 +34,10 @@ plot_potential(
     frames, dates,
     cable.tot_params.index, [cable.tot_params["V(v)"]]
 )
+# Run for initial spike event 17:10 UT 10 May
+# Run for Sharp turning event 2:30 UT 11 May
+# Run for sharp turning event 12 UT 11 May
+
+# Plot of collrelation analysis among stations
+# Plot DMSP data-plots and SuperMag dataset for infernece
+# Email MoM to group
