@@ -8,6 +8,33 @@ from scubas.datasets import PROFILES
 from scubas.cables import TransmissionLine, Cable
 from scubas.conductivity import ConductivityProfile as CP
 import os
+from loguru import logger
+
+os.environ["OMNIDATA_PATH"] = "/home/shibaji/omni/"
+
+def _load_omni_(dates, res=1):
+    import pyomnidata
+    logger.info(f"OMNIDATA_PATH: {os.environ['OMNIDATA_PATH']}")
+    pyomnidata.UpdateLocalData()
+    omni = pd.DataFrame(
+        pyomnidata.GetOMNI(dates[0].year,Res=res)
+    )
+    omni["time"] = omni.apply(
+        lambda r: (
+            dt.datetime(
+                int(str(r.Date)[:4]), 
+                int(str(r.Date)[4:6]),
+                int(str(r.Date)[6:].replace(".0","")) 
+            ) 
+            + dt.timedelta(hours=r.ut)
+        ), 
+        axis=1
+    )
+    omni = omni[
+        (omni.time>=dates[0])
+        & (omni.time<dates[1])
+    ]
+    return omni
 
 def stack_profiles_to_csv(profiles, file=".scubas_config/sample.csv"):
     import os
