@@ -18,6 +18,122 @@ def setups(size = 12):
     )
     return
 
+class TimeSeriesPlot(object):
+
+    def __init__(
+        self, dates, fig_title, num_subplots=3, text_size=15,
+        major_locator=mdates.HourLocator(byhour=range(0, 24, 12)),
+        minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
+        formatter=DateFormatter(r"$%H^{%M}$"),
+    ):
+        self.dates = dates
+        self.num_subplots = num_subplots
+        self._num_subplots_created = 0
+        self.text_size = text_size
+        self.fig_title = fig_title
+        self.major_locator = major_locator
+        self.minor_locator = minor_locator
+        self.formatter = formatter
+        self.fig = plt.figure(figsize=(8, 3*num_subplots), dpi=180) # Size for website
+        return
+    
+    def _add_axis(self):
+        setups(self.text_size)
+        self._num_subplots_created += 1
+        ax = self.fig.add_subplot(self.num_subplots, 1, self._num_subplots_created)
+        if self._num_subplots_created == 1:
+            ax.text(
+                0.075, 1.05, self.fig_title, 
+                ha="left", va="center", 
+                fontdict=dict(size=self.text_size),
+                transform=ax.transAxes
+            )
+        ax.xaxis.set_major_locator(self.major_locator)
+        ax.xaxis.set_minor_locator(self.minor_locator)
+        ax.xaxis.set_major_formatter(self.formatter)
+        return ax
+
+    def save(self, filepath):
+        self.fig.savefig(filepath, bbox_inches="tight")
+
+    def close(self):
+        self.fig.clf()
+        plt.close()
+
+    def add_omni(
+        self, omni, ylelft="B", yright="FlowPressure", 
+        linewdiths=[0.7, 1.5],
+        ytitles = [r"B [nT]", r"$P_{dyn}$ [nPa]"],
+        colors=["b", "r"], ylims=[[], []], xlabel=""
+    ):
+        ax = self._add_axis()
+        ax.plot(
+            omni.time, omni[ylelft], 
+            color=colors[0], ls="-", 
+            lw=linewdiths[0], alpha=0.7,
+        )
+        ax.set_ylabel(ytitles[0], fontdict=dict(color=colors[0]))
+        ax.set_ylim(ylims[0])
+        ax.set_xlabel(xlabel)
+        ax.set_xlim(self.dates)
+
+        axt =  ax.twinx()
+        axt.xaxis.set_major_formatter(self.formatter)
+        axt.xaxis.set_major_locator(self.major_locator)
+        axt.xaxis.set_minor_locator(self.minor_locator)
+        axt.plot(
+            omni.time, omni[yright], 
+            color=colors[1], ls="-", 
+            lw=linewdiths[1], alpha=0.7,
+        )
+        axt.set_ylabel(ytitles[1], fontdict=dict(color=colors[1]))
+        axt.set_ylim(ylims[1])
+        return ax, axt
+    
+    def add_mag(
+        self, df, stations=["FRD", "STJ", "HAD"],
+        lw=0.7, colors=["k", "b", "g"],
+        ylim=[-2000, 1500], xlabel="", loc=1,
+    ):
+        ax = self._add_axis()
+        for c, stn in zip(colors, stations):
+            o = df[stn]
+            o.X = o.X - np.nanmean(o.X.iloc[:60*10])
+            o.Y = o.Y - np.nanmean(o.Y.iloc[:60*10])
+            o.Z = o.Z - np.nanmean(o.Z.iloc[:60*10])
+            ax.plot(
+                o.index, o.X, 
+                color=c, ls="-", 
+                lw=lw, alpha=0.7,
+                label=fr"$B[{stn}]$"
+            )
+            ax.plot(
+                o.index, o.Y, 
+                color=c, ls="--", 
+                lw=lw, alpha=0.7,
+            )
+        ax.set_xlim(self.dates)
+        ax.set_ylim(ylim)
+        ax.set_xlabel(xlabel)
+        ax.legend(loc=loc, prop={"size": 10})
+        return
+    
+    def add_voltage(
+        self, df, lw=0.7, color="k",
+        ylim=[-500, 500], xlabel="Time [UT]"
+    ):
+        ax = self._add_axis()
+        ax.plot(
+            df.index[::3], df["V(v)"][::3], 
+            color=color, ls="-", 
+            lw=lw, alpha=0.7,
+        )
+        ax.set_ylabel("Voltage, [V]")
+        ax.set_ylim(ylim)
+        ax.set_xlabel(xlabel)
+        ax.set_xlim(self.dates)
+        return ax
+
 def plot_potential(
     frames, dates, 
     pot_time, params, omni,
