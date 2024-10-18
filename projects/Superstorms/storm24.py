@@ -10,9 +10,10 @@ from event_runs import (
     read_bfield_frames, 
     compile_cable_to_calculate_parameters,
     initialize_mag_fold,
-    _load_omni_
+    _load_omni_,
+    load_speadas
 )
-from event_plots import plot_potential
+from event_plots import TimeSeriesPlot
 
 
 initialize_mag_fold()
@@ -32,33 +33,71 @@ profiles = [
     PROFILES.DO_4, PROFILES.DO_5, PROFILES.MAR, PROFILES.DO_6,
     PROFILES.CS_E
 ]
+
+# ['thc_fgs_btotal', 
+# 'thc_fgs_gse', 'thc_fgs_gsm', 
+# 'thc_fgs_dsl', 'thc_fgl_btotal', 'thc_fgl_gse', 
+# 'thc_fgl_gsm', 'thc_fgl_dsl', 'thc_fgl_ssl', 'thc_fgh_btotal', 
+# 'thc_fgh_gse', 'thc_fgh_gsm', 'thc_fgh_dsl', 'thc_fgh_ssl']
+themis_fgm, themis_mom = load_speadas(dates)
+
 tlines, cable = compile_cable_to_calculate_parameters(FRD, STJ, HAD, profiles)
-omni = _load_omni_(dates)
-plot_potential(
-    frames, [dt.datetime(2024,5,10,17), dt.datetime(2024,5,10,17,25)],
-    cable.tot_params.index, [cable.tot_params["V(v)"]], omni,
+
+ts = TimeSeriesPlot(
+    [
+        dt.datetime(2024,5,10,17), 
+        dt.datetime(2024,5,10,17,25)
+    ],
     major_locator=mdates.MinuteLocator(byminute=range(0, 60, 5)),
     minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 1)),
-    yticks=[[-200, 0, 200, 400]], ylims=[[-200, 400], [-150, 150]],
-    formatter=DateFormatter("%M"),
-    xlabel="Minutes since 17 UT", fig_title="Date: 10 May 2024", text_size=12,
-    fname="figures/Pot01.png"
+    fig_title="Date: 10 May 2024 / IP Shock", text_size=15,
+    num_subplots=3,
+    vlines=[dt.datetime(2024,5,10,17,6)], colors=["r"]
 )
-# Run for initial spike event 17:10 UT 10 May
-# Run for Sharp turning event 2:30 UT 11 May
-# Run for sharp turning event 12 UT 11 May
+ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"])
+ts.add_mag(frames, ylim=[-200, 500])
+ts.add_voltage(cable.tot_params, xlabel="Minutes since 17 UT", ylim=[-200, 100])
+ts.save("figures/Pot01.png")
+ts.close()
 
-# Plot of collrelation analysis among stations
-# Plot DMSP data-plots and SuperMag dataset for infernece
-# Email MoM to group
-
-plot_potential(
-    frames, [dt.datetime(2024,5,10,22), dt.datetime(2024,5,11)],
-    cable.tot_params.index, [cable.tot_params["V(v)"]], omni,
+ts = TimeSeriesPlot(
+    [
+        dt.datetime(2024,5,10,22), 
+        dt.datetime(2024,5,11)
+    ],
     major_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
     minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 15)),
-    #yticks=[[-200, 0, 200, 400]], ylims=[[-200, 400], [-150, 150]],
-    formatter=DateFormatter("%H^{%M}"),
-    xlabel="Minutes since 22 UT", fig_title="Date: 10 May 2024", text_size=12,
-    fname="figures/Pot02.png"
+    fig_title="Date: 10-11 May 2024 / IMF By turning", text_size=15,
+    num_subplots=3,
+    vlines=[dt.datetime(2024,5,10,22,30)], colors=["r"]
 )
+ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"])
+ts.add_mag(frames, ylim=[-1000, 1000])
+ts.add_voltage(cable.tot_params, xlabel="Minutes since 22 UT", ylim=[-50, 400])
+ts.save("figures/Pot02.png")
+ts.close()
+
+# ts = TimeSeriesPlot(
+#     [
+#         dt.datetime(2024,5,10,12), dt.datetime(2024,5,12)
+#     ],
+#     fig_title="Date: 10-12 May 2024", text_size=12,
+#     num_subplots=2,
+#     vlines=[dt.datetime(2024,5,10,17,6), dt.datetime(2024,5,10,22,30)], colors=["r", "k"]
+# )
+# ts.add_mag(frames)
+# ts.add_voltage(cable.tot_params)
+# ts.save("figures/Pot.png")
+# ts.close()
+
+
+# plot_potential(
+#     frames, [dt.datetime(2024,5,10,22), dt.datetime(2024,5,11)],
+#     cable.tot_params.index, [cable.tot_params["V(v)"]], omni,
+#     major_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
+#     minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 15)),
+#     #yticks=[[-200, 0, 200, 400]], ylims=[[-200, 400], [-150, 150]],
+#     formatter=DateFormatter("%H^{%M}"),
+#     xlabel="Minutes since 22 UT", fig_title="Date: 10 May 2024", text_size=12,
+#     fname="figures/Pot02.png"
+# )

@@ -4,6 +4,8 @@ from matplotlib.dates import DateFormatter
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime as dt
+
 
 
 def setups(size = 12):
@@ -25,6 +27,7 @@ class TimeSeriesPlot(object):
         major_locator=mdates.HourLocator(byhour=range(0, 24, 12)),
         minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
         formatter=DateFormatter(r"$%H^{%M}$"),
+        vlines=[], colors=[]
     ):
         self.dates = dates
         self.num_subplots = num_subplots
@@ -34,6 +37,8 @@ class TimeSeriesPlot(object):
         self.major_locator = major_locator
         self.minor_locator = minor_locator
         self.formatter = formatter
+        self.vlines = vlines
+        self.colors = colors
         self.fig = plt.figure(figsize=(8, 3*num_subplots), dpi=180) # Size for website
         return
     
@@ -51,6 +56,9 @@ class TimeSeriesPlot(object):
         ax.xaxis.set_major_locator(self.major_locator)
         ax.xaxis.set_minor_locator(self.minor_locator)
         ax.xaxis.set_major_formatter(self.formatter)
+        for col, vline in zip(self.colors, self.vlines):
+            ax.axvline(vline, ls="--", lw=1.5, color=col)
+            ax.axvline(vline, ls="--", lw=1.5, color=col)
         return ax
 
     def save(self, filepath):
@@ -89,11 +97,45 @@ class TimeSeriesPlot(object):
         axt.set_ylabel(ytitles[1], fontdict=dict(color=colors[1]))
         axt.set_ylim(ylims[1])
         return ax, axt
+
+    def add_themis(
+        self, themis_fgm, themis_mom, pnames=[],
+        lw=0.7, colors=["k", "b", "g"],
+        ylim=[-100, 100], xlabel="", loc=2,
+        labels=[["$B_x$","$B_y$","$B_z$"]],
+        ylabels=[r"$B_{sw}$ [nT]", r"$P_{dyn}$ [nPa]"]
+    ):
+        ax = self._add_axis()
+        for j in range(themis_fgm[pnames[0]]["y"].shape[1]):
+            ax.plot(
+                [dt.datetime.utcfromtimestamp(x) for x in themis_fgm[pnames[0]]["x"]],
+                themis_fgm[pnames[0]]["y"][:, j], color=colors[j], lw=lw, ls="-", label=labels[0][j]
+            )
+        ax.set_xlim(self.dates)
+        ax.set_ylim(ylim)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabels[0])
+        ax.legend(loc=loc, prop={"size": 10})
+
+        axt = ax.twinx()
+        axt.xaxis.set_major_formatter(self.formatter)
+        axt.xaxis.set_major_locator(self.major_locator)
+        axt.xaxis.set_minor_locator(self.minor_locator)
+        axt.plot(
+            [dt.datetime.utcfromtimestamp(x) for x in themis_mom[pnames[1]]["x"]],
+            themis_mom[pnames[1]]["y"], 
+            color="m", ls="-", 
+            lw=lw, alpha=0.7,
+        )
+        axt.set_xlim(self.dates)
+        axt.set_ylabel(ylabels[1], fontdict=dict(color="m"))
+        return
     
     def add_mag(
         self, df, stations=["FRD", "STJ", "HAD"],
         lw=0.7, colors=["k", "b", "g"],
         ylim=[-2000, 1500], xlabel="", loc=1,
+        ylabel=r"$B_{x,y}$ [nT]"
     ):
         ax = self._add_axis()
         for c, stn in zip(colors, stations):
@@ -115,6 +157,7 @@ class TimeSeriesPlot(object):
         ax.set_xlim(self.dates)
         ax.set_ylim(ylim)
         ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         ax.legend(loc=loc, prop={"size": 10})
         return
     

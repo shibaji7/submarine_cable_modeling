@@ -113,6 +113,9 @@ def create_stack_plots(dates, size=15):
     ax.set_ylabel("AE/AL/AU (nT)")
     ax.set_xlim(dates)
 
+    for ax in axes:
+        ax.axvline(dt.datetime(2024,5,10,17,6), ls="--", lw=1.5, color="r")
+        ax.axvline(dt.datetime(2024,5,10,22,30), ls="--", lw=1.5, color="k")
     print(omni.columns)
     ax.set_xlabel("Time [UT]")
     fig.savefig("figures/Event.png", bbox_inches="tight")
