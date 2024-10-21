@@ -6,6 +6,7 @@ __pycache__/
 *figures/*
 *ev/*
 *.scubas_config/
+*themis*
 
 
 # C extensions
