@@ -45,59 +45,53 @@ tlines, cable = compile_cable_to_calculate_parameters(FRD, STJ, HAD, profiles)
 
 ts = TimeSeriesPlot(
     [
-        dt.datetime(2024,5,10,17), 
-        dt.datetime(2024,5,10,17,25)
+        dt.datetime(2024,5,10,16,50), 
+        dt.datetime(2024,5,10,17,20)
     ],
     major_locator=mdates.MinuteLocator(byminute=range(0, 60, 5)),
     minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 1)),
     fig_title="Date: 10 May 2024 / IP Shock", text_size=15,
     num_subplots=3,
+)
+ts.add_vlines(
+    ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"]),
+    vlines=[dt.datetime(2024,5,10,17,0,30)], colors=["r"]
+)
+ts.add_vlines(
+    ts.add_mag(frames, ylim=[-200, 500]), 
     vlines=[dt.datetime(2024,5,10,17,6)], colors=["r"]
 )
-ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"])
-ts.add_mag(frames, ylim=[-200, 500])
-ts.add_voltage(cable.tot_params, xlabel="Minutes since 17 UT", ylim=[-200, 100])
+ts.add_vlines(
+    ts.add_voltage(cable.tot_params, xlabel="Minutes since 17 UT", ylim=[-200, 100]),
+    vlines=[dt.datetime(2024,5,10,17,6)], colors=["r"]
+)
 ts.save("figures/Pot01.png")
 ts.close()
 
 ts = TimeSeriesPlot(
     [
-        dt.datetime(2024,5,10,22), 
+        dt.datetime(2024,5,10,21,30), 
         dt.datetime(2024,5,11)
     ],
     major_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
     minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 15)),
     fig_title="Date: 10-11 May 2024 / IMF By turning", text_size=15,
     num_subplots=3,
-    vlines=[dt.datetime(2024,5,10,22,30)], colors=["r"]
 )
-ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"])
-ts.add_mag(frames, ylim=[-1000, 1000])
-ts.add_voltage(cable.tot_params, xlabel="Minutes since 22 UT", ylim=[-50, 400])
+ts.add_vlines(
+    ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"]),
+    vlines=[dt.datetime(2024,5,10,22,30)], colors=["k"]
+)
+ts.add_vlines(
+    ts.add_mag(frames, ylim=[-1000, 1000]),
+    vlines=[dt.datetime(2024,5,10,22,36)], colors=["k"]
+)
+ts.add_vlines(
+    ts.add_voltage(cable.tot_params, xlabel="Minutes since 22 UT", ylim=[-50, 400]),
+    vlines=[dt.datetime(2024,5,10,22,36)], colors=["k"]
+)
 ts.save("figures/Pot02.png")
 ts.close()
 
-# ts = TimeSeriesPlot(
-#     [
-#         dt.datetime(2024,5,10,12), dt.datetime(2024,5,12)
-#     ],
-#     fig_title="Date: 10-12 May 2024", text_size=12,
-#     num_subplots=2,
-#     vlines=[dt.datetime(2024,5,10,17,6), dt.datetime(2024,5,10,22,30)], colors=["r", "k"]
-# )
-# ts.add_mag(frames)
-# ts.add_voltage(cable.tot_params)
-# ts.save("figures/Pot.png")
-# ts.close()
 
-
-# plot_potential(
-#     frames, [dt.datetime(2024,5,10,22), dt.datetime(2024,5,11)],
-#     cable.tot_params.index, [cable.tot_params["V(v)"]], omni,
-#     major_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
-#     minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 15)),
-#     #yticks=[[-200, 0, 200, 400]], ylims=[[-200, 400], [-150, 150]],
-#     formatter=DateFormatter("%H^{%M}"),
-#     xlabel="Minutes since 22 UT", fig_title="Date: 10 May 2024", text_size=12,
-#     fname="figures/Pot02.png"
-# )
+    

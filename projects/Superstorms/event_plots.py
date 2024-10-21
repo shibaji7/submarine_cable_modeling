@@ -27,7 +27,6 @@ class TimeSeriesPlot(object):
         major_locator=mdates.HourLocator(byhour=range(0, 24, 12)),
         minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
         formatter=DateFormatter(r"$%H^{%M}$"),
-        vlines=[], colors=[]
     ):
         self.dates = dates
         self.num_subplots = num_subplots
@@ -37,9 +36,15 @@ class TimeSeriesPlot(object):
         self.major_locator = major_locator
         self.minor_locator = minor_locator
         self.formatter = formatter
-        self.vlines = vlines
-        self.colors = colors
         self.fig = plt.figure(figsize=(8, 3*num_subplots), dpi=180) # Size for website
+        return
+
+    def add_vlines(
+        self, ax, vlines=[], colors=[]
+    ):
+        for col, vline in zip(colors, vlines):
+            ax.axvline(vline, ls="--", lw=1.5, color=col)
+            ax.axvline(vline, ls="--", lw=1.5, color=col)
         return
     
     def _add_axis(self):
@@ -56,9 +61,6 @@ class TimeSeriesPlot(object):
         ax.xaxis.set_major_locator(self.major_locator)
         ax.xaxis.set_minor_locator(self.minor_locator)
         ax.xaxis.set_major_formatter(self.formatter)
-        for col, vline in zip(self.colors, self.vlines):
-            ax.axvline(vline, ls="--", lw=1.5, color=col)
-            ax.axvline(vline, ls="--", lw=1.5, color=col)
         return ax
 
     def save(self, filepath):
@@ -129,7 +131,7 @@ class TimeSeriesPlot(object):
         )
         axt.set_xlim(self.dates)
         axt.set_ylabel(ylabels[1], fontdict=dict(color="m"))
-        return
+        return ax
     
     def add_mag(
         self, df, stations=["FRD", "STJ", "HAD"],
@@ -159,7 +161,7 @@ class TimeSeriesPlot(object):
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.legend(loc=loc, prop={"size": 10})
-        return
+        return ax
     
     def add_voltage(
         self, df, lw=0.7, color="k",
