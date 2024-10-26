@@ -35,7 +35,7 @@ FRD, HAD, STJ = (
 )
 stns, dates = (
     ["FRD", "STJ", "HAD"], 
-    [dt.datetime(1989,3,12), dt.datetime(1989,3,15)]
+    [dt.datetime(1989,3,13), dt.datetime(1989,3,14,12)]
 )
 frames = read_bfield_frames(stns, [FRD, HAD, STJ])
 
