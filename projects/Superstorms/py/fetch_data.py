@@ -3,6 +3,7 @@ import pyspedas
 from loguru import logger
 import pandas as pd
 import datetime as dt
+import numpy as np
 os.environ["OMNIDATA_PATH"] = "/home/shibaji/omni/"
 
 def _load_omni_(dates, res=1):
@@ -133,7 +134,7 @@ def read_Bfield_data(files, return_xyzf=True, csv_file_date_name="Date"):
         Bfield = pd.concat([Bfield, o])
     return Bfield
 
-def read_bfield_frames(stns, stn_files):
+def clean_B_fields(stns, stn_files):
     frames = dict()
     for stn, fs in zip(stns, stn_files):
         o = pd.DataFrame()

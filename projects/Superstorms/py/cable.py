@@ -3,8 +3,8 @@ import numpy as np
 import datetime as dt
 import glob
 from scipy import constants as C
+from loguru import logger
 
-from scubas.datasets import PROFILES
 from scubas.cables import TransmissionLine, Cable
 import os
 import sys
@@ -18,16 +18,17 @@ class SCUBASModel(object):
             self, 
             cable_name="TAT-8",
             cable_structure=get_cable_informations(),
+            segment_files=[],
         ):
         self.cable_name = cable_name
         self.cable_structure = cable_structure
-        self.initialize_TL()
-        self.run_cable_segment()
+        self.segment_files = segment_files
+        logger.info(f"Initialize {cable_name}")
         return
     
     def initialize_TL(self):
         self.tlines = []
-        for seg in self.cable_structure.cable_seg:
+        for i, seg in enumerate(self.cable_structure.cable_seg):
             self.tlines.append(
                 TransmissionLine(
                     sec_id=seg["sec_id"],
@@ -43,12 +44,15 @@ class SCUBASModel(object):
                         flim=seg["flim"],
                     ),
                     active_termination=seg["active_termination"],
-                ).compile_oml(FRD_files),
+                ).compile_oml(self.segment_files[i]),
             )
+            print(self.tlines[i].model)
+            print(self.tlines[i].model.Efield.head())
         return
     
     def run_cable_segment(self):
         # Running the cable operation
+        logger.info(f"Components: {self.tlines[0].components}")
         self.cable = Cable(self.tlines, self.tlines[0].components)
         return
     
