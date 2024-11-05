@@ -104,12 +104,12 @@ def fetch_dataset_from_netcdf_by_date_range(dates, cable, df, dmlat=2, dmlt=1):
             x = get_dataset_from_netcdf(date, glat, glon, df, dmlat, dmlt)
             frame = pd.concat([frame, x])
         
-        fname = f".scubas_config/May2024/cable_segment_{i}.csv"
+        fname = f"simulation/May2024/cable_segment_{i}.csv"
         frame.to_csv(fname, float_format="%g", index=False, header=True)
     return
 
 def interpolate_smag():
-    os.makedirs(".scubas_config/May2024/", exist_ok=True)
+    os.makedirs("simulation/May2024/", exist_ok=True)
     cable = get_cable_informations()
     O, Dates = pd.DataFrame(), []
     for d in [dt.datetime(2024,5,10), dt.datetime(2024,5,11)]:
@@ -132,4 +132,3 @@ if __name__ == "__main__":
     # TODO: Plot all the supermag dataset for 9 different segments TS plot
     
     # TODO: Invoke scubas by the interpolated dataset 
-
