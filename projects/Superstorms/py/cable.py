@@ -1,15 +1,12 @@
-import pandas as pd
-import numpy as np
 import datetime as dt
-import glob
-from scipy import constants as C
 from loguru import logger
+import matplotlib.dates as mdates
 
 from scubas.cables import TransmissionLine, Cable
-import os
 import sys
 sys.path.append("py/")
 
+from plots import TimeSeriesPlot
 from utils import get_cable_informations
 
 class SCUBASModel(object):
@@ -46,8 +43,6 @@ class SCUBASModel(object):
                     active_termination=seg["active_termination"],
                 ).compile_oml(self.segment_files[i]),
             )
-            print(self.tlines[i].model)
-            print(self.tlines[i].model.Efield.head())
         return
     
     def run_cable_segment(self):
@@ -56,5 +51,32 @@ class SCUBASModel(object):
         self.cable = Cable(self.tlines, self.tlines[0].components)
         return
     
-    def plot_TS_with_others(self):
+    def plot_TS_with_others(
+            self, date_lim, fname, fig_title, vlines,
+            themis_fgm, themis_mom,
+            major_locator=mdates.MinuteLocator(byminute=range(0, 60, 5)),
+            minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 1)), 
+            text_size=15):
+        ts = TimeSeriesPlot(
+            date_lim,
+            major_locator=major_locator,
+            minor_locator=minor_locator,
+            fig_title=fig_title, 
+            text_size=text_size,
+            num_subplots=3,
+        )
+        ts.add_vlines(
+            ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"]),
+            vlines=vlines, colors=["r"]
+        )
+        ts.add_vlines(
+            ts.add_mag(frames, ylim=[-200, 500]), 
+            vlines=vlines, colors=["r"]
+        )
+        ts.add_vlines(
+            ts.add_voltage(self.cable.tot_params, xlabel="Minutes since 17 UT", ylim=[-200, 100]),
+            vlines=vlines, colors=["r"]
+        )
+        ts.save(fname)
+        ts.close()
         return
