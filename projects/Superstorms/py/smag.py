@@ -6,60 +6,16 @@ import aacgmv2
 import pandas as pd
 from types import SimpleNamespace
 import os
+import sys
+sys.path.append("py/")
+# from event_plots import TimeSeriesPlot
+from utils import get_cable_informations
 
-from event_plots import TimeSeriesPlot
-
-def get_cable_informations(kind="TAT-8"):
-    if kind == "TAT-8":
-        cable = SimpleNamespace(**dict(
-            cable_seg = [
-                dict(
-                    initial=dict(lat=39.6, lon=-74.33), 
-                    final=dict(lat=38.79, lon=-72.62)
-                ),
-                dict(
-                    initial=dict(lat=38.79, lon=-72.62), 
-                    final=dict(lat=37.11, lon=-68.94)
-                ),
-                dict(
-                    initial=dict(lat=37.11, lon=-68.94), 
-                    final=dict(lat=39.80, lon=-48.20)
-                ),
-                dict(
-                    initial=dict(lat=39.80, lon=-48.20), 
-                    final=dict(lat=40.81, lon=-45.19)
-                ),
-                dict(
-                    initial=dict(lat=40.81, lon=-45.19), 
-                    final=dict(lat=43.15, lon=-39.16)
-                ),
-                dict(
-                    initial=dict(lat=43.15, lon=-39.16), 
-                    final=dict(lat=44.83, lon=-34.48)
-                ),
-                dict(
-                    initial=dict(lat=44.83, lon=-34.48), 
-                    final=dict(lat=46.51, lon=-22.43)
-                ),
-                dict(
-                    initial=dict(lat=46.51, lon=-22.43), 
-                    final=dict(lat=47.85, lon=-9.05)
-                ),
-                dict(
-                    initial=dict(lat=47.85, lon=-9.05), 
-                    final=dict(lat=50.79, lon=-4.55)
-                ),
-            ]
-        ))
-    for seg in cable.cable_seg:
-        seg["center"] = dict(
-            lat=0.5*(seg["initial"]["lat"]+seg["final"]["lat"]),
-            lon=0.5*(seg["initial"]["lon"]+seg["final"]["lon"]),
-        )
-    return cable
-
-def read_dataset(date):
-    file = f".scubas_config/{date.strftime('%Y%m%d')}.north.schavec-mlt-supermag.60s.rev-0006.ncdf"
+def read_dataset(date, base_folder="dataset/May2024/"):
+    file = os.path.join(
+        base_folder,
+        f"{date.strftime('%Y%m%d')}.north.schavec-mlt-supermag.60s.rev-0006.ncdf"
+    )
     obj = xr.open_dataset(file)
     ddates, dates = [], []
     for y,m,d,H,M,S in zip(
