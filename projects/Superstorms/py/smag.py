@@ -4,21 +4,75 @@ from loguru import logger
 import numpy as np
 import aacgmv2
 import pandas as pd
-from types import SimpleNamespace
+import glob
 import os
 import sys
 sys.path.append("py/")
-# from event_plots import TimeSeriesPlot
+from plots import TimeSeriesPlot
 from utils import get_cable_informations
+
+folder="simulation/May2024/"
+base_folder="dataset/May2024/"
+
+def fetch_dataset(date, mlat, mlt):
+    global folder, base_folder
+    file = os.path.join(
+        base_folder,
+        f"{date.strftime('%Y%m%d')}.north.model-supermag.60s.rev-0006.ncdf"
+    )
+    obj = xr.open_dataset(file)
+    dates = [
+        dt.datetime(y,m,d,H,M,S)
+        for y,m,d,H,M,S in zip(
+            obj.variables["time_yr"].values.astype(int),
+            obj.variables["time_mo"].values.astype(int),
+            obj.variables["time_dy"].values.astype(int),
+            obj.variables["time_hr"].values.astype(int),
+            obj.variables["time_mt"].values.astype(int),
+            obj.variables["time_sc"].values.astype(int),
+        )
+    ]
+    i = dates.index(date)
+    o = pd.DataFrame()
+    o["mlat"], o["mlt"] = (
+        obj.variables["mlat"].values[i, :],
+        obj.variables["mlt"].values[i, :]
+    )
+    o["dbn_nez"] = obj.variables["dbn_nez"].values[i,:]
+    o["dbe_nez"] = obj.variables["dbe_nez"].values[i,:]
+    o["dbz_nez"] = obj.variables["dbz_nez"].values[i,:]
+    o["db_nez"] = np.sqrt(o["dbn_nez"]**2+o["dbe_nez"]**2)
+    o = o.drop(o[o.mlat>91].index)
+    x = o[
+        (o.mlt>=np.mod(mlt-1, 24))
+        & (o.mlt<=np.mod(mlt+1, 24))
+        & (o.mlat>=mlat-2)
+        & (o.mlat<=mlat+2)
+    ]
+    x["dates"] = date
+    logger.info(f"{date}, {np.max(x.db_nez)}")
+    if len(x):
+        x = x.groupby("dates").mean().reset_index()
+    else:
+        logger.info(f"No data point {date}/{mlat}/{mlt}")
+        x["dates"] = [date]
+        x["mlat"], x["mlt"] = [mlat], [mlt]
+        x["dbn_nez"], x["dbe_nez"], x["dbz_nez"], x["db_nez"] = (
+            [np.nan], [np.nan], [np.nan], [np.nan]
+        )
+    return x
 
 def read_dataset(date, base_folder="dataset/May2024/"):
     file = os.path.join(
         base_folder,
-        f"{date.strftime('%Y%m%d')}.north.schavec-mlt-supermag.60s.rev-0006.ncdf"
+        f"{date.strftime('%Y%m%d')}.north.model-supermag.60s.rev-0006.ncdf"
     )
     obj = xr.open_dataset(file)
     ddates, dates = [], []
-    for y,m,d,H,M,S in zip(
+    mlat, mlon, mlt = [], [], []
+    dbn_nez, dbe_nez, dbz_nez = [], [], []
+    for i,y,m,d,H,M,S in zip(
+            range(len(obj.variables["time_yr"])),
             obj.variables["time_yr"].values.astype(int),
             obj.variables["time_mo"].values.astype(int),
             obj.variables["time_dy"].values.astype(int),
@@ -26,21 +80,26 @@ def read_dataset(date, base_folder="dataset/May2024/"):
             obj.variables["time_mt"].values.astype(int),
             obj.variables["time_sc"].values.astype(int),
         ):
-        ddates.extend([dt.datetime(y,m,d,H,M,S)]*600)
+        ddates.extend([dt.datetime(y,m,d,H,M,S)]*obj.variables["glat"].shape[1])
+        mlat.extend(obj.variables["mlat"].values[i, :])
+        mlt.extend(obj.variables["mlt"].values[i, :])
+        mlon.extend(obj.variables["mlon"].values[i, :])
+        dbn_nez.extend(obj.variables["dbn_nez"].values[i, :])
+        dbe_nez.extend(obj.variables["dbe_nez"].values[i, :])
+        dbz_nez.extend(obj.variables["dbz_nez"].values[i, :])
         dates.append(dt.datetime(y,m,d,H,M,S))
     o = pd.DataFrame()
     o["dates"] = ddates
-    o["mlat"] = obj.variables["mlat"].values.ravel()
-    o["mlt"] = obj.variables["mlt"].values.ravel()
-    o["mlon"] = np.mod(obj.variables["mlon"].values.ravel()+180, 360) - 180
+    o["mlat"] = mlat
+    o["mlon"] = mlon
+    o["mlt"] = mlt
     o["dbn_nez"] = obj.variables["dbn_nez"].values.ravel()
     o["dbe_nez"] = obj.variables["dbe_nez"].values.ravel()
     o["dbz_nez"] = obj.variables["dbz_nez"].values.ravel()
+    o = o.drop(o[o.mlat>91].index)
     return o, dates
 
-def get_dataset_from_netcdf(date, glat, glon, df, dmlat=2, dmlt=1):
-    mlat, mlon, mlt = aacgmv2.get_aacgm_coord(glat, glon, 300, date)
-    logger.info(f"Converted mlat, mlon, mlt: {mlat}, {mlon}, {mlt}")
+def get_dataset_from_netcdf(date, mlat, mlt, df, dmlat, dmlt):
     x = df[
         (df.dates == date)
         & (df.mlt>=np.mod(mlt-dmlt, 24))
@@ -48,34 +107,81 @@ def get_dataset_from_netcdf(date, glat, glon, df, dmlat=2, dmlt=1):
         & (df.mlat>=mlat-dmlat)
         & (df.mlat<=mlat+dmlat)
     ]
-    logger.info(f"Number of data points againts this bin {len(x)}")
+    if len(x)==0:
+        o = df[(df.dates == date)]
+        logger.info(f"No data point {date}/{mlat}/{mlt}")
     x = x.groupby("dates").mean().reset_index()
     return x
 
-def fetch_dataset_from_netcdf_by_date_range(dates, cable, df, dmlat=2, dmlt=1):
+def fetch_dataset_from_netcdf_by_date_range(dates, cable, df, dmlat=2, dmlt=2):
     for i, seg in enumerate(cable.cable_seg):
         glat, glon = seg["center"]["lat"], seg["center"]["lon"]
+        logger.info(f"Segment {i}")
         frame = pd.DataFrame()
         for date in dates:
-            x = get_dataset_from_netcdf(date, glat, glon, df, dmlat, dmlt)
+            mlat, _, mlt = aacgmv2.get_aacgm_coord(glat, glon, 300, date)
+            x = get_dataset_from_netcdf(date, mlat, mlt, df, dmlat, dmlt)
             frame = pd.concat([frame, x])
-        
         fname = f"simulation/May2024/cable_segment_{i}.csv"
         frame.to_csv(fname, float_format="%g", index=False, header=True)
     return
 
 def interpolate_smag():
-    os.makedirs("simulation/May2024/", exist_ok=True)
+    global folder, base_folder
+    os.makedirs(folder, exist_ok=True)
     cable = get_cable_informations()
     O, Dates = pd.DataFrame(), []
-    for d in [dt.datetime(2024,5,10), dt.datetime(2024,5,11)]:
-        o, dates = read_dataset(d)
-        O = pd.concat([O, o])
-        Dates.extend(dates)
-    fetch_dataset_from_netcdf_by_date_range(
-        Dates, cable, O, 
-        dmlat=2, dmlt=1
+    dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(1440*2)]
+    for i, seg in enumerate(cable.cable_seg):
+        fname = f"{folder}cable_segment_{i}.csv"
+        if not os.path.exists(fname):
+            glat, glon = seg["center"]["lat"], seg["center"]["lon"]
+            frame = pd.DataFrame()
+            logger.info(f"Segment {i}")
+            for date in dates:
+                mlat, _, mlt = aacgmv2.get_aacgm_coord(glat, glon, 300, date)
+                x = fetch_dataset(date, mlat, mlt)
+                frame = pd.concat([frame, x])
+            frame.to_csv(fname, float_format="%g", index=False, header=True)
+        
+
+    # for d in [dt.datetime(2024,5,10)]:
+    #     o, dates = read_dataset(d)
+    #     logger.info(f"date: {d}/{len(dates)}")
+    #     O = pd.concat([O, o])
+    #     Dates.extend(dates)
+    # fetch_dataset_from_netcdf_by_date_range(
+    #     Dates, cable, O
+    # )
+    return
+
+def create_smag_stack_plot(dates=[dt.datetime(2024,5,10,12), dt.datetime(2024,5,12)]):
+    global folder, base_folder
+    import matplotlib.dates as mdates
+    ts = TimeSeriesPlot(
+        dates, f"", num_subplots=3, text_size=15,
+        major_locator=mdates.HourLocator(byhour=range(0, 24, 4)),
+        minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
     )
+    files = glob.glob(f"{folder}/cable_segment*.csv")
+    files.sort()
+    od = {}
+    for i, f in enumerate(files):
+        d = pd.read_csv(f, parse_dates=["dates"])
+        d.set_index("dates", inplace=True)
+        d = d.interpolate(method="linear")
+        d.reset_index(inplace=True)
+        d = d.rename(columns=dict(dbn_nez="Y", dbe_nez="X", dbz_nez="Z"))
+        od[f"CS_{i+1}"] = d
+        logger.info(f"File {f}/{len(d)}")
+        print(d.head())
+    ts.add_mag(od, stations=["CS_1"])
+    ts.add_mag(od, stations=["CS_4"])
+    ts.add_mag(od, stations=["CS_9"])
+    # ts.add_mag(od, stations=["CS_0", "CS_1", "CS_2"])
+    # ts.add_mag(od, stations=["CS_3", "CS_4", "CS_5"])
+    # ts.add_mag(od, stations=["CS_6", "CS_7", "CS_8"])
+    ts.save("figures/SuperMAG.stack.png")
     return
 
 if __name__ == "__main__":
@@ -83,8 +189,9 @@ if __name__ == "__main__":
     # 2. Call fetch_dataset_from_netcdf_by_date_range for whole date range 
     #       and save to local files. (D)
     # TODO: 3. May be plan to add 12th May
-    interpolate_smag()
+    # interpolate_smag()
 
     # TODO: Plot all the supermag dataset for 9 different segments TS plot
-    
+    create_smag_stack_plot()
+
     # TODO: Invoke scubas by the interpolated dataset 

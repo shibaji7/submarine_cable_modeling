@@ -142,17 +142,18 @@ class TimeSeriesPlot(object):
         ax = self._add_axis()
         for c, stn in zip(colors, stations):
             o = df[stn]
+            print(o.head())
             o.X = o.X - np.nanmean(o.X.iloc[:60*10])
             o.Y = o.Y - np.nanmean(o.Y.iloc[:60*10])
             o.Z = o.Z - np.nanmean(o.Z.iloc[:60*10])
             ax.plot(
-                o.index, o.X, 
+                o.dates, o.X, 
                 color=c, ls="-", 
                 lw=lw, alpha=0.7,
                 label=fr"$B[{stn}]$"
             )
             ax.plot(
-                o.index, o.Y, 
+                o.dates, o.Y, 
                 color=c, ls="--", 
                 lw=lw, alpha=0.7,
             )
