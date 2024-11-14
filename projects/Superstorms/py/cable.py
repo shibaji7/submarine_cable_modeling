@@ -8,6 +8,7 @@ sys.path.append("py/")
 
 from plots import TimeSeriesPlot
 from utils import get_cable_informations
+from fetch_data import clean_B_fields
 
 class SCUBASModel(object):
     
@@ -21,6 +22,17 @@ class SCUBASModel(object):
         self.cable_structure = cable_structure
         self.segment_files = segment_files
         logger.info(f"Initialize {cable_name}")
+        self.read_stations()
+        return
+    
+    def read_stations(self):
+        stns = ["FRD", "STJ", "HAD"]
+        FRD, HAD, STJ = (
+            ["dataset/May2024/frd20240510psec.sec.txt"],
+            ["dataset/May2024/had20240510psec.sec.txt"], 
+            ["dataset/May2024/stj20240510psec.sec.txt"]
+        )
+        self.frames = clean_B_fields(stns, [FRD, HAD, STJ])
         return
     
     def initialize_TL(self):
@@ -52,11 +64,12 @@ class SCUBASModel(object):
         return
     
     def plot_TS_with_others(
-            self, date_lim, fname, fig_title, vlines,
-            themis_fgm, themis_mom,
-            major_locator=mdates.MinuteLocator(byminute=range(0, 60, 5)),
-            minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 1)), 
-            text_size=15):
+        self, date_lim, fname, fig_title, vlines,
+        themis_fgm, themis_mom,
+        major_locator=mdates.MinuteLocator(byminute=range(0, 60, 5)),
+        minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 1)), 
+        text_size=15
+    ):
         ts = TimeSeriesPlot(
             date_lim,
             major_locator=major_locator,
@@ -70,7 +83,7 @@ class SCUBASModel(object):
             vlines=vlines, colors=["r"]
         )
         ts.add_vlines(
-            ts.add_mag(frames, ylim=[-200, 500]), 
+            ts.add_mag(self.frames, ylim=[-200, 500]), 
             vlines=vlines, colors=["r"]
         )
         ts.add_vlines(

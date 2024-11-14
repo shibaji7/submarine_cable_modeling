@@ -12,11 +12,11 @@ def run_May2024_storm():
     segment_files = [
         ["dataset/May2024/frd20240510psec.sec.csv"],
         ["dataset/May2024/frd20240510psec.sec.csv"],
-        ["dataset/May2024/stj20240510vsec.sec.csv"],
-        ["dataset/May2024/stj20240510vsec.sec.csv"],
-        ["dataset/May2024/stj20240510vsec.sec.csv"],
-        ["dataset/May2024/stj20240510vsec.sec.csv"],
-        ["dataset/May2024/stj20240510vsec.sec.csv"], 
+        ["dataset/May2024/stj20240510psec.sec.csv"],
+        ["dataset/May2024/stj20240510psec.sec.csv"],
+        ["dataset/May2024/stj20240510psec.sec.csv"],
+        ["dataset/May2024/stj20240510psec.sec.csv"],
+        ["dataset/May2024/stj20240510psec.sec.csv"], 
         ["dataset/May2024/had20240510psec.sec.csv"],
         ["dataset/May2024/had20240510psec.sec.csv"],
     ]
@@ -25,7 +25,7 @@ def run_May2024_storm():
             "FRD", "STJ", "HAD"
         ], [
             ["dataset/May2024/frd20240510psec.sec.txt"],
-            ["dataset/May2024/stj20240510vsec.sec.txt"],
+            ["dataset/May2024/stj20240510psec.sec.txt"],
             ["dataset/May2024/had20240510psec.sec.txt"]
         ]
     )

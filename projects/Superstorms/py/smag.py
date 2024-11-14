@@ -10,17 +10,23 @@ import sys
 sys.path.append("py/")
 from plots import TimeSeriesPlot
 from utils import get_cable_informations
+from fetch_data import clean_B_fields
 
 folder="simulation/May2024/"
 base_folder="dataset/May2024/"
+StationMap = dict(
+    frd=dict(lat=38.3032, lon=-77.460),
+    stj=dict(lat=47.56, lon=-52.71283),
+    had=dict(lat=51, lon=-4.48),
+)
 
 def fetch_dataset(date, mlat, mlt):
     global folder, base_folder
     file = os.path.join(
         base_folder,
-        f"{date.strftime('%Y%m%d')}.north.model-supermag.60s.rev-0006.ncdf"
+        f"{date.strftime('%Y%m%d')}.north.schavec-aacgm-supermag.60s.rev-0006.ncdf"
     )
-    obj = xr.open_dataset(file)
+    obj = xr.open_dataset(file, engine="netcdf4")
     dates = [
         dt.datetime(y,m,d,H,M,S)
         for y,m,d,H,M,S in zip(
@@ -42,10 +48,14 @@ def fetch_dataset(date, mlat, mlt):
     o["dbe_nez"] = obj.variables["dbe_nez"].values[i,:]
     o["dbz_nez"] = obj.variables["dbz_nez"].values[i,:]
     o["db_nez"] = np.sqrt(o["dbn_nez"]**2+o["dbe_nez"]**2)
-    o = o.drop(o[o.mlat>91].index)
+    mlt_hi, mlt_low = np.mod(mlt+1, 24), np.mod(mlt-1, 24)
+    if mlt_hi < mlt_low:
+        d = mlt_low
+        mlt_low = mlt_hi
+        mlt_hi = d
     x = o[
-        (o.mlt>=np.mod(mlt-1, 24))
-        & (o.mlt<=np.mod(mlt+1, 24))
+        (o.mlt>=mlt_low)
+        & (o.mlt<=mlt_hi)
         & (o.mlat>=mlat-2)
         & (o.mlat<=mlat+2)
     ]
@@ -62,76 +72,54 @@ def fetch_dataset(date, mlat, mlt):
         )
     return x
 
-def read_dataset(date, base_folder="dataset/May2024/"):
-    file = os.path.join(
-        base_folder,
-        f"{date.strftime('%Y%m%d')}.north.model-supermag.60s.rev-0006.ncdf"
-    )
-    obj = xr.open_dataset(file)
-    ddates, dates = [], []
-    mlat, mlon, mlt = [], [], []
-    dbn_nez, dbe_nez, dbz_nez = [], [], []
-    for i,y,m,d,H,M,S in zip(
-            range(len(obj.variables["time_yr"])),
-            obj.variables["time_yr"].values.astype(int),
-            obj.variables["time_mo"].values.astype(int),
-            obj.variables["time_dy"].values.astype(int),
-            obj.variables["time_hr"].values.astype(int),
-            obj.variables["time_mt"].values.astype(int),
-            obj.variables["time_sc"].values.astype(int),
-        ):
-        ddates.extend([dt.datetime(y,m,d,H,M,S)]*obj.variables["glat"].shape[1])
-        mlat.extend(obj.variables["mlat"].values[i, :])
-        mlt.extend(obj.variables["mlt"].values[i, :])
-        mlon.extend(obj.variables["mlon"].values[i, :])
-        dbn_nez.extend(obj.variables["dbn_nez"].values[i, :])
-        dbe_nez.extend(obj.variables["dbe_nez"].values[i, :])
-        dbz_nez.extend(obj.variables["dbz_nez"].values[i, :])
-        dates.append(dt.datetime(y,m,d,H,M,S))
-    o = pd.DataFrame()
-    o["dates"] = ddates
-    o["mlat"] = mlat
-    o["mlon"] = mlon
-    o["mlt"] = mlt
-    o["dbn_nez"] = obj.variables["dbn_nez"].values.ravel()
-    o["dbe_nez"] = obj.variables["dbe_nez"].values.ravel()
-    o["dbz_nez"] = obj.variables["dbz_nez"].values.ravel()
-    o = o.drop(o[o.mlat>91].index)
-    return o, dates
-
-def get_dataset_from_netcdf(date, mlat, mlt, df, dmlat, dmlt):
-    x = df[
-        (df.dates == date)
-        & (df.mlt>=np.mod(mlt-dmlt, 24))
-        & (df.mlt<=np.mod(mlt+dmlt, 24))
-        & (df.mlat>=mlat-dmlat)
-        & (df.mlat<=mlat+dmlat)
-    ]
-    if len(x)==0:
-        o = df[(df.dates == date)]
-        logger.info(f"No data point {date}/{mlat}/{mlt}")
-    x = x.groupby("dates").mean().reset_index()
-    return x
-
-def fetch_dataset_from_netcdf_by_date_range(dates, cable, df, dmlat=2, dmlt=2):
-    for i, seg in enumerate(cable.cable_seg):
-        glat, glon = seg["center"]["lat"], seg["center"]["lon"]
-        logger.info(f"Segment {i}")
-        frame = pd.DataFrame()
+def fetch_data_by_station(stn = "frd"):
+    global folder, base_folder, StationMap
+    os.makedirs(folder, exist_ok=True)
+    location = StationMap[stn]
+    frame = pd.DataFrame()
+    fname = f"{folder}station_{stn}.csv"
+    dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(1440)]
+    if not os.path.exists(fname):
+        glat, glon = location["lat"], location["lon"]
         for date in dates:
             mlat, _, mlt = aacgmv2.get_aacgm_coord(glat, glon, 300, date)
-            x = get_dataset_from_netcdf(date, mlat, mlt, df, dmlat, dmlt)
+            x = fetch_dataset(date, mlat, mlt)
             frame = pd.concat([frame, x])
-        fname = f"simulation/May2024/cable_segment_{i}.csv"
         frame.to_csv(fname, float_format="%g", index=False, header=True)
+    stn_validation_plots(stn)
+    return
+
+def stn_validation_plots(stn, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024,5,11)]):
+    global folder, base_folder
+    fname, file = (
+        f"{folder}station_{stn}.csv",
+        f"{base_folder}{stn}20240510psec.sec.csv"
+    )
+    df = pd.read_csv(fname, parse_dates=["dates"])
+    o = clean_B_fields([stn], [[file]])[stn]
+    o.reset_index(inplace=True)
+    o.X = o.X - np.nanmean(o.X.iloc[:60*10])
+    o.Y = o.Y - np.nanmean(o.Y.iloc[:60*10])
+    o.Z = o.Z - np.nanmean(o.Z.iloc[:60*10])
+    print(o)
+    import matplotlib.dates as mdates
+    ts = TimeSeriesPlot(
+        dates, f"", num_subplots=3, text_size=15,
+        major_locator=mdates.HourLocator(byhour=range(0, 24, 4)),
+        minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
+    )
+    ax = ts.add_curve(df.dates, df.dbn_nez)
+    ts.add_curve(o.Date, o.X, ax = ax, color="r", ylabel=r"$B_{im,eq}(X)$ [nT]")
+    ax = ts.add_curve(df.dates, df.dbe_nez)
+    ts.add_curve(o.Date, o.Y, ax = ax, color="r", ylabel=r"$B_{im,eq}(Y)$ [nT]")
+    ts.save(f"figures/SuperMAG.validation.{stn}.png")
     return
 
 def interpolate_smag():
     global folder, base_folder
     os.makedirs(folder, exist_ok=True)
     cable = get_cable_informations()
-    O, Dates = pd.DataFrame(), []
-    dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(1440*2)]
+    dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(1440)]
     for i, seg in enumerate(cable.cable_seg):
         fname = f"{folder}cable_segment_{i}.csv"
         if not os.path.exists(fname):
@@ -143,16 +131,6 @@ def interpolate_smag():
                 x = fetch_dataset(date, mlat, mlt)
                 frame = pd.concat([frame, x])
             frame.to_csv(fname, float_format="%g", index=False, header=True)
-        
-
-    # for d in [dt.datetime(2024,5,10)]:
-    #     o, dates = read_dataset(d)
-    #     logger.info(f"date: {d}/{len(dates)}")
-    #     O = pd.concat([O, o])
-    #     Dates.extend(dates)
-    # fetch_dataset_from_netcdf_by_date_range(
-    #     Dates, cable, O
-    # )
     return
 
 def create_smag_stack_plot(dates=[dt.datetime(2024,5,10,12), dt.datetime(2024,5,12)]):
@@ -190,8 +168,9 @@ if __name__ == "__main__":
     #       and save to local files. (D)
     # TODO: 3. May be plan to add 12th May
     # interpolate_smag()
+    fetch_data_by_station("stj")
 
     # TODO: Plot all the supermag dataset for 9 different segments TS plot
-    create_smag_stack_plot()
+    # create_smag_stack_plot()
 
     # TODO: Invoke scubas by the interpolated dataset 

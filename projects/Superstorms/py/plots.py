@@ -164,6 +164,24 @@ class TimeSeriesPlot(object):
         ax.legend(loc=loc, prop={"size": 10})
         return ax
     
+    def add_curve(
+        self, x, y, ax=None, 
+        lw=0.7, color="k",
+        ylim=[-2000, 1500], xlabel="", loc=1,
+        ylabel=r"$B_{sm,eq}$ [nT]"
+    ):
+        ax = ax if ax else self._add_axis()
+        ax.plot(
+            x, y, 
+            color=color, ls="--", 
+            lw=lw, alpha=0.7,
+        )
+        ax.set_xlim(self.dates)
+        ax.set_ylim(ylim)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        return ax
+    
     def add_voltage(
         self, df, lw=0.7, color="k",
         ylim=[-500, 500], xlabel="Time [UT]"
