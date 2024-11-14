@@ -8,6 +8,7 @@ __pycache__/
 *.scubas_config/
 *themis*
 *simulation*
+projects/Superstorms/dataset/May2024/*.ncdf
 
 
 # C extensions
