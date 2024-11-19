@@ -91,6 +91,17 @@ def fetch_data_by_station(stn = "frd"):
 
 def stn_validation_plots(stn, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024,5,11)]):
     global folder, base_folder
+    from supermag import SuperMAGGetData, sm_grabme
+    (_, data) = SuperMAGGetData("shibaji7", dates[0], 3600*12, "all,delta=start,baseline=yearly", stn.upper())
+    if len(data) > 0:
+        for comp in ["N", "E", "Z"]:
+            for cord in ["nez", "geo"]:
+                data[comp + "_" + cord] = sm_grabme(data, comp, cord)
+        data.drop(["N", "E", "Z"], axis=1, inplace=True)
+        data.tval = data.tval.apply(
+            lambda x: dt.datetime.utcfromtimestamp(x)
+        )
+        print(data)
     fname, file = (
         f"{folder}station_{stn}.csv",
         f"{base_folder}{stn}20240510psec.sec.csv"
@@ -101,17 +112,16 @@ def stn_validation_plots(stn, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024
     o.X = o.X - np.nanmean(o.X.iloc[:60*10])
     o.Y = o.Y - np.nanmean(o.Y.iloc[:60*10])
     o.Z = o.Z - np.nanmean(o.Z.iloc[:60*10])
-    print(o)
     import matplotlib.dates as mdates
     ts = TimeSeriesPlot(
         dates, f"", num_subplots=3, text_size=15,
         major_locator=mdates.HourLocator(byhour=range(0, 24, 4)),
         minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
     )
-    ax = ts.add_curve(df.dates, df.dbn_nez)
-    ts.add_curve(o.Date, o.X, ax = ax, color="r", ylabel=r"$B_{im,eq}(X)$ [nT]")
-    ax = ts.add_curve(df.dates, df.dbe_nez)
-    ts.add_curve(o.Date, o.Y, ax = ax, color="r", ylabel=r"$B_{im,eq}(Y)$ [nT]")
+    ax = ts.add_curve(df.dates, df.dbn_nez, ylim=[-150, 200])
+    ts.add_curve(data.tval, data.N_nez, ax = ax, color="r", ylabel=r"$N_{nez}$ [nT]", ylim=[-500, 500])
+    ax = ts.add_curve(df.dates, df.dbe_nez, ylim=[-150, 200])
+    ts.add_curve(data.tval, data.E_nez, ax = ax, color="r", ylabel=r"$E_{nez}(Y)$ [nT]", ylim=[-500, 500])
     ts.save(f"figures/SuperMAG.validation.{stn}.png")
     return
 
@@ -168,7 +178,7 @@ if __name__ == "__main__":
     #       and save to local files. (D)
     # TODO: 3. May be plan to add 12th May
     # interpolate_smag()
-    fetch_data_by_station("stj")
+    fetch_data_by_station("had")
 
     # TODO: Plot all the supermag dataset for 9 different segments TS plot
     # create_smag_stack_plot()
