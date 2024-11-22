@@ -22,17 +22,18 @@ class SCUBASModel(object):
         self.cable_structure = cable_structure
         self.segment_files = segment_files
         logger.info(f"Initialize {cable_name}")
-        self.read_stations()
         return
     
-    def read_stations(self):
-        stns = ["FRD", "STJ", "HAD"]
-        FRD, HAD, STJ = (
-            ["dataset/May2024/frd20240510psec.sec.txt"],
-            ["dataset/May2024/had20240510psec.sec.txt"], 
-            ["dataset/May2024/stj20240510psec.sec.txt"]
-        )
-        self.frames = clean_B_fields(stns, [FRD, HAD, STJ])
+    def read_stations(
+            self, 
+            stns=["FRD", "STJ", "HAD"], 
+            stn_files=[
+                ["dataset/May2024/frd20240510psec.sec.txt"],
+                ["dataset/May2024/had20240510psec.sec.txt"], 
+                ["dataset/May2024/stj20240510psec.sec.txt"]
+            ]
+        ):
+        self.frames = clean_B_fields(stns, stn_files)
         return
     
     def initialize_TL(self):
