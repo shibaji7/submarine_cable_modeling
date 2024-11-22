@@ -187,10 +187,16 @@ class TimeSeriesPlot(object):
         ylim=[-500, 500], xlabel="Time [UT]"
     ):
         ax = self._add_axis()
+        print(df.head())
         ax.plot(
-            df.index[::3], df["V(v)"][::3], 
+            df.index, df["V(v)"], 
             color=color, ls="-", 
             lw=lw, alpha=0.7,
+        )
+        ax.plot(
+            df.index, df["Vt(v)"], 
+            color="r", ls="-", 
+            lw=lw, alpha=0.9,
         )
         ax.set_ylabel("Voltage, [V]")
         ax.set_ylim(ylim)

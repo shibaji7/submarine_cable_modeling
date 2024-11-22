@@ -59,18 +59,19 @@ D, H, Z = (
     pd.read_csv("dataset/H[Eskdalemuir]-rescale-HR.csv", parse_dates=["Time"]),
     pd.read_csv("dataset/Z[Eskdalemuir]-rescale-HR.csv", parse_dates=["Time"])
 )
-D = D[(D.Time>=dt.datetime(1958, 2, 10, 11)) & (D.Time<=dt.datetime(1958, 2, 11, 8))]
-H = H[(H.Time>=dt.datetime(1958, 2, 10, 11)) & (H.Time<=dt.datetime(1958, 2, 11, 8))]
-Z = Z[(Z.Time>=dt.datetime(1958, 2, 10, 11)) & (Z.Time<=dt.datetime(1958, 2, 11, 8))]
+D = D[(D.Time>=dt.datetime(1958, 2, 10, 11)) & (D.Time<dt.datetime(1958, 2, 11, 8))]
+H = H[(H.Time>=dt.datetime(1958, 2, 10, 11)) & (H.Time<dt.datetime(1958, 2, 11, 8))]
+Z = Z[(Z.Time>=dt.datetime(1958, 2, 10, 11)) & (Z.Time<dt.datetime(1958, 2, 11, 8))]
 data = pd.DataFrame()
 data["Time"], data["H"], data["D"], data["Z"] = D.Time, np.copy(H.H), np.copy(D.D), np.copy(Z.Z)
 data["X"], data["Y"] = (
     data.H * np.cos(np.deg2rad(data.D)),
     data.H * np.sin(np.deg2rad(data.D))
 )
-print(data.head(70))
 data = data.set_index("Time").resample("1S").asfreq().interpolate(method="cubic").reset_index()
 data["F"] = np.sqrt(data.X**2+data.Y**2+data.Z**2)
+data = data[data.Time<dt.datetime(1958, 2, 11, 7, 59)]
+print(data.tail(60))
 
 major_locator=mdates.HourLocator(byhour=range(0, 24, 12))
 minor_locator=mdates.HourLocator(byhour=range(0, 24, 1))
@@ -121,3 +122,19 @@ model = SCUBASModel(
 )
 model.read_stations(["ESK"], [["dataset/compiled.csv"]])
 model.initialize_TL()
+model.run_cable_segment()
+from plots import TimeSeriesPlot
+ts = TimeSeriesPlot(
+    [dt.datetime(1958, 2, 10, 11), dt.datetime(1958, 2, 11, 8)],
+    major_locator=major_locator,
+    minor_locator=minor_locator,
+    fig_title="Staring at 11 UT, 10 Feb, 1958", 
+    text_size=15,
+    num_subplots=2,
+    formatter=DateFormatter(r"%H^{%M}"),
+)
+# ax = ts._add_axis()
+ts.add_voltage(model.cable.tot_params, lw=0.7, color="k",
+        ylim=[-3000, 3000], xlabel="Time [UT]")
+ts.save("figures/runs.png")
+ts.close()

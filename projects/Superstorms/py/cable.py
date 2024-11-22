@@ -66,7 +66,7 @@ class SCUBASModel(object):
     
     def plot_TS_with_others(
         self, date_lim, fname, fig_title, vlines,
-        themis_fgm, themis_mom,
+        themis_fgm, themis_mom, stations,
         major_locator=mdates.MinuteLocator(byminute=range(0, 60, 5)),
         minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 1)), 
         text_size=15
@@ -79,12 +79,13 @@ class SCUBASModel(object):
             text_size=text_size,
             num_subplots=3,
         )
+        if len(themis_fgm) and len(themis_mom):
+            ts.add_vlines(
+                ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"]),
+                vlines=vlines, colors=["r"]
+            )
         ts.add_vlines(
-            ts.add_themis(themis_fgm, themis_mom, ["thc_fgs_gsm", "pdyn"]),
-            vlines=vlines, colors=["r"]
-        )
-        ts.add_vlines(
-            ts.add_mag(self.frames, ylim=[-200, 500]), 
+            ts.add_mag(self.frames, stations, ylim=[-200, 500]), 
             vlines=vlines, colors=["r"]
         )
         ts.add_vlines(
