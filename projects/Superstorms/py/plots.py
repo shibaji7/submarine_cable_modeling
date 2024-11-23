@@ -184,18 +184,12 @@ class TimeSeriesPlot(object):
     
     def add_voltage(
         self, df, lw=0.7, color="k",
-        ylim=[-500, 500], xlabel="Time [UT]"
+        ylim=[-500, 500], xlabel="Time [UT]", ax=None
     ):
-        ax = self._add_axis()
-        print(df.head())
-        ax.plot(
-            df.index, df["V(v)"], 
-            color=color, ls="-", 
-            lw=lw, alpha=0.7,
-        )
+        ax = ax if ax else self._add_axis()
         ax.plot(
             df.index, df["Vt(v)"], 
-            color="r", ls="-", 
+            color=color, ls="-", 
             lw=lw, alpha=0.9,
         )
         ax.set_ylabel("Voltage, [V]")

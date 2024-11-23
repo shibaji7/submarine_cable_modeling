@@ -103,7 +103,33 @@ for p, seg in zip(profiles, segments):
 
 from utils import create_from_lat_lon
 from cable import SCUBASModel
-cable = create_from_lat_lon(dSegments, profiles)
+from scubas.datasets import PROFILES
+
+land50 = PROFILES.CS_E
+land50.layers[0].thickness = 50
+cable0, cable1, cable2 = (
+    create_from_lat_lon(
+        dSegments, 
+        profiles, 
+    ),
+    create_from_lat_lon(
+        dSegments, 
+        profiles, 
+        left_active_termination=PROFILES.LD,
+        right_active_termination=PROFILES.LD
+    ),
+    create_from_lat_lon(
+        dSegments, 
+        profiles, 
+        left_active_termination=PROFILES.LD,
+        right_active_termination=land50
+    )
+)
+fig_titles=[
+    "No active terminations",
+    "Active terminations with Land on both sides",
+    "Active terminations with Land and 50-m water"
+]
 
 segment_files = [
     ["dataset/compiled.csv"],
@@ -115,26 +141,68 @@ segment_files = [
     ["dataset/compiled.csv"], 
 ]
 
-model = SCUBASModel(
-    cable_name="TAT-1",
-    cable_structure=cable,
-    segment_files=segment_files,
+model0, model1, model2 = (
+    SCUBASModel(
+        cable_name="TAT-1",
+        cable_structure=cable0,
+        segment_files=segment_files,
+    ),
+    SCUBASModel(
+        cable_name="TAT-1",
+        cable_structure=cable1,
+        segment_files=segment_files,
+    ),
+    SCUBASModel(
+        cable_name="TAT-1",
+        cable_structure=cable2,
+        segment_files=segment_files,
+    )
 )
-model.read_stations(["ESK"], [["dataset/compiled.csv"]])
-model.initialize_TL()
-model.run_cable_segment()
+
+model0.read_stations(["ESK"], [["dataset/compiled.csv"]])
+model0.initialize_TL()
+model0.run_cable_segment()
+
+model1.read_stations(["ESK"], [["dataset/compiled.csv"]])
+model1.initialize_TL()
+model1.run_cable_segment()
+
+model2.read_stations(["ESK"], [["dataset/compiled.csv"]])
+model2.initialize_TL()
+model2.run_cable_segment()
+
 from plots import TimeSeriesPlot
 ts = TimeSeriesPlot(
     [dt.datetime(1958, 2, 10, 11), dt.datetime(1958, 2, 11, 8)],
     major_locator=major_locator,
     minor_locator=minor_locator,
-    fig_title="Staring at 11 UT, 10 Feb, 1958", 
+    fig_title=fig_titles[0], 
     text_size=15,
     num_subplots=2,
     formatter=DateFormatter(r"%H^{%M}"),
 )
-# ax = ts._add_axis()
-ts.add_voltage(model.cable.tot_params, lw=0.7, color="k",
-        ylim=[-3000, 3000], xlabel="Time [UT]")
+ax = ts.add_voltage(model0.cable.tot_params, lw=0.7, color="k",
+        ylim=[-3000, 3000], xlabel="UT since at 11 on 10 Feb, 1958")
+ax.plot(model0.cable.tot_params.index, model0.cable.tot_params["V(v)"],
+        color="r", ls="-", lw=0.7, alpha=0.7, zorder=1)
 ts.save("figures/runs.png")
+ts.close()
+
+from plots import TimeSeriesPlot
+ts = TimeSeriesPlot(
+    [dt.datetime(1958, 2, 10, 11), dt.datetime(1958, 2, 11, 8)],
+    major_locator=major_locator,
+    minor_locator=minor_locator,
+    fig_title="", 
+    text_size=15,
+    num_subplots=2,
+    formatter=DateFormatter(r"%H^{%M}"),
+)
+ax = ts.add_voltage(model0.cable.tot_params, lw=0.7, color="k",
+        ylim=[-3000, 3000], xlabel="UT since at 11 on 10 Feb, 1958")
+ax.plot(model1.cable.tot_params.index, model1.cable.tot_params["Vt(v)"],
+        color="r", ls="-", lw=0.7, alpha=0.7, zorder=3, label="AT/Land",)
+ax.plot(model2.cable.tot_params.index, model2.cable.tot_params["Vt(v)"],
+        color="b", ls="-", lw=0.7, alpha=0.7, zorder=5, label="AT/Land,50-m Water")
+ts.save("figures/compare.png")
 ts.close()

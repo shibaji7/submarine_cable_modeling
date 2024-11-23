@@ -129,7 +129,7 @@ def interpolate_smag():
     global folder, base_folder
     os.makedirs(folder, exist_ok=True)
     cable = get_cable_informations()
-    dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(1440)]
+    dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(2*1440)]
     for i, seg in enumerate(cable.cable_seg):
         fname = f"{folder}cable_segment_{i}.csv"
         if not os.path.exists(fname):
@@ -140,6 +140,7 @@ def interpolate_smag():
                 mlat, _, mlt = aacgmv2.get_aacgm_coord(glat, glon, 300, date)
                 x = fetch_dataset(date, mlat, mlt)
                 frame = pd.concat([frame, x])
+            frame.rename(columns=dict(dates="Date",dbn_nez="X",dbe_nez="Y",dbz_nez="Z",db_nez="F"), inplace=True)
             frame.to_csv(fname, float_format="%g", index=False, header=True)
     return
 
@@ -172,15 +173,59 @@ def create_smag_stack_plot(dates=[dt.datetime(2024,5,10,12), dt.datetime(2024,5,
     ts.save("figures/SuperMAG.stack.png")
     return
 
+from cable import SCUBASModel
+
+def run_May2024_storm():
+    dates = [dt.datetime(2024,5,10,12), dt.datetime(2024,5,12)]
+    segment_files = [
+        ["simulation/May2024/cable_segment_0.csv"],
+        ["simulation/May2024/cable_segment_1.csv"],
+        ["simulation/May2024/cable_segment_2.csv"],
+        ["simulation/May2024/cable_segment_3.csv"],
+        ["simulation/May2024/cable_segment_4.csv"],
+        ["simulation/May2024/cable_segment_5.csv"],
+        ["simulation/May2024/cable_segment_6.csv"], 
+        ["simulation/May2024/cable_segment_7.csv"],
+        ["simulation/May2024/cable_segment_8.csv"],
+    ]
+    model = SCUBASModel(segment_files=segment_files)
+    model.initialize_TL()
+    model.run_cable_segment()
+    data = model.cable.tot_params.reset_index().copy()
+    data.to_csv("simulation/May2024/SCUBAS-Simulation-SuperMAG-Fitted.csv", float_format="%g", index=False)
+    return
+
+def SuperMAG_compare_plots():
+    smag_simulations = pd.read_csv("simulation/May2024/SCUBAS-Simulation-SuperMAG-Fitted.csv", parse_dates=["Time"]).set_index("Time")
+    print(smag_simulations.head())
+    scuba_simulations = pd.read_csv("simulation/May2024/SCUBAS-Simulation-3-Stations.csv", parse_dates=["Time"]).set_index("Time")
+    dates = [dt.datetime(2024,5,10,12), dt.datetime(2024,5,12)]
+    import matplotlib.dates as mdates
+    ts = TimeSeriesPlot(
+        dates,
+        major_locator=mdates.HourLocator(byhour=range(0, 24, 6)),
+        minor_locator=mdates.HourLocator(byhour=range(0, 24, 3)),
+        fig_title="Compare Voltages (Red: 3 Stations, Black: SuperMAG Fitted)", 
+        text_size=15,
+        num_subplots=1,
+    )
+    ax = ts.add_voltage(smag_simulations, xlabel="")
+    ts.add_voltage(scuba_simulations, ax=ax, color="r", xlabel="Hours Since 10 May 2024, 12 UT")
+    ts.save("simulation/May2024/SCUBAS-Simulation-SMag-Compare.png")
+    ts.close()
+    return
+
 if __name__ == "__main__":
     # 1. Fetch o, dates based on 10 and 11 th May (D)
     # 2. Call fetch_dataset_from_netcdf_by_date_range for whole date range 
     #       and save to local files. (D)
     # TODO: 3. May be plan to add 12th May
-    # interpolate_smag()
-    fetch_data_by_station("had")
+    interpolate_smag()
+    # fetch_data_by_station("had")
 
     # TODO: Plot all the supermag dataset for 9 different segments TS plot
     # create_smag_stack_plot()
 
     # TODO: Invoke scubas by the interpolated dataset 
+    run_May2024_storm()
+    SuperMAG_compare_plots()

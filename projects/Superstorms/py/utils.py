@@ -2,7 +2,12 @@ from types import SimpleNamespace
 from scubas.datasets import PROFILES
 
 
-def create_from_lat_lon(dSegments, profiles, width=1.0, flim=[1e-6, 1e0]):
+def create_from_lat_lon(
+        dSegments, profiles, 
+        width=1.0, flim=[1e-6, 1e0], 
+        left_active_termination=None,
+        right_active_termination=None,
+    ):
     cable_seg = []
     for i in range(len(dSegments)-1):
         initial = dSegments[i]
@@ -18,6 +23,16 @@ def create_from_lat_lon(dSegments, profiles, width=1.0, flim=[1e-6, 1e0]):
                     left=None,
                 ),
             )
+        )
+    if left_active_termination:
+        cable_seg[0]["active_termination"] = dict(
+            right=None,
+            left=left_active_termination,
+        )
+    if right_active_termination:
+        cable_seg[0]["active_termination"] = dict(
+            right=right_active_termination,
+            left=None,
         )
     cable = SimpleNamespace(**dict(
         cable_seg = cable_seg
