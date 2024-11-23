@@ -30,7 +30,7 @@ def create_from_lat_lon(
             left=left_active_termination,
         )
     if right_active_termination:
-        cable_seg[0]["active_termination"] = dict(
+        cable_seg[-1]["active_termination"] = dict(
             right=right_active_termination,
             left=None,
         )

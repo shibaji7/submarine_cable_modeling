@@ -190,7 +190,7 @@ ts.close()
 
 from plots import TimeSeriesPlot
 ts = TimeSeriesPlot(
-    [dt.datetime(1958, 2, 10, 11), dt.datetime(1958, 2, 11, 8)],
+    [dt.datetime(1958, 2, 11), dt.datetime(1958, 2, 11, 8)],
     major_locator=major_locator,
     minor_locator=minor_locator,
     fig_title="", 
