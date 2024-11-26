@@ -131,6 +131,7 @@ def interpolate_smag():
     cable = get_cable_informations()
     dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(2*1440)]
     for i, seg in enumerate(cable.cable_seg):
+        print(seg["center"]["lat"], seg["center"]["lon"])
         fname = f"{folder}cable_segment_{i}.csv"
         if not os.path.exists(fname):
             glat, glon = seg["center"]["lat"], seg["center"]["lon"]
@@ -227,5 +228,5 @@ if __name__ == "__main__":
     # create_smag_stack_plot()
 
     # TODO: Invoke scubas by the interpolated dataset 
-    run_May2024_storm()
-    SuperMAG_compare_plots()
+    # run_May2024_storm()
+    # SuperMAG_compare_plots()
