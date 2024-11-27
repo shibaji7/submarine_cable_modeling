@@ -73,8 +73,8 @@ data["F"] = np.sqrt(data.X**2+data.Y**2+data.Z**2)
 data = data[data.Time<dt.datetime(1958, 2, 11, 7, 59)]
 print(data.tail(60))
 
-major_locator=mdates.HourLocator(byhour=range(0, 24, 12))
-minor_locator=mdates.HourLocator(byhour=range(0, 24, 1))
+major_locator=mdates.HourLocator(byhour=range(0, 24, 1))
+minor_locator=mdates.MinuteLocator(byminute=range(0, 60, 30))
 formatter=DateFormatter(r"%H^{%M}")
 fig, ax = plt.subplots(dpi=240, figsize=(8,3), nrows=1, ncols=1)
 ax.xaxis.set_major_locator(major_locator)
@@ -84,8 +84,8 @@ ax.plot(data.Time, data.X-np.nanmedian(data.X.iloc[0:60]), color="b", lw=0.6, ls
 ax.plot(data.Time, data.Y-np.nanmedian(data.Y.iloc[0:60]), color="r", lw=0.6, ls="-", label=r"$B_y$")
 ax.plot(data.Time, data.Z-np.nanmedian(data.Z.iloc[0:60]), color="g", lw=0.6, ls="-", label=r"$B_z$")
 ax.legend(loc=1)
-ax.set_xlim([dt.datetime(1958, 2, 10, 11), dt.datetime(1958, 2, 11, 8)])
-ax.text(0.1, 1.05, "Staring at 11 UT, 10 Feb, 1958", ha="left", va="center", transform=ax.transAxes)
+ax.set_xlim([dt.datetime(1958, 2, 11), dt.datetime(1958, 2, 11, 4)])
+ax.text(0.1, 1.05, "Staring at 00 UT, 11 Feb, 1958", ha="left", va="center", transform=ax.transAxes)
 ax.set_ylabel("dB (Eskdalemuir), nT")
 ax.set_xlabel("Time, UT")
 fig.savefig("figures/EskdalemuirXY.png")
@@ -190,7 +190,7 @@ ts.close()
 
 from plots import TimeSeriesPlot
 ts = TimeSeriesPlot(
-    [dt.datetime(1958, 2, 11), dt.datetime(1958, 2, 11, 8)],
+    [dt.datetime(1958, 2, 11), dt.datetime(1958, 2, 11, 4)],
     major_locator=major_locator,
     minor_locator=minor_locator,
     fig_title="", 
@@ -199,7 +199,7 @@ ts = TimeSeriesPlot(
     formatter=DateFormatter(r"%H^{%M}"),
 )
 ax = ts.add_voltage(model0.cable.tot_params, lw=0.7, color="k",
-        ylim=[-3000, 3000], xlabel="UT since at 11 on 10 Feb, 1958")
+        ylim=[-3000, 3000], xlabel="Staring at 00 UT, 11 Feb, 1958")
 ax.plot(model1.cable.tot_params.index, model1.cable.tot_params["Vt(v)"],
         color="r", ls="-", lw=0.7, alpha=0.7, zorder=3, label="AT/Land",)
 ax.plot(model2.cable.tot_params.index, model2.cable.tot_params["Vt(v)"],
