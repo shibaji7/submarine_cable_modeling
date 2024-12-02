@@ -11,10 +11,10 @@ convertable_parameters = [
             dict(
                 component="H",
                 file="H[Eskdalemuir].csv",
-                y1=80, y2=93, ybase=15894, yscale=16.6,
-                x1=62, x2=250, 
+                y1=80, y2=95, ybase=15894, yscale=16.6,
+                x1=60, x2=275, 
                 x1_date=dt.datetime(1958,2,10,12),
-                x2_date=dt.datetime(1958,2,11),
+                x2_date=dt.datetime(1958,2,11,2),
                 xlim=[
                     dt.datetime(1958,2,10,18),
                     dt.datetime(1958,2,11,6)
