@@ -85,7 +85,7 @@ ax.plot(data.Time, data.Y-np.nanmedian(data.Y.iloc[0:60]), color="r", lw=0.6, ls
 ax.plot(data.Time, data.Z-np.nanmedian(data.Z.iloc[0:60]), color="g", lw=0.6, ls="-", label=r"$B_z$")
 ax.legend(loc=1)
 ax.set_xlim([dt.datetime(1958, 2, 10, 11), dt.datetime(1958, 2, 11, 8)])
-ax.text(0.1, 1.05, "Staring at 11 UT, 10 Feb, 1958", ha="left", va="center", transform=ax.transAxes)
+ax.text(0.1, 1.05, "Starting at 11 UT, 10 Feb, 1958", ha="left", va="center", transform=ax.transAxes)
 ax.set_ylabel("dB (Eskdalemuir), nT")
 ax.set_xlabel("Time, UT")
 fig.savefig("figures/EskdalemuirXY.png")
@@ -182,7 +182,7 @@ ts = TimeSeriesPlot(
     formatter=DateFormatter(r"%H^{%M}"),
 )
 ax = ts.add_voltage(model0.cable.tot_params, lw=0.7, color="k",
-        ylim=[-3000, 3000], xlabel="UT since at 11 on 10 Feb, 1958")
+        ylim=[-3000, 3000], xlabel="UT since 11 UT on 10 Feb, 1958")
 ax.plot(model0.cable.tot_params.index, model0.cable.tot_params["V(v)"],
         color="r", ls="-", lw=0.7, alpha=0.7, zorder=1)
 ts.save("figures/runs.png")
