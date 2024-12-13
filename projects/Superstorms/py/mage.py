@@ -122,7 +122,7 @@ def SuperMAG_compare_plots():
         dates,
         major_locator=mdates.HourLocator(byhour=range(0, 24, 6)),
         minor_locator=mdates.HourLocator(byhour=range(0, 24, 3)),
-        fig_title="Compare Voltages (R: 3 Stn, Bk: SMAG Fit, Bl: MAGE)", 
+        fig_title="Compare Voltages (R: 3 Stn, Bk: SMAG Fit, Bl: 3 Stn MAGE)", 
         text_size=15,
         num_subplots=1,
     )
@@ -135,7 +135,7 @@ def SuperMAG_compare_plots():
 
 if __name__ == "__main__":
     # 1. Fetch o, dates based on MAGE simulations 10 and 11 th May (D)
-    # fetch_MAGE_simulations()
+    fetch_MAGE_simulations()
     # fetch_data_by_station("had")
 
     # TODO: Plot all the supermag dataset for different segments TS plot
@@ -144,5 +144,5 @@ if __name__ == "__main__":
     # stn_validation_plots("stj")
 
     # TODO: Invoke scubas by the interpolated dataset 
-    # run_May2024_storm()
+    run_May2024_storm()
     SuperMAG_compare_plots()
