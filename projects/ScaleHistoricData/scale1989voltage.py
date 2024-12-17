@@ -27,17 +27,17 @@ convertable_parameters = [
             dict(
                 component="Voltage",
                 file="TAT8Volt.csv",
-                y1=-25, y2=52, ybase=10, yscale=1,
-                x1=1, x2=2, 
-                x1_date=dt.datetime(1989,3,13,1),
-                x2_date=dt.datetime(1989,3,13,2),
+                y1=290, y2=500, ybase=0, yscale=1,
+                x1=0, x2=24, 
+                x1_date=dt.datetime(1989,3,12,12),
+                x2_date=dt.datetime(1989,3,13,12),
                 xlim=[
-                    dt.datetime(1989,3,13,1),
-                    dt.datetime(1989,3,13,2)
+                    dt.datetime(1989,3,12,12),
+                    dt.datetime(1989,3,13,12)
                 ],
                 ylabel=r"TAT-8 Voltage [V]",
                 text="Scaled Voltage from TAT8, 13 March 1989",
-                ylim=[-400, 800],
+                ylim=[-500, 1000],
             ),
         ]
     )
