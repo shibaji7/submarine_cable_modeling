@@ -78,7 +78,7 @@ def fetch_data_by_station(stn = "frd"):
     location = StationMap[stn]
     frame = pd.DataFrame()
     fname = f"{folder}station_{stn}.csv"
-    dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(1440)]
+    dates = [dt.datetime(2024,5,10) + dt.timedelta(minutes=t) for t in range(1440*2)]
     if not os.path.exists(fname):
         glat, glon = location["lat"], location["lon"]
         for date in dates:
@@ -89,10 +89,10 @@ def fetch_data_by_station(stn = "frd"):
     stn_validation_plots(stn)
     return
 
-def stn_validation_plots(stn, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024,5,11)]):
+def stn_validation_plots(stn, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024,5,12)]):
     global folder, base_folder
     from supermag import SuperMAGGetData, sm_grabme
-    (_, data) = SuperMAGGetData("shibaji7", dates[0], 3600*12, "all,delta=start,baseline=yearly", stn.upper())
+    (_, data) = SuperMAGGetData("shibaji7", dates[0], 3600*36, "all,delta=start,baseline=yearly", stn.upper())
     if len(data) > 0:
         for comp in ["N", "E", "Z"]:
             for cord in ["nez", "geo"]:
@@ -118,10 +118,20 @@ def stn_validation_plots(stn, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024
         major_locator=mdates.HourLocator(byhour=range(0, 24, 4)),
         minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
     )
-    ax = ts.add_curve(df.dates, df.dbn_nez, ylim=[-150, 200])
-    ts.add_curve(data.tval, data.N_nez, ax = ax, color="r", ylabel=r"$N_{nez}$ [nT]", ylim=[-500, 500])
-    ax = ts.add_curve(df.dates, df.dbe_nez, ylim=[-150, 200])
-    ts.add_curve(data.tval, data.E_nez, ax = ax, color="r", ylabel=r"$E_{nez}(Y)$ [nT]", ylim=[-500, 500])
+    print(df.head())
+    ax = ts.add_curve(df.dates, -df.dbn_nez,)
+    ts.add_curve(o.Date, o.Y, ax = ax, color="b")
+    ts.add_curve(data.tval, -data.N_nez, ax = ax, color="r", ylabel=r"$N_{nez}(Y)$ [nT]", ylim=[-1000, 1000])
+    ax = ts.add_curve(df.dates, df.dbe_nez,)
+    ts.add_curve(o.Date, o.X, ax = ax, color="b")
+    ts.add_curve(data.tval, data.E_nez, ax = ax, color="r", ylabel=r"$E_{nez}(X)$ [nT]", ylim=[-1000, 1000])
+    
+    # ax = ts.add_curve(df.dates, df.dbn_nez, ylim=[-150, 200])
+    # ts.add_curve(data.tval, data.N_nez, ax = ax, color="r", ylabel=r"$N_{nez}$ [nT]", ylim=[-500, 500])
+    # ts.add_curve(o.Date, o.Y, ax = ax, color="b")
+    # ax = ts.add_curve(df.dates, df.dbe_nez, ylim=[-150, 200])
+    # ts.add_curve(data.tval, data.E_nez, ax = ax, color="r", ylabel=r"$E_{nez}$ [nT]", ylim=[-500, 500])
+    # ts.add_curve(o.Date, o.X, ax = ax, color="b")
     ts.save(f"figures/SuperMAG.validation.{stn}.png")
     return
 
@@ -221,8 +231,10 @@ if __name__ == "__main__":
     # 2. Call fetch_dataset_from_netcdf_by_date_range for whole date range 
     #       and save to local files. (D)
     # TODO: 3. May be plan to add 12th May
-    interpolate_smag()
-    # fetch_data_by_station("had")
+    # interpolate_smag()
+    fetch_data_by_station("frd")
+    fetch_data_by_station("had")
+    fetch_data_by_station("stj")
 
     # TODO: Plot all the supermag dataset for 9 different segments TS plot
     # create_smag_stack_plot()
