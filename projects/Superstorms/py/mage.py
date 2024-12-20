@@ -8,7 +8,7 @@ import numpy as np
 sys.path.append("py/")
 from plots import TimeSeriesPlot
 from utils import get_cable_informations
-from fetch_data import clean_B_fields
+from fetch_data import clean_B_fields, read_iaga
 
 from cable import SCUBASModel
 
@@ -21,7 +21,7 @@ def fetch_MAGE_simulations(stations=["frd", "stj", "had"]):
     for stn in stations:
         file = f"{base_folder}{stn.upper()}_May2024_MAGE.csv"
         d = pd.read_csv(file)
-        d.rename(columns=dict(Var1="X",Var2="Y",Var3="Z"), inplace=True)
+        d.rename(columns=dict(Var1="Z",Var2="Y",Var3="X"), inplace=True)
         d["Date"] = [dt.datetime(2024,5,9,20) + dt.timedelta(minutes=i) for i in range(len(d))]
         d = d[d.Date<dt.datetime(2024,5,12)]
         d.to_csv(f"{folder}{stn.lower()}_May2024_MAGE.csv", index=False, header=True, float_format="%g")
@@ -71,10 +71,11 @@ def stn_validation_plots(stn, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024
 
     fname, file = (
         f"{folder}{stn}_May2024_MAGE.csv",
-        f"{base_folder}{stn}20240510psec.sec.csv"
+        f"{base_folder}{stn}20240510min.min"
     )
     df = pd.read_csv(fname, parse_dates=["Date"])
-    o = clean_B_fields([stn], [[file]])[stn]
+    # o = clean_B_fields([stn], [[file]])[stn]
+    o = read_iaga(file)
     o.reset_index(inplace=True)
     o.X = o.X - np.nanmean(o.X.iloc[:60*10])
     o.Y = o.Y - np.nanmean(o.Y.iloc[:60*10])
@@ -85,12 +86,14 @@ def stn_validation_plots(stn, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024
         major_locator=mdates.HourLocator(byhour=range(0, 24, 4)),
         minor_locator=mdates.HourLocator(byhour=range(0, 24, 1)),
     )
+    # Add MAGE
     ax = ts.add_curve(df.Date, df.Y,)
-    ts.add_curve(o.Date, o.Y, ax = ax, color="b")
-    ts.add_curve(data.tval, -data.N_nez, ax = ax, color="r", ylabel=r"$N_{nez}(Y)$ [nT]", ylim=[-1000, 1000])
+    # Add Intermagnet
+    ts.add_curve(o.Date, o.Y, ax = ax, color="b", ylabel=r"$N_{nez}(Y)$ [nT]", ylim=[-1000, 1000])
+    # ts.add_curve(data.tval, data.N_nez, ax = ax, color="r", ylabel=r"$N_{nez}(Y)$ [nT]", ylim=[-1000, 1000])
     ax = ts.add_curve(df.Date, df.X,)
-    ts.add_curve(o.Date, o.X, ax = ax, color="b")
-    ts.add_curve(data.tval, data.E_nez, ax = ax, color="r", ylabel=r"$E_{nez}(X)$ [nT]", ylim=[-1000, 1000])
+    ts.add_curve(o.Date, o.X, ax = ax, color="b", ylabel=r"$N_{nez}(X)$ [nT]", ylim=[-1000, 1000])
+    # ts.add_curve(data.tval, data.E_nez, ax = ax, color="r", ylabel=r"$E_{nez}(X)$ [nT]", ylim=[-1000, 1000])
     ts.save(f"figures/MAGE.validation.{stn}.png")
     return
 
@@ -145,8 +148,8 @@ if __name__ == "__main__":
     # TODO: Plot all the supermag dataset for different segments TS plot
     create_mage_stack_plot()
     stn_validation_plots("frd")
-    stn_validation_plots("stj")
-    stn_validation_plots("had")
+    # stn_validation_plots("stj")
+    # stn_validation_plots("had")
 
     # TODO: Invoke scubas by the interpolated dataset 
     # run_May2024_storm()
