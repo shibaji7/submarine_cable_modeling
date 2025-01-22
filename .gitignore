@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*Operators*
 *figures/*
 *ev/*
 *.scubas_config/
