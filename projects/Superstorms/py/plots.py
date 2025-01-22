@@ -61,6 +61,7 @@ class TimeSeriesPlot(object):
         ax.xaxis.set_major_locator(self.major_locator)
         ax.xaxis.set_minor_locator(self.minor_locator)
         ax.xaxis.set_major_formatter(self.formatter)
+        ax.set_xlim(self.dates)
         return ax
 
     def save(self, filepath):
