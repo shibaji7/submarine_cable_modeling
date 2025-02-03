@@ -17,6 +17,7 @@ import datetime as dt
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans", "Lucida Grande", "Verdana"]
@@ -39,8 +40,8 @@ class CartoDataOverlay(object):
         cb=True,
         central_longitude=-30.0,
         central_latitude=45.0,
-        extent=[-90, 10, 40, 90],
-        plt_lats=np.arange(40, 90, 10),
+        extent=[-90, 10, 20, 80],
+        plt_lats=np.arange(20, 80, 10),
         txt_size=8,
     ):
         setsize(txt_size)
@@ -79,7 +80,9 @@ class CartoDataOverlay(object):
         Instatitate figure and axes labels
         """
         self._num_subplots_created += 1
-        proj = cartopy.crs.NorthPolarStereo(central_longitude=self.central_longitude)
+        proj = cartopy.crs.PlateCarree(
+            central_longitude=self.central_longitude,
+        )
         ax = self.fig.add_subplot(
             100 * self.nrows + 10 * self.ncols + self._num_subplots_created,
             projection="CartoBase",
@@ -88,8 +91,8 @@ class CartoDataOverlay(object):
             plot_date=self.date,
         )
         ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
-        plt_lons = np.arange(-180, 181, 15)
-        mark_lons = np.arange(self.extent[0], self.extent[1], 15)
+        plt_lons = np.arange(-180, 181, 20)
+        mark_lons = np.arange(self.extent[0], self.extent[1], 20)
         plt_lats = self.plt_lats
         ax.set_extent(self.extent, crs=cartopy.crs.PlateCarree())
         gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), linewidth=0.2)
@@ -128,92 +131,53 @@ class CartoDataOverlay(object):
             )
         return ax
     
+def get_bthmetry():
+    # from scubas.coductivity import ConductivityProfile
+    # cp = ConductivityProfile()
+    from scipy.io import netcdf_file
+    filename = ".scubas_config/LITHO1.0.nc"
+    with netcdf_file(filename) as f:
+        latitude = np.copy(f.variables["latitude"][:])
+        longitude = np.copy(f.variables["longitude"][:])
 
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-import cartopy.io.shapereader as shpreader
-from glob import glob
-def load_bathymetry(zip_file_url):
-    """Read zip file from Natural Earth containing bathymetry shapefiles"""
-    # Download and extract shapefiles
-    import io
-    import zipfile
+        # water levels
+        water_bottom_depth = np.copy(f.variables["water_bottom_depth"][:])
+        water_top_depth = np.copy(f.variables["water_top_depth"][:])
+        dwater = water_bottom_depth-water_top_depth
+        dwater[dwater<=0] = np.nan
+        # dwater = np.ma.masked_invalid(dwater)
+    return (latitude, longitude, dwater)
 
-    import requests
-    r = requests.get(zip_file_url)
-    z = zipfile.ZipFile(io.BytesIO(r.content))
-    z.extractall("dataset/ne_10m_bathymetry_all/")
-
-    # Read shapefiles, sorted by depth
-    shp_dict = {}
-    files = glob('dataset/ne_10m_bathymetry_all/*.shp')
-    assert len(files) > 0
-    files.sort()
-    depths = []
-    for f in files:
-        depth = '-' + f.split('_')[-1].split('.')[0]  # depth from file name
-        depths.append(depth)
-        bbox = (90, -15, 160, 60)  # (x0, y0, x1, y1)
-        nei = shpreader.Reader(f, bbox=bbox)
-        shp_dict[depth] = nei
-    depths = np.array(depths)[::-1]  # sort from surface to bottom
-    return depths, shp_dict
-    
 if __name__ == "__main__":
-    depths_str, shp_dict = load_bathymetry(
-        'https://naturalearth.s3.amazonaws.com/' +
-        '4.1.1/10m_physical/ne_10m_bathymetry_all.zip')
-    depths = depths_str.astype(int)
-
-    N = len(depths)
-    nudge = 0.01  # shift bin edge slightly to include data
-    boundaries = [min(depths)] + sorted(depths+nudge)  # low to high
-    norm = matplotlib.colors.BoundaryNorm(boundaries, N)
-    blues_cm = matplotlib.colormaps['Blues_r'].resampled(N)
-    colors_depths = blues_cm(norm(depths))
-
-
-    import pandas as pd
-    data = pd.read_csv("dataset/lat_long_bathymetry.csv")
-    
-    # Construct a discrete colormap with colors corresponding to each depth
-    depths = depths_str.astype(int)
-    N = len(depths)
-    nudge = 0.01  # shift bin edge slightly to include data
-    boundaries = [min(depths)] + sorted(depths+nudge)  # low to high
-    norm = matplotlib.colors.BoundaryNorm(boundaries, N)
-    blues_cm = matplotlib.colormaps['Blues_r'].resampled(N)
-    colors_depths = blues_cm(norm(depths))
-
-    # Set up plot
-    subplot_kw = {'projection': ccrs.LambertCylindrical()}
-    fig, ax = plt.subplots(subplot_kw=subplot_kw, figsize=(9, 7))
-    ax.set_extent([-90, 160, -15, 90], crs=ccrs.PlateCarree())  # x0, x1, y0, y1
-
-    # Iterate and plot feature for each depth level
-    for i, depth_str in enumerate(depths_str):
-        ax.add_geometries(shp_dict[depth_str].geometries(),
-                          crs=ccrs.PlateCarree(),
-                          color=colors_depths[i])
-
-    # Add standard features
-    ax.add_feature(cfeature.LAND, color='grey')
-    ax.coastlines(lw=1, resolution='110m')
-    ax.gridlines(draw_labels=False)
-    ax.set_position([0.03, 0.05, 0.8, 0.9])
-
-    # Add custom colorbar
-    axi = fig.add_axes([0.85, 0.1, 0.025, 0.8])
-    ax.add_feature(cfeature.BORDERS, linestyle=':')
-    sm = plt.cm.ScalarMappable(cmap=blues_cm, norm=norm)
-    fig.colorbar(mappable=sm,
-                 cax=axi,
-                 spacing='proportional',
-                 extend='min',
-                 ticks=depths,
-                 label='Depth (m)')
-
-    # Convert vector bathymetries to raster (saves a lot of disk space)
-    # while leaving labels as vectors
-    ax.set_rasterized(True)
-    fig.savefig("dataset/routes.png")
+    cb = CartoDataOverlay(date=dt.datetime(1958,2,11))
+    ax = cb.add_axes()
+    bth = pd.read_csv("dataset/lat_long_bathymetry.csv")
+    xyz = cb.proj.transform_points(
+        cb.geo, bth.lon, bth.lat
+    )
+    ax.plot(
+        xyz[:, 0], xyz[:, 1],
+        ls="-", lw=0.8, color="r",
+        transform=cb.proj
+    )
+    (latitude, longitude, dwater) = get_bthmetry()
+    lats, lons = np.meshgrid(latitude, longitude)
+    xyz = cb.proj.transform_points(
+        cb.geo, lons, lats
+    )
+    im = ax.pcolormesh(
+        xyz[:,:,0], xyz[:,:,1],
+        dwater.T, cmap="Blues",
+        transform=cb.proj, vmax=4,
+        vmin=0
+    )
+    cpos = [1.04, 0.1, 0.025, 0.8]
+    cax = ax.inset_axes(cpos, transform=ax.transAxes)
+    cbr = cb.fig.colorbar(im, ax=ax, cax=cax)
+    cbr.set_label("Water Depth (km)", color="k", fontsize="x-small")
+    cbr.set_ticks(np.linspace(0, 4, 5))
+    cbr.ax.tick_params(which="both", colors="k")
+    cbr.outline.set_edgecolor("k")
+    cb.save("figures/routes.png")
+    cb.close()
+    pass
