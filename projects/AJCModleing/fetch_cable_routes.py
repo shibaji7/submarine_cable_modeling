@@ -72,6 +72,20 @@ def plot_routes(o, geo, fname="figures/ajc_routes.png", d=dt.datetime(1958,2,11)
         ".", ms=0.8, color="b",
         transform=cb.proj
     ) 
+    o = pd.read_csv("datasets/20250211-20-39-supermag.csv", parse_dates=["Date_UTC"])
+    iagas = o.IAGA.unique()
+    for iaga in iagas:
+        x = o[o.IAGA==iaga]
+        # print([x["GEOLON"].tolist()[0]], [x["GEOLAT"].tolist()[0]])
+        Lon, Lat = [x["GEOLON"].tolist()[0]], [x["GEOLAT"].tolist()[0]]
+        xyz = cb.proj.transform_points(
+            cb.geo, np.array(Lon), np.array(Lat)
+        )
+        ax.scatter(
+            xyz[:, 0], xyz[:, 1],
+            s=4, color="m", marker="D",
+            transform=cb.proj
+        )
     cb.save(fname)
     cb.close()
     return
@@ -110,7 +124,7 @@ def plot_bathymatry(profiles):
     ax.set_ylabel("Depths, km")
     ax.set_xlim(0, np.cumsum(distance)[-1])
     fig.savefig("figures/ajc_route_bathymetry.png", bbox_inches="tight")
-    print(distance, depths)
+    # print(distance, depths)
     return
 
 if __name__ == "__main__":

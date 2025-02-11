@@ -1,0 +1,186 @@
+-------------------------------------------------------------------------------------------
+                              SuperMAG Rules of the Road
+-------------------------------------------------------------------------------------------
+SuperMAG is made possible by the generous contribution of data by numerous collaborators. 
+To ensure their continued operation the user must follow the below rules-of-the-road. Data, 
+plots or derived data products are provided under the limitations of "fair use" and cannot 
+be redistributed. Contact the individual instrument PI and the SuperMAG PI for requests 
+that are in conflict with these restrictions.
+
+The user is requested to acknowledge individual collaborators and SuperMAG when original 
+data, derived data, movies, or data products are used in publications and/or presentations.
+
+---------------------------
+When Using Data
+---------------------------
+
+    In all cases:
+
+     - Include acknowledgement as listed on the SuperMAG website.
+     - Include references to a technical papers for stations used (see list below).
+     - Include SuperMAG reference: 
+     
+            Gjerloev, J. W. (2012), The SuperMAG data processing technique, J. Geophys. 
+            Res., 117, A09213, doi:10.1029/2012JA017683.
+
+    In cases that only a few stations play a key role and their data are central to the 
+    scientific conclusion of the paper:
+
+     - Offer of co-authorship to the PI (or PIs) of those stations and reference the 
+       appropriate paper (see list below).
+
+       
+---------------------------
+When Using Indices
+---------------------------
+
+    In all cases:
+
+     - Include the text: 
+    
+            We gratefully acknowledge the SuperMAG collaborators 
+            (https://supermag.jhuapl.edu/info/?page=acknowledgement)
+
+     - Include appropriate reference for indices used (see list below).
+     - Include SuperMAG reference: 
+     
+            Gjerloev, J. W. (2012), The SuperMAG data processing technique, J. Geophys. 
+            Res., 117, A09213, doi:10.1029/2012JA017683.
+    
+    
+---------------------------
+When Using Substorm Lists
+---------------------------
+
+     - If the substorm onset list is central to your study please offer co-authorship to 
+       the authors of the technique you use.
+    
+     - When using substorm lists please include acknowledgements found here:
+     
+       https://supermag.jhuapl.edu/substorms/?tab=about
+        
+    Include appropriate reference (see list below)
+    For details please see https://supermag.jhuapl.edu/substorms.
+
+
+---------------------------
+When Using OMNI
+---------------------------
+    
+    Include appropriate acknowledgement 
+    (see https://supermag.jhuapl.edu/info/data.php?page=swdata).
+
+    
+---------------------------
+When Using Imaging
+---------------------------
+    
+    Include appropriate acknowledgement 
+    (see https://supermag.jhuapl.edu/info/data.php?page=images).
+
+    
+---------------------------
+When using INTERMAGNET Data
+---------------------------
+
+    Include appropriate acknowledgement 
+    (see www.intermagnet.org/data-donnee/data-eng.php#conditions).
+
+    
+---------------------------
+References
+---------------------------
+
+Collaborator EMMA
+    Lichtenberger J., M. Clilverd, B. Heilig, M. Vellante, J. Manninen, C. Rodger, 
+    A. Collier, A. Jørgensen, J. Reda, R. Holzworth, and R. Friedel (2013), The 
+    plasmasphere during a space weather event: first results from the PLASMON project, 
+    J. Space Weather Space Clim., 3, A23 
+    (www.swsc-journal.org/articles/swsc/pdf/2013/01/swsc120062.pdf).
+
+Collaborator IMAGE Chain
+    Tanskanen, E.I. (2009), A comprehensive high-throughput analysis of substorms 
+    observed by IMAGE magnetometer network: Years 1993-2003 examined, 114, A05204, 
+    doi:10.1029/2008JA013682.
+
+Collaborator MACCS
+    Engebretson, M. J., W. J. Hughes, J. L. Alford, E. Zesta, L. J. Cahill, Jr., 
+    R. L. Arnoldy, and G. D. Reeves (1995), Magnetometer array for cusp and cleft 
+    studies observations of the spatial extent of broadband ULF magnetic pulsations 
+    at cusp/cleft latitudes , J. Geophys. Res., 100, 19371-19386, 
+    doi:10.1029/95JA00768.
+
+Collaborator McMAC Chain
+    Chi, P. J., M. J. Engebretson, M. B. Moldwin, C. T. Russell, I. R. Mann, M. R. 
+    Hairston, M. Reno, J. Goldstein, L. I. Winkler, J. L. Cruz-Abeyro, D.-H. Lee, 
+    K.Yumoto, R. Dalrymple, B. Chen, and J. P. Gibson (2013), Sounding of the 
+    plasmasphere by Mid-continent MAgnetoseismic Chain magnetometers, J. Geophys. 
+    Res. Space Physics, 118, doi:10.1002/jgra.50274.
+
+Collaborator MAGDAS / 210 Chain
+    Yumoto, K,. and the CPMN Group (2001), Characteristics of Pi 2 magnetic 
+    pulsations observed at the CPMN stations: A review of the STEP results, Earth 
+    Planets Space, 53, 981-992.
+
+Collaborator CARISMA
+    Mann, I. R., et al. (2008), The upgraded CARISMA magnetometer array in the 
+    THEMIS era, Space Sci. Rev., 141, 413–451, doi:10.1007/s11214-008-9457-6.
+
+Collaborator AALPIP
+    Clauer, C. R., et al. (2014), An autonomous adaptive low-power instrument 
+    platform (AAL-PIP) for remote high-latitude geospace data collection, Geosci. 
+    Instrum. Methods Data Syst., 3, 211–227, doi:10.5194/gi-3-211-2014
+
+Collaborator INTERMAGNET
+    Love, J. J., Chulliat, A., (2013), An international network of magnetic 
+    observatories, Eos, 94(42), 373-374, doi:10.1002/2013EO420001
+
+SuperMAG
+    Gjerloev, J. W. (2012), The SuperMAG data processing technique, J. Geophys. 
+    Res., 117 , A09213, doi:10.1029/2012JA017683.
+
+Indices SML, SMU, SME
+    Newell, P. T., and J. W. Gjerloev (2011), Evaluation of SuperMAG auroral
+    electrojet indices as indicators of substorms and auroral power, J. Geophys. 
+    Res., 116, A12211, doi:10.1029/2011JA016779.
+
+Indices SMLs, SMLd, SMUs, SMUd
+    Gjerloev, J. W., R. A. Hoffman, S. Ohtani, J. Weygand, and R. Barnes, Response 
+    of the Auroral Electrojet Indices to Abrupt Southward IMF Turnings (2010), 
+    Annales Geophysicae, 28, 1167-1182.
+
+Indices SME-LT, SMU-LT, SML-LT
+    Newell, P. T., and J. W. Gjerloev (2014), Local geomagnetic indices and the 
+    prediction of auroral power, J. Geophys. Res. Space Physics, 119, 
+    doi:10.1002/2014JA020524.
+
+Indices SMR, SMR-LT
+    Newell, P. T. and J. W. Gjerloev (2012), SuperMAG-Based Partial Ring Current 
+    Indices, J. Geophys. Res., 117, doi:10.1029/2012JA017586.
+
+Substorm List
+    Forsyth, C., Rae, I. J., Coxon, J. C., Freeman, M. P., Jackman, C. M., Gjerloev, 
+    J., and Fazakerley, A. N. ( 2015), A new technique for determining Substorm Onsets 
+    and Phases from Indices of the Electrojet (SOPHIE), J. Geophys. Res. Space Physics, 
+    120, 10,592– 10,606, doi:10.1002/2015JA021343.
+
+    Frey, H. U., Mende, S. B., Angelopoulos, V., and Donovan, E. F. (2004), Substorm 
+    onset observations by IMAGE‐FUV, J. Geophys. Res., 109, A10304, 
+    doi:10.1029/2004JA010607.
+
+    Gjerloev, J. W. (2012), The SuperMAG data processing technique, J. Geophys. Res., 
+    117, A09213,  doi:10.1029/2012JA017683.
+
+    Liou, K. (2010),  Polar Ultraviolet Imager observation of auroral breakup, 
+    J. Geophys. Res.,  115, A12219, doi:10.1029/2010JA015578.
+
+    Newell, P. T., and J. W. Gjerloev (2011), Evaluation of SuperMAG auroral electrojet 
+    indices as indicators of substorms and auroral power, J. Geophys. Res., 116, A12211, 
+    doi:10.1029/2011JA016779.
+
+    Newell, P. T., and J. W. Gjerloev (2011), Substorm and magnetosphere characteristic 
+    scales inferred from the SuperMAG auroral electrojet indices, J. Geophys. Res., 116, 
+    A12232, doi:10.1029/2011JA016936.
+
+    Ohtani, S., and J. Gjerloev, Is the Substorm Current Wedge an Ensemble of Wedgelets?: 
+    Revisit to Midlatitude Positive Bays, accepted, J. Geophys. Res, 2020.

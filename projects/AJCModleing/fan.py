@@ -170,7 +170,7 @@ if __name__ == "__main__":
         dwater.T, cmap="Blues",
         transform=cb.proj, vmax=4,
         vmin=0
-    )
+    )    
     cpos = [1.04, 0.1, 0.025, 0.8]
     cax = ax.inset_axes(cpos, transform=ax.transAxes)
     cbr = cb.fig.colorbar(im, ax=ax, cax=cax)
