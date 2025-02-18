@@ -23,8 +23,9 @@ def calculate_bathymetry_byLITHO1(o, distance_interval=600):
     d = d.sort_values(by="geolats")
     return d
 
-def calculate_conductive_profiles(d):
+def calculate_conductive_profiles(d, base_name="AJC"):
     from scubas.conductivity import ConductivityProfile
+    from scubas.datasets import Site
     cp = ConductivityProfile()
     profiles = []
     for i in range(len(d)-1):
@@ -34,13 +35,20 @@ def calculate_conductive_profiles(d):
         )
         ipts = cp.get_interpolation_points(bin_i, bin_j)
         profile = cp._compile_profile_(ipts)
+        profile = Site.init(
+            1.0 / profile["resistivity"].to_numpy(dtype=float),
+            profile["thickness"].to_numpy(dtype=float)*1e3, # Convert to m
+            profile["name"],
+            "",
+            base_name+f"_{i}",
+        )
         td_km = geodesic(bin_i, bin_j).km
         profiles.append(dict(
             profile=profile,
             bin_i=bin_i,
             bin_j=bin_j,
             td_km=td_km,
-            depth=profile.thickness.tolist()[0],
+            depth=profile.get_thicknesses(0),
         ))
     return profiles
 

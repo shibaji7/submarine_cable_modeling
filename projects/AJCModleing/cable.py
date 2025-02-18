@@ -2,18 +2,17 @@ import datetime as dt
 from loguru import logger
 import matplotlib.dates as mdates
 
-from scubas.cables import TransmissionLine, Cable
+from scubas.cables import TransmissionLine, Cable, CableSection
 
 # from plots import TimeSeriesPlot
-from utils import get_cable_informations
 from fetch_data import clean_B_fields
 
 class SCUBASModel(object):
     
     def __init__(
             self, 
-            cable_name="TAT-1",
-            cable_structure=get_cable_informations(),
+            cable_name="AJC",
+            cable_structure=None,
             segment_files=[],
         ):
         self.cable_name = cable_name
@@ -37,23 +36,36 @@ class SCUBASModel(object):
     def initialize_TL(self):
         self.tlines = []
         for i, seg in enumerate(self.cable_structure.cable_seg):
-            self.tlines.append(
-                TransmissionLine(
-                    sec_id=seg["sec_id"],
-                    directed_length=dict(
-                        edge_locations=dict(
-                            initial=seg["initial"], 
-                            final=seg["final"]
-                        )
-                    ),
-                    elec_params=dict(
-                        site=seg["site"],
-                        width=seg["width"],
-                        flim=seg["flim"],
-                    ),
-                    active_termination=seg["active_termination"],
-                ).compile_oml(self.segment_files[i]),
+            logger.info(f"File to be compiled: {self.segment_files[i]}")
+            # Filter based on some lengths
+            cs = CableSection(
+                f"Sec_{i}",
+                directed_length=dict(
+                    edge_locations=dict(
+                        initial=seg["initial"], 
+                        final=seg["final"]
+                    )
+                )
             )
+            cs.compute_lengths()
+            if cs.length_east >0 and cs.length_north >0:
+                self.tlines.append(
+                    TransmissionLine(
+                        sec_id=seg["sec_id"],
+                        directed_length=dict(
+                            edge_locations=dict(
+                                initial=seg["initial"], 
+                                final=seg["final"]
+                            )
+                        ),
+                        elec_params=dict(
+                            site=seg["site"],
+                            width=seg["width"],
+                            flim=seg["flim"],
+                        ),
+                        active_termination=seg["active_termination"],
+                    ).compile_oml(self.segment_files[i]),
+                )
         return
     
     def run_cable_segment(self):

@@ -1,20 +1,57 @@
 import pandas as pd
+from loguru import logger
+from types import SimpleNamespace
+import numpy as np
+
+from scubas.utils import GreatCircle
 
 def parse_csv(fname="datasets/20250211-20-39-supermag.csv"):
     o = pd.read_csv(fname, parse_dates=["Date_UTC"])
     iagas = o.IAGA.unique()
     for iaga in iagas:
-        x = o[o.IAGA==iaga][["Date_UTC","dbn_geo","dbe_geo","dbz_geo"]]
+        logger.info(f"IAGA: {iaga}")
+        x = o[o.IAGA==iaga][[
+            "Date_UTC",
+            "dbn_geo","dbe_geo","dbz_geo",
+            "IAGA","GEOLON","GEOLAT",
+        ]]
+        x["F"] = np.sqrt(x.dbn_geo**2+x.dbe_geo**2+x.dbz_geo**2)
         x.rename(
             columns={
                 "Date_UTC": "Date",
                 "dbn_geo": "Y",
                 "dbe_geo": "X",
                 "dbz_geo": "Z",
+                "IAGA": "code",
+                "GEOLON": "lon",
+                "GEOLAT": "lat"
             }, 
             inplace=True
         )
         x.to_csv(f"datasets/{iaga}.csv", header=True, index=False)
     return
 
-parse_csv()
+def get_nearest_station(lat, lon, codes=["CNB", "CTA", "GUA", "KAK"]):
+    distances = []
+    for code in codes:
+        fname = f"datasets/{code.upper()}.csv"
+        o = pd.read_csv(fname, parse_dates=["Date"])
+        glat, glon = (
+            o.lat.to_list()[0],
+            o.lon.to_list()[0]
+        )
+        gc = GreatCircle(
+            SimpleNamespace(**dict(lat=lat, lon=lon)), 
+            SimpleNamespace(**dict(lat=glat, lon=glon)), 
+        )
+        distances.append(gc.great_circle())
+    code = codes[np.argmin(distances)]
+    return code, f"datasets/{code.upper()}.csv" 
+
+def load_modify_file(code):
+    fname = f"datasets/{code.upper()}.csv"
+    o = pd.read_csv(fname, parse_dates=["Date"])
+    return
+
+if __name__ == "__main__":
+    parse_csv()

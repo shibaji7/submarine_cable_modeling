@@ -132,10 +132,19 @@ class CartoDataOverlay(object):
         return ax
     
 def get_bthmetry():
-    # from scubas.coductivity import ConductivityProfile
+    # from scubas.conductivity import ConductivityProfile
     # cp = ConductivityProfile()
+    # latitude, longitude = (
+    #     np.linspace(-90, 90, 91),
+    #     np.linspace(-180, 180, 181)
+    # )
+    # pts = np.array([[latitude[0], longitude[0]]])
+    # prof = cp.compile_profile(pts)
+    # print(prof)
+    # water_bot_values = cp.lithosphere_model["water_bottom_depth"](pts)
     from scipy.io import netcdf_file
     filename = ".scubas_config/LITHO1.0.nc"
+    from scipy.interpolate import RegularGridInterpolator
     with netcdf_file(filename) as f:
         latitude = np.copy(f.variables["latitude"][:])
         longitude = np.copy(f.variables["longitude"][:])
@@ -145,8 +154,10 @@ def get_bthmetry():
         water_top_depth = np.copy(f.variables["water_top_depth"][:])
         dwater = water_bottom_depth-water_top_depth
         dwater[dwater<=0] = np.nan
-        # dwater = np.ma.masked_invalid(dwater)
-    return (latitude, longitude, dwater)
+        dwater = np.ma.masked_invalid(dwater)
+        xg, yg = np.meshgrid(longitude, latitude, indexing='ij', sparse=True)
+        interp = RegularGridInterpolator((xg, yg), dwater)
+    return (latitude, longitude, interp(np.array([longitude, latitude])))
 
 if __name__ == "__main__":
     cb = CartoDataOverlay(date=dt.datetime(1958,2,11))
@@ -160,24 +171,24 @@ if __name__ == "__main__":
         ls="-", lw=0.8, color="r",
         transform=cb.proj
     )
-    (latitude, longitude, dwater) = get_bthmetry()
+    (latitude, longitude, water) = get_bthmetry()
     lats, lons = np.meshgrid(latitude, longitude)
-    xyz = cb.proj.transform_points(
-        cb.geo, lons, lats
-    )
-    im = ax.pcolormesh(
-        xyz[:,:,0], xyz[:,:,1],
-        dwater.T, cmap="Blues",
-        transform=cb.proj, vmax=4,
-        vmin=0
-    )
-    cpos = [1.04, 0.1, 0.025, 0.8]
-    cax = ax.inset_axes(cpos, transform=ax.transAxes)
-    cbr = cb.fig.colorbar(im, ax=ax, cax=cax)
-    cbr.set_label("Water Depth (km)", color="k", fontsize="x-small")
-    cbr.set_ticks(np.linspace(0, 4, 5))
-    cbr.ax.tick_params(which="both", colors="k")
-    cbr.outline.set_edgecolor("k")
+    # xyz = cb.proj.transform_points(
+    #     cb.geo, lons, lats
+    # )
+    # im = ax.pcolormesh(
+    #     xyz[:,:,0], xyz[:,:,1],
+    #     dwater.T, cmap="Blues",
+    #     transform=cb.proj, vmax=4,
+    #     vmin=0
+    # )
+    # cpos = [1.04, 0.1, 0.025, 0.8]
+    # cax = ax.inset_axes(cpos, transform=ax.transAxes)
+    # cbr = cb.fig.colorbar(im, ax=ax, cax=cax)
+    # cbr.set_label("Water Depth (km)", color="k", fontsize="x-small")
+    # cbr.set_ticks(np.linspace(0, 4, 5))
+    # cbr.ax.tick_params(which="both", colors="k")
+    # cbr.outline.set_edgecolor("k")
     cb.save("figures/routes.png")
     cb.close()
     pass
