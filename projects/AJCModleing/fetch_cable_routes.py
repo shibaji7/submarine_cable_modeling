@@ -23,6 +23,36 @@ def calculate_bathymetry_byLITHO1(o, distance_interval=600):
     d = d.sort_values(by="geolats")
     return d
 
+def calculate_conductive_profiles_with_distance(dp, dpn, base_name="AJC"):
+    from scubas.conductivity import ConductivityProfile
+    from scubas.datasets import Site
+    cp = ConductivityProfile()
+    profiles = []
+    bin_n = (dpn.geolats, dpn.geolongs)
+    for i in range(len(dp)-1):
+        bin_i, bin_j = (
+            (dp.geolats.iloc[i], dp.geolongs.iloc[i]),
+            (dp.geolats.iloc[i+1], dp.geolongs.iloc[i+1])
+        )
+        ipts = cp.get_interpolation_points(bin_i, bin_j)
+        profile = cp._compile_profile_(ipts)
+        profile = Site.init(
+            1.0 / profile["resistivity"].to_numpy(dtype=float),
+            profile["thickness"].to_numpy(dtype=float)*1e3, # Convert to m
+            profile["name"],
+            "",
+            base_name+f"_{i}",
+        )
+        td_km = geodesic(bin_i, bin_n).km
+        profiles.append(dict(
+            profile=profile,
+            bin_i=bin_i,
+            bin_j=bin_n,
+            td_km=td_km,
+            depth=profile.get_thicknesses(0),
+        ))
+    return profiles
+
 def calculate_conductive_profiles(d, base_name="AJC"):
     from scubas.conductivity import ConductivityProfile
     from scubas.datasets import Site
@@ -76,7 +106,7 @@ def plot_routes(o, geo, fname="figures/ajc_routes.png", d=dt.datetime(1958,2,11)
         cb.geo, np.array(geo.geolongs), np.array(geo.geolats)
     )
     ax.plot(
-        xyz[:-1, 0], xyz[:-1, 1],
+        xyz[:, 0], xyz[:, 1],
         ".", ms=0.8, color="b",
         transform=cb.proj
     ) 
@@ -124,15 +154,16 @@ def plot_bathymatry(profiles):
         depths.append(profile["depth"])
     ax.plot(
         np.cumsum(distance),
-        np.array(depths), ls="-",
+        np.array(depths)/1e3, ls="-",
         lw=0.8, color="r",
     )
     ax.invert_yaxis()
+    ax.set_ylim(8,0)
     ax.set_xlabel("Distance, km")
     ax.set_ylabel("Depths, km")
     ax.set_xlim(0, np.cumsum(distance)[-1])
     fig.savefig("figures/ajc_route_bathymetry.png", bbox_inches="tight")
-    # print(distance, depths)
+    print(np.cumsum(distance), depths)
     return
 
 if __name__ == "__main__":

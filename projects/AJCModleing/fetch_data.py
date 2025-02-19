@@ -148,6 +148,9 @@ def clean_B_fields(stns, stn_files):
             o[key] = o[key].bfill()
         print("Post-Is there any issue / nan data? (X,Y,Z)", o.X.hasnans, o.Y.hasnans, o.Z.hasnans)
         fs[0] = fs[0].replace(".txt", ".csv")
+        for a in ["X", "Y", "Z", "F"]:
+            fmed = np.median(o[a].iloc[:120])
+            o[a] = o[a] - fmed
         o.to_csv(fs[0], header=True, index=True, float_format="%g")
         frames[stn] = o
     return frames

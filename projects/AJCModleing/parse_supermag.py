@@ -2,6 +2,7 @@ import pandas as pd
 from loguru import logger
 from types import SimpleNamespace
 import numpy as np
+from fetch_data import read_iaga
 
 from scubas.utils import GreatCircle
 
@@ -34,11 +35,12 @@ def parse_csv(fname="datasets/20250211-20-39-supermag.csv"):
 def get_nearest_station(lat, lon, codes=["CNB", "CTA", "GUA", "KAK"]):
     distances = []
     for code in codes:
-        fname = f"datasets/{code.upper()}.csv"
-        o = pd.read_csv(fname, parse_dates=["Date"])
+        # fname = f"datasets/{code.upper()}.csv"
+        fname = f"datasets/IM.{code.lower()}.min.txt"
+        o, header = read_iaga(fname, return_header=True)
         glat, glon = (
-            o.lat.to_list()[0],
-            o.lon.to_list()[0]
+            float(header["geodetic latitude"]),
+            float(header["geodetic longitude"])
         )
         gc = GreatCircle(
             SimpleNamespace(**dict(lat=lat, lon=lon)), 
@@ -46,7 +48,7 @@ def get_nearest_station(lat, lon, codes=["CNB", "CTA", "GUA", "KAK"]):
         )
         distances.append(gc.great_circle())
     code = codes[np.argmin(distances)]
-    return code, f"datasets/{code.upper()}.csv" 
+    return code, f"datasets/IM.{code.lower()}.min.csv" 
 
 def load_modify_file(code):
     fname = f"datasets/{code.upper()}.csv"
