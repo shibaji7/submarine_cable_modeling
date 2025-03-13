@@ -313,6 +313,39 @@ ax.set_xlabel("Time [UT]")
 fig.subplots_adjust(wspace=0.05,hspace=0.05)
 fig.savefig("cmnt3.png", bbox_inches="tight")
 
+fig = plt.figure(dpi=300, figsize=(4,1.5*2))
+ax = fig.add_subplot(211)
+ax.set_ylabel(r"GIC [Amps/$^\circ$]", color="b")
+ax.plot(t/3600, Ets[0]*20.3*1e-3, ls="-", lw=0.6, color="b") # N, A/p, to bus 9
+ax.plot(t/3600, Ets[0]*-27.67*1e-3, ls=":", lw=0.6, color="b") # N, A/p, to transformer T8
+ax.set_xlim([0, 24])
+ax.set_ylim([-6, 6])
+ax.text(0.1, 0.9, tag[0], ha="left", va="center", transform=ax.transAxes)
+ax.set_xticklabels([])
+ax = ax.twinx()
+ax.set_ylabel(r"GIC [Amps]", color="r")
+ax.plot(t/3600, Ets[0]*-279.08*1e-3, ls="-", lw=0.3, color="r") # N, A, to substation S5
+ax.set_xlim([0, 24])
+ax.set_ylim([-40, 40])
+ax.set_xticks([0, 6, 12, 18, 24])
+
+ax = fig.add_subplot(212)
+ax.set_ylabel(r"GIC [Amps/$^\circ$]", color="b")
+ax.plot(t/3600, Ets[1]*20.3*1e-3, ls="-", lw=0.6, color="b") # N, A/p, to bus 9
+ax.plot(t/3600, Ets[1]*-27.67*1e-3, ls=":", lw=0.6, color="b") # N, A/p, to transformer T8
+ax.set_xlim([0, 24])
+ax.set_ylim([-6, 6])
+ax.text(0.1, 0.9, tag[1], ha="left", va="center", transform=ax.transAxes)
+ax.set_xlabel("Time [UT]")
+ax = ax.twinx()
+ax.set_ylabel(r"GIC [Amps]", color="r")
+ax.plot(t/3600, Ets[1]*-279.08*1e-3, ls="-", lw=0.3, color="r") # N, A, to substation S5
+ax.set_xlim([0, 24])
+# ax.set_ylim([-40, 40])
+ax.set_xticks([0, 6, 12, 18, 24])
+fig.subplots_adjust(wspace=0.05,hspace=0.05)
+fig.savefig("GIC.png", bbox_inches="tight")
+
 
 # fig = plt.figure(dpi=300, figsize=(4,1.5*3))
 # dB = np.diff(B, prepend=B[0])
