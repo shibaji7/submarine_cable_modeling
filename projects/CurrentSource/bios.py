@@ -59,7 +59,7 @@ domain_end = 1.0
 n_segments = 10 # number of segments
 n_nodes = n_segments + 1
 nodes = np.zeros((n_nodes, 3))  # Three Columns for x, y, z
-nodes[:, 2] = np.linspace(domain_start, domain_end, n_nodes) #Equally Spaced Points - 1 meter wire
+nodes[:, 2] = np.linspace(0.*(domain_start+domain_end), 1*(domain_start+domain_end), n_nodes) #Equally Spaced Points - 1 meter wire
 
 # Element Connectivity (line segments) - 1 less element than the number of nodes.
 elements = np.zeros((n_segments, 2), dtype=int)
@@ -93,16 +93,17 @@ plt.savefig("Bios.png")
 
 #3D Quiver plot example with more points and with current on the x direction
 #Setup
-n_segments = 100 # number of segments
+n_segments = 20 # number of segments
 nodes = np.zeros((n_segments + 1, 3))  # Three Columns for x, y, z
 nodes[:, 0] = np.linspace(domain_start, domain_end, n_segments + 1) #Equally Spaced Points - 1 meter wire
+print(nodes)
 elements = np.zeros((n_segments, 2), dtype=int)
 for i in range(n_segments):
     elements[i, 0] = i
     elements[i, 1] = i + 1
 current = 1 #Amps
 # Create a grid of evaluation points for the 3D Plot.
-num_points = 10
+num_points = 5
 x = np.linspace(-0.5, 0.5, num_points)
 y = np.linspace(-0.5, 0.5, num_points)
 z = np.linspace(-0.5, 0.5, num_points)
@@ -122,6 +123,7 @@ ax = fig.add_subplot(projection='3d')
 norm = np.linalg.norm(B, axis=1, keepdims=True)
 B_normalized = B / norm
 
+# ax.plot(elements[:,0], elements[:,1], ls="-", color="r")
 ax.quiver(evaluation_points[:, 0], evaluation_points[:, 1], evaluation_points[:, 2],
               B_normalized[:, 0], B_normalized[:, 1], B_normalized[:, 2], length=0.2)
 
@@ -130,3 +132,73 @@ ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 plt.title('B Field from Straight Wire')
 plt.savefig("Bios1.png")
+
+
+## Good integral
+
+# def biot_savart_fem(nodes, elements, current, evaluation_points, quadrature_points=3):
+#     """
+#     Biot-Savart Law with Gaussian Quadrature
+
+#     """
+#     # Gaussian Quadrature
+#     gauss_points, gauss_weights = np.polynomial.legendre.leggauss(quadrature_points)
+#     #...
+#     #Loop though point
+
+#             #Numerical integration of the element
+#             dB = np.zeros(point.shape)
+#             for j in range(quadrature_points):
+
+#                 # Map the Gaussian point to the element
+#                 xi = 0.5 * ((node_2 - node_1) * gauss_points[j]) + 0.5 * (node_1 + node_2) # point in the integration
+#                 dl = node_2 - node_1
+#                 r = point - xi
+#                 r_mag = np.linalg.norm(r)
+
+#                 dB += (mu_0 / (4 * np.pi)) * (current * np.cross(dl, r) / (r_mag**3)) * gauss_weights[j]
+
+
+#             B[i] += dB #Add superposition
+#     return B
+
+# import numpy as np
+
+# def create_straight_wire_geometry(start_point, end_point, n_segments):
+#     """
+#     Creates nodes and elements for a straight wire in 3D space.
+
+#     Args:
+#         start_point (np.array): 3D coordinates of the starting point of the wire.
+#         end_point (np.array): 3D coordinates of the ending point of the wire.
+#         n_segments (int): Number of line segments (elements) to divide the wire into.
+
+#     Returns:
+#         nodes (np.array): Array of node coordinates (N x 3).
+#         elements (np.array): Array of element connectivity (M x 2).
+#     """
+
+#     nodes = np.zeros((n_segments + 1, 3))
+#     elements = np.zeros((n_segments, 2), dtype=int)
+
+#     #Calculate node positions
+#     for i in range(n_segments + 1):
+#         t = i / n_segments
+#         nodes[i, :] = start_point + t * (end_point - start_point) # Linear interpolation
+
+#     #Define element connectivity
+#     for i in range(n_segments):
+#         elements[i, 0] = i
+#         elements[i, 1] = i + 1
+
+#     return nodes, elements
+
+# # Example Usage - Define a straight wire
+# start_point = np.array([0, 0, 0]) #Starts at origin
+# end_point = np.array([1, 0, 0]) #Ends at (1, 0, 0)
+# n_segments = 10
+
+# nodes, elements = create_straight_wire_geometry(start_point, end_point, n_segments)
+
+# print("Nodes:\n", nodes)
+# print("Elements:\n", elements)
