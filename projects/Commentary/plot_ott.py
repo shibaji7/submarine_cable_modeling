@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import glob
 
-a_55, a_60 = 0.55*np.exp(0.115*55), np.exp(0.115*60)
+a_55, a_60 = 0.001*np.exp(0.115*55), 0.001*np.exp(0.115*60)
 a_scale = a_60/a_55
 
 files = glob.glob("datasets/*.csv")
