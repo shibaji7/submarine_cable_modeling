@@ -21,7 +21,7 @@ ts = TimeSeriesPlot(
     [dt.datetime(1989,3,13,12), dt.datetime(1989,3,14,12)], "", 
     num_subplots=1, text_size=15,
 )   
-model["Vt(v)"] = -model["Vt(v)"]
+model["Vt(v)"] = -model["Vt(v)"] # Why need to check with David.
 # print(data.tail(), data.head())
 ax = ts.add_voltage(model, xlabel="")
 ts.add_voltage(data, color="r", xlabel="Time since 12 UT, 12 March 1989 [UT]", ax=ax)
