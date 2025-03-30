@@ -17,6 +17,10 @@ import datetime as dt
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+<<<<<<< HEAD
+=======
+import pandas as pd
+>>>>>>> a8429f5bf3936f33668b28c9a7eedbb37d96a9e7
 
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans", "Lucida Grande", "Verdana"]
@@ -39,8 +43,13 @@ class CartoDataOverlay(object):
         cb=True,
         central_longitude=-30.0,
         central_latitude=45.0,
+<<<<<<< HEAD
         extent=[-90, 10, 40, 90],
         plt_lats=np.arange(40, 90, 10),
+=======
+        extent=[-90, 10, 20, 80],
+        plt_lats=np.arange(20, 80, 10),
+>>>>>>> a8429f5bf3936f33668b28c9a7eedbb37d96a9e7
         txt_size=8,
     ):
         setsize(txt_size)
@@ -79,7 +88,13 @@ class CartoDataOverlay(object):
         Instatitate figure and axes labels
         """
         self._num_subplots_created += 1
+<<<<<<< HEAD
         proj = cartopy.crs.NorthPolarStereo(central_longitude=self.central_longitude)
+=======
+        proj = cartopy.crs.PlateCarree(
+            central_longitude=self.central_longitude,
+        )
+>>>>>>> a8429f5bf3936f33668b28c9a7eedbb37d96a9e7
         ax = self.fig.add_subplot(
             100 * self.nrows + 10 * self.ncols + self._num_subplots_created,
             projection="CartoBase",
@@ -88,8 +103,13 @@ class CartoDataOverlay(object):
             plot_date=self.date,
         )
         ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
+<<<<<<< HEAD
         plt_lons = np.arange(-180, 181, 15)
         mark_lons = np.arange(self.extent[0], self.extent[1], 15)
+=======
+        plt_lons = np.arange(-180, 181, 20)
+        mark_lons = np.arange(self.extent[0], self.extent[1], 20)
+>>>>>>> a8429f5bf3936f33668b28c9a7eedbb37d96a9e7
         plt_lats = self.plt_lats
         ax.set_extent(self.extent, crs=cartopy.crs.PlateCarree())
         gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), linewidth=0.2)
@@ -128,6 +148,7 @@ class CartoDataOverlay(object):
             )
         return ax
     
+<<<<<<< HEAD
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -217,3 +238,66 @@ if __name__ == "__main__":
     # while leaving labels as vectors
     ax.set_rasterized(True)
     fig.savefig("dataset/routes.png")
+=======
+def get_bthmetry():
+    # from scubas.conductivity import ConductivityProfile
+    # cp = ConductivityProfile()
+    # latitude, longitude = (
+    #     np.linspace(-90, 90, 91),
+    #     np.linspace(-180, 180, 181)
+    # )
+    # pts = np.array([[latitude[0], longitude[0]]])
+    # prof = cp.compile_profile(pts)
+    # print(prof)
+    # water_bot_values = cp.lithosphere_model["water_bottom_depth"](pts)
+    from scipy.io import netcdf_file
+    filename = ".scubas_config/LITHO1.0.nc"
+    from scipy.interpolate import RegularGridInterpolator
+    with netcdf_file(filename) as f:
+        latitude = np.copy(f.variables["latitude"][:])
+        longitude = np.copy(f.variables["longitude"][:])
+
+        # water levels
+        water_bottom_depth = np.copy(f.variables["water_bottom_depth"][:])
+        water_top_depth = np.copy(f.variables["water_top_depth"][:])
+        dwater = water_bottom_depth-water_top_depth
+        dwater[dwater<=0] = np.nan
+        dwater = np.ma.masked_invalid(dwater)
+        xg, yg = np.meshgrid(longitude, latitude, indexing='ij', sparse=True)
+        interp = RegularGridInterpolator((xg, yg), dwater)
+    return (latitude, longitude, interp(np.array([longitude, latitude])))
+
+if __name__ == "__main__":
+    cb = CartoDataOverlay(date=dt.datetime(1958,2,11))
+    ax = cb.add_axes()
+    bth = pd.read_csv("dataset/lat_long_bathymetry.csv")
+    xyz = cb.proj.transform_points(
+        cb.geo, bth.lon, bth.lat
+    )
+    ax.plot(
+        xyz[:, 0], xyz[:, 1],
+        ls="-", lw=0.8, color="r",
+        transform=cb.proj
+    )
+    (latitude, longitude, water) = get_bthmetry()
+    lats, lons = np.meshgrid(latitude, longitude)
+    # xyz = cb.proj.transform_points(
+    #     cb.geo, lons, lats
+    # )
+    # im = ax.pcolormesh(
+    #     xyz[:,:,0], xyz[:,:,1],
+    #     dwater.T, cmap="Blues",
+    #     transform=cb.proj, vmax=4,
+    #     vmin=0
+    # )
+    # cpos = [1.04, 0.1, 0.025, 0.8]
+    # cax = ax.inset_axes(cpos, transform=ax.transAxes)
+    # cbr = cb.fig.colorbar(im, ax=ax, cax=cax)
+    # cbr.set_label("Water Depth (km)", color="k", fontsize="x-small")
+    # cbr.set_ticks(np.linspace(0, 4, 5))
+    # cbr.ax.tick_params(which="both", colors="k")
+    # cbr.outline.set_edgecolor("k")
+    cb.save("figures/routes.png")
+    cb.close()
+    pass
+>>>>>>> a8429f5bf3936f33668b28c9a7eedbb37d96a9e7

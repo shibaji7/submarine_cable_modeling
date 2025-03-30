@@ -2,8 +2,10 @@ import pandas as pd
 import glob
 import datetime as dt
 import sys
+import matplotlib.dates as mdates
 sys.path.append("py/")
 from plots import TimeSeriesPlot
+from fetch_data import _load_omni_
 
 def read_files_as_pandas(folder):
     df = []
@@ -18,32 +20,38 @@ def read_files_as_pandas(folder):
     return df
 
 def plot_datasets_instack(
-        dfs, dates=[dt.datetime(2024,5,8), dt.datetime(2024,5,13)], 
+        dfs, dates=[dt.datetime(2024,5,10,12), dt.datetime(2024,5,12)], 
         fig_title="", volt_key="V_(S1)_PAD (1S) (V)", curr_key="I_(S1)_PAD (1S) (mA)",
         fname="figures/AJC.png"
     ):
+    omni = _load_omni_(dates)
     ts = TimeSeriesPlot(
-        dates, fig_title, num_subplots=len(dfs), text_size=15
+        dates, fig_title, num_subplots=len(dfs), text_size=15,
+        major_locator=mdates.HourLocator(byhour=range(0, 24, 4))
     )
     for _, df in enumerate(dfs):
+        df.Timestamp = df.Timestamp + dt.timedelta(minutes=15)
         ax = ts._add_axis()
-        print(df.head())
         ax.plot(df.Timestamp, df[volt_key], "b.", ls="None", ms=0.5, alpha=0.7)
         ax.set_xlabel("Time, UT")
         ax.set_ylabel("Voltage, V", fontdict=dict(color="b"))
         ax = ax.twinx()
-        ax.set_ylabel("Current, mA", fontdict=dict(color="r"))
-        ax.plot(df.Timestamp, df[curr_key], "r.", ls="None", ms=0.5, alpha=0.7)
+        ax.set_ylabel("IMF [B], nT", fontdict=dict(color="r"))
+        ax.plot(omni.time, omni.B, "r.", ls="None", ms=0.5, alpha=1.0)
     ts.save(fname)
+    
+    print(omni.columns)
     return
 
 
 if __name__ == "__main__":
     df = read_files_as_pandas(
-        "dataset/Operators/AJC PFE DATA/Shima (JAPAN)"
+        "dataset/Operators/AJC PFE DATA/Oxford Falls (AUSTRALIA)"
     )
+    stn, station_code, data_cad = "OXF", 2, 1
     plot_datasets_instack(
-        [df], fig_title="Date: 09-13 May 2024; Stn: shi/jpn",
-        volt_key="V_(S10)_SHI (5S) (V)", curr_key="I_(S10)_SHI (5S) (mA)",
-        fname="figures/ajc_shi.png"
+        [df], fig_title=f"Date: 10-12 May 2024; Stn: {stn.lower()}/aus",
+        volt_key=f"V_(S{station_code})_{stn} ({data_cad}S) (V)", 
+        curr_key=f"I_(S{station_code})_{stn} ({data_cad}S) (mA)",
+        fname=f"figures/ajc_{stn.lower()}.png"
     )

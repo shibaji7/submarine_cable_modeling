@@ -29,11 +29,11 @@ convertable_parameters = [
                 file="TAT8Volt.csv",
                 y1=290, y2=500, ybase=0, yscale=1,
                 x1=0, x2=24, 
-                x1_date=dt.datetime(1989,3,12,12),
-                x2_date=dt.datetime(1989,3,13,12),
+                x1_date=dt.datetime(1989,3,13,12),
+                x2_date=dt.datetime(1989,3,14,12),
                 xlim=[
-                    dt.datetime(1989,3,12,12),
-                    dt.datetime(1989,3,13,12)
+                    dt.datetime(1989,3,13,12),
+                    dt.datetime(1989,3,14,12)
                 ],
                 ylabel=r"TAT-8 Voltage [V]",
                 text="Scaled Voltage from TAT8, 13 March 1989",
@@ -66,7 +66,7 @@ def draw_dataset(scaled, param, ylabel, fname, xlim, text, fitted=None, ylim=Non
     fig = plt.figure(dpi=300, figsize=(6, 3))
     ax = fig.add_subplot(111)
     ax.xaxis.set_major_formatter(DateFormatter(r"%H^{%M}"))
-    hours = mdates.HourLocator(byhour=range(0, 24, 1))
+    hours = mdates.HourLocator(byhour=range(0, 24, 6))
     ax.xaxis.set_major_locator(hours)
     ax.plot(scaled.Time, scaled[param], "ro", ms=0.5, ls="None")
     if fitted:
