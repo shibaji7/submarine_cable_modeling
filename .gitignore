@@ -10,6 +10,7 @@ __pycache__/
 *themis*
 *simulation*
 projects/Superstorms/dataset/May2024/*.ncdf
+ne_10m_bathymetry_all*
 
 
 # C extensions
