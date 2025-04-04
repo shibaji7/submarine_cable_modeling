@@ -9,7 +9,7 @@ import datetime as dt
 
 
 def setups(size = 12):
-    plt.style.use(["science", "ieee"])
+    # plt.style.use(["science", "ieee"])
     plt.rcParams["font.family"] = "sans-serif"
     plt.rcParams["font.sans-serif"] = [
         "Tahoma", "DejaVu Sans",
