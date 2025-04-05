@@ -91,8 +91,8 @@ class CartoDataOverlay(object):
             plot_date=self.date,
         )
         ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
-        plt_lons = np.arange(-180, 181, 20)
-        mark_lons = np.arange(self.extent[0], self.extent[1], 20)
+        plt_lons = np.arange(-180, 181, 5)
+        mark_lons = np.arange(self.extent[0], self.extent[1], 5)
         plt_lats = self.plt_lats
         ax.set_extent(self.extent, crs=cartopy.crs.PlateCarree())
         gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), linewidth=0.2)

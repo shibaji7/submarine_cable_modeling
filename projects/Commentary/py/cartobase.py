@@ -333,7 +333,7 @@ class CartoBase(GeoAxes):
         marker="o",
         zorder=2,
         markerColor="k",
-        markerSize=3,
+        markerSize=6,
         fontSize=4,
         font_color="k",
         xOffset=8,
@@ -355,11 +355,32 @@ class CartoBase(GeoAxes):
         self.text(
             x,
             y,
-            stn.upper(),
+            stn,
             ha="center",
             va="center",
             transform=self.projection,
             fontdict={"color": font_color, "size": fontSize},
+            alpha=0.8,
+        )
+        return
+
+    def add_bus(
+        self, 
+        lats,
+        lons,
+        tx=cartopy.crs.PlateCarree(),
+        zorder=3,
+        ls="-", 
+        lw=0.8,
+        color="r"
+    ):
+        self.plot(
+            lons, lats,
+            color=color,
+            zorder=zorder,
+            transform=tx,
+            ls=ls,
+            lw=lw,
             alpha=0.8,
         )
         return

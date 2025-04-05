@@ -5,11 +5,12 @@ from scipy import constants as C
 from scubas.datasets import Site, PROFILES
 import glob
 
-def get_benchmark_datasets():
+def get_benchmark_datasets(a_scale=None):
     a_55, a_60 = 0.001*np.exp(0.115*55), 0.001*np.exp(0.115*60)
-    a_scale = a_60/a_55
+    a_scale = a_scale if a_scale else a_60/a_55
     files = glob.glob("datasets/*.csv")
     files.sort()
+    print("a_scale>>>", a_scale)
     datasets = pd.concat([pd.read_csv(f, parse_dates=["datetime"]) for f in files])
     datasets.x = (datasets.x-np.mean(datasets.x.iloc[:60]))*a_scale
     datasets.y = (datasets.y-np.mean(datasets.y.iloc[:60]))*a_scale

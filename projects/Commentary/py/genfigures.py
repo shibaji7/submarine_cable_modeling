@@ -210,8 +210,66 @@ def find_BM_Efield():
 
 def figure5():
     from fan import CartoDataOverlay
-    cb = CartoDataOverlay(date=dt.datetime(2024,5,11))
+    import cartopy
+    cb = CartoDataOverlay(date=dt.datetime(2024,5,11), extent=[-90, -78, 28, 36],)
     ax = cb.add_axes()
+
+    ax.add_ground_station("Sub1", 33.6135, -87.3737, markerColor="m", font_color="k", xOffset=-0.5, yOffset=0.)
+    ax.add_ground_station("Sub2", 34.3104, -86.3658, markerColor="m", font_color="k", xOffset=-0.5, yOffset=0.25)
+    ax.add_ground_station("Sub3", 33.9551, -84.6794, markerColor="m", font_color="k", xOffset=-0.5, yOffset=0.5)
+    ax.add_ground_station("Sub4", 33.5479, -86.0746, markerColor="m", font_color="k", xOffset=-0.25, yOffset=-0.25)
+    ax.add_ground_station("Sub5", 32.7051, -84.6634, markerColor="m", font_color="k", xOffset=-0.5, yOffset=-0.5)
+    ax.add_ground_station("Sub6", 33.3773, -82.6188, markerColor="m", font_color="k", xOffset=-0.5, yOffset=-0.5)
+    ax.add_ground_station("Sub7", 34.2522, -82.8363, markerColor="m", font_color="k", xOffset=-0.5, yOffset=0.5)
+    ax.add_ground_station("Sub8", 34.1956, -81.0980, markerColor="m", font_color="k", xOffset=-0.5, yOffset=0.5)
+
+    ax.add_bus(
+        lats=[33.6135, 34.3104], lons=[-87.3737, -86.3658], color="b",
+    )
+    ax.add_bus(
+        lats=[33.6135, 33.5479], lons=[-87.3737, -86.0746], color="b",
+    )
+    ax.add_bus(
+        lats=[34.3104, 33.9551], lons=[-86.3658, -84.6794], color="b",
+    )
+    ax.add_bus(
+        lats=[33.9551, 32.7051], lons=[-84.6794, -84.6634], color="b",
+    )
+    ax.add_bus(
+        lats=[34.3104, 32.7051], lons=[-86.3658, -84.6634], color="b",
+    )
+
+
+    ax.add_bus(
+        lats=[34.2522, 34.1956], lons=[-82.8363, -81.0980], color="r",
+    )
+    ax.add_bus(
+        lats=[34.2522, 33.3773], lons=[-82.8363, -82.6188], color="r",
+    )
+    ax.add_bus(
+        lats=[33.5479, 33.3773], lons=[-86.0746, -82.6188], color="r",
+    )
+    ax.add_bus(
+        lats=[33.9551, 33.5479], lons=[-84.6794, -86.0746], color="r",
+    )
+    ax.add_bus(
+        lats=[32.7051, 33.3773], lons=[-84.6634, -82.6188], color="r",
+    )
+    ax.add_bus(
+        lats=[32.7051, 34.2522], lons=[-84.6634, -82.8363], color="r",
+    )
+    ax.add_bus(
+        lats=np.array([33.3773, 33.9551])-5e-2, lons=np.array([-82.6188, -84.6794])-5e-2, color="r", lw=0.4
+    )
+    ax.add_bus(
+        lats=np.array([33.3773, 33.9551])+5e-2, lons=np.array([-82.6188, -84.6794])+5e-2, color="r", lw=0.4
+    )
+    ax.add_bus(
+        lats=np.array([33.5479, 32.7051])-5e-2, lons=np.array([-86.0746, -84.6634])-5e-2, color="r", lw=0.4
+    )
+    ax.add_bus(
+        lats=np.array([33.5479, 32.7051])+5e-2, lons=np.array([-86.0746, -84.6634])+5e-2, color="r", lw=0.4
+    )
     cb.save("figures/Figure05a.png")
     cb.close()
     return
@@ -351,9 +409,9 @@ def figure7():
     fig.savefig("figures/Figure07.png", bbox_inches="tight")
     return
 
-figure7()
-figure6()
-# figure5()
+# figure7()
+# figure6()
+figure5()
 # find_BM_Efield()
 # figure4()
 # figure2()
