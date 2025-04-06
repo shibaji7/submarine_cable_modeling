@@ -14,7 +14,7 @@ sys.path.append("../Superstorms/py/")
 
 
 def setups(size = 15):
-    plt.style.use(["science", "ieee"])
+    # plt.style.use(["science", "ieee"])
     plt.rcParams["font.family"] = "sans-serif"
     plt.rcParams["font.sans-serif"] = [
         "Tahoma", "DejaVu Sans",
@@ -206,3 +206,6 @@ ax.plot(model2.cable.tot_params.index, model2.cable.tot_params["Vt(v)"],
         color="b", ls="-", lw=0.7, alpha=0.7, zorder=5, label="AT/Land,50-m Water")
 ts.save("figures/compare.png")
 ts.close()
+
+model0.cable.tot_params.to_csv("dataset/simulation.csv")
+print(model0.cable.tot_params.head())
