@@ -211,7 +211,7 @@ def find_BM_Efield():
 def figure5():
     from fan import CartoDataOverlay
     import cartopy
-    cb = CartoDataOverlay(date=dt.datetime(2024,5,11), extent=[-90, -78, 28, 36],)
+    cb = CartoDataOverlay(date=dt.datetime(2024,5,11), extent=[-88, -80, 30, 36],)
     ax = cb.add_axes()
 
     ax.add_ground_station("Sub1", 33.6135, -87.3737, markerColor="m", font_color="k", xOffset=-0.5, yOffset=0.)

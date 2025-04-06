@@ -41,7 +41,7 @@ class CartoDataOverlay(object):
         central_longitude=-30.0,
         central_latitude=45.0,
         extent=[-130, -60, 20, 80],
-        plt_lats=np.arange(20, 80, 10),
+        plt_lats=np.arange(20, 80, 2),
         txt_size=8,
     ):
         setsize(txt_size)
@@ -90,9 +90,9 @@ class CartoDataOverlay(object):
             coords=self.coord,
             plot_date=self.date,
         )
-        ax.overaly_coast_lakes(lw=0.4, alpha=0.4)
-        plt_lons = np.arange(-180, 181, 5)
-        mark_lons = np.arange(self.extent[0], self.extent[1], 5)
+        ax.coastlines(lw=0.4, alpha=0.4)
+        plt_lons = np.arange(-180, 181, 2)
+        mark_lons = np.arange(self.extent[0], self.extent[1], 2)
         plt_lats = self.plt_lats
         ax.set_extent(self.extent, crs=cartopy.crs.PlateCarree())
         gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), linewidth=0.2)
@@ -101,7 +101,7 @@ class CartoDataOverlay(object):
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
         gl.n_steps = 90
-        ax.mark_latitudes(plt_lats, fontsize="xx-small", color="k", lon_location=-90)
+        ax.mark_latitudes(plt_lats, fontsize="xx-small", color="k", lon_location=-84)
         ax.mark_longitudes(mark_lons, fontsize="xx-small", color="k")
         self.proj = proj
         self.geo = cartopy.crs.PlateCarree()

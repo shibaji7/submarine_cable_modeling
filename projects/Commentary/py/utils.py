@@ -5,10 +5,14 @@ from scipy import constants as C
 from scubas.datasets import Site, PROFILES
 import glob
 
+def get_nerc_dataset():
+    datasets = pd.read_csv("datasets/nerc.csv")
+    return datasets
+
 def get_benchmark_datasets(a_scale=None):
     a_55, a_60 = 0.001*np.exp(0.115*55), 0.001*np.exp(0.115*60)
     a_scale = a_scale if a_scale else a_60/a_55
-    files = glob.glob("datasets/*.csv")
+    files = glob.glob("datasets/OTT*.csv")
     files.sort()
     print("a_scale>>>", a_scale)
     datasets = pd.concat([pd.read_csv(f, parse_dates=["datetime"]) for f in files])
