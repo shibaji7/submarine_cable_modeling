@@ -278,16 +278,7 @@ def figure6():
     plt.rcParams.update({
         "font.size": 10
     })
-    ds = utils.get_benchmark_datasets()
-    # Case A
-    site = utils.sites[0]
-    from scubas.utils import fft, ifft
-    Bxf, f = fft(ds.x, 1)
-    Ets = dict(
-        Y=ifft(np.array(utils.calcTFx(site, freqs=f).E2B) * Bxf),
-    )
-    Byf, f = fft(ds.y, 1)
-    Ets["X"] = ifft(np.array(utils.calcTFx(site, freqs=f).E2B) * Byf)
+    ds, Ets, del_t = utils.run_benchmark_sim(snum=0)
 
     fig, start = plt.figure(dpi=300, figsize=(5,7)), 311
     ax = fig.add_subplot(start)
@@ -296,9 +287,9 @@ def figure6():
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
     ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
     ax.set_ylim(-4000, 2000)
-    ax.set_ylabel(r"B, nT")
+    ax.set_ylabel(r"$\Delta $B, nT")
     ax.plot(ds.datetime, ds.x, ls="-", lw=0.6, color="r", label="$B_x$")
-    ax.plot(ds.datetime, ds.y, ls="-", lw=0.6, color="k", label="$B_y$")
+    ax.plot(ds.datetime, ds.y, ls="-", lw=0.3, color="k", label="$B_y$")
     ax.legend(loc=1)
     ax.set_xticklabels([])
     ax.text(0.05, 0.95, "(a)", ha="left", va="top", transform=ax.transAxes)
@@ -310,35 +301,17 @@ def figure6():
     ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
     ax.set_ylim(-2, 2)
     ax.set_ylabel(r"E, V/km")
-    ax.plot(ds.datetime, Ets["X"]/1e3, ls="-", lw=0.6, color="r")
-    ax.plot(ds.datetime, Ets["Y"]/1e3, ls="-", lw=0.6, color="k")
+    ax.plot(ds.datetime, Ets["X"]/1e3, ls="-", lw=0.6, color="r", label=r"$E_x$")
+    ax.plot(ds.datetime, Ets["Y"]/1e3, ls="-", lw=0.3, color="k", label=r"$E_y$")
+    ax.legend(loc=1)
     ax.text(0.05, 0.95, "(b) "+r"Case A, $\tau_0=10.0$ km", ha="left", va="top", transform=ax.transAxes)
     r0, r1 = np.corrcoef(ds.x, Ets["Y"])[0,1], np.corrcoef(ds.y, Ets["X"])[0,1]
-    ax.text(0.05, 0.3, "$r(B,E)_{x}$=%.3f"%r0, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="r",size=7))
-    ax.text(0.05, 0.2, "$r(B,E)_{y}$=%.3f"%r1, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.05, 0.3, "$r(\Delta B_x,E_y)$=%.3f"%r0, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.05, 0.2, "$r(\Delta B_y,E_x)$=%.3f"%r1, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
     r0, r1 = np.corrcoef(ds.dx, Ets["Y"])[0,1], np.corrcoef(ds.dy, Ets["X"])[0,1]
-    ax.text(0.95, 0.3, "$r(\partial B,E)_{x}$=%.3f"%r0, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="r",size=7))
-    ax.text(0.95, 0.2, "$r(\partial B,E)_{y}$=%.3f"%r1, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
-    ax.set_xticklabels([])
-
-    ax = fig.add_subplot(start+2)
-    date_format = mdates.DateFormatter("%H")
-    ax.xaxis.set_major_formatter(date_format)
-    ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
-    ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
-    ax.set_ylabel(r"GIC [Amps/$^\circ$]", color="b")
-    ax.plot(ds.datetime, Ets["X"]*20.3*1e-3, ls="-", lw=0.3, color="b") # N, A/p, to bus 9
-    ax.plot(ds.datetime, Ets["X"]*-27.67*1e-3, ls="--", lw=0.3, color="k") # N, A/p, to transformer T8
-    ax.set_ylim([-60, 60])
+    ax.text(0.95, 0.3, "$r(\partial B_x,E_y)$=%.3f"%r0, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.95, 0.2, "$r(\partial B_y,E_x)$=%.3f"%r1, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
     ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
-    # ax = ax.twinx()
-    # ax.set_ylabel(r"GIC [Amps]", color="r")
-    # ax.plot(ds.datetime, Ets["X"]*-279.08*1e-3, ls="-", lw=0.3, color="r", alpha=0.5) # N, A, to substation S5
-    # # ax.set_xlim([0, 24])
-    # ax.set_ylim([-400, 400])
-    ax.text(0.05, 0.95, "(c) GIC expecetd through B9 and T8 due to $E_x$", ha="left", va="top", transform=ax.transAxes)
-
-    
     fig.savefig("figures/Figure06.png", bbox_inches="tight")
     return
 
@@ -346,16 +319,7 @@ def figure7():
     plt.rcParams.update({
         "font.size": 10
     })
-    ds = utils.get_benchmark_datasets()
-    # Case A
-    site = utils.sites[1]
-    from scubas.utils import fft, ifft
-    Bxf, f = fft(ds.x, 1)
-    Ets = dict(
-        Y=ifft(np.array(utils.calcTFx(site, freqs=f).E2B) * Bxf),
-    )
-    Byf, f = fft(ds.y, 1)
-    Ets["X"] = ifft(np.array(utils.calcTFx(site, freqs=f).E2B) * Byf)
+    ds, Ets, del_t = utils.run_benchmark_sim(snum=1)
 
     fig, start = plt.figure(dpi=300, figsize=(5,7)), 311
     ax = fig.add_subplot(start)
@@ -363,10 +327,10 @@ def figure7():
     ax.xaxis.set_major_formatter(date_format)
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
     ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
-    ax.set_ylim(-4000, 2000)
-    ax.set_ylabel(r"B, nT")
-    ax.plot(ds.datetime, ds.x, ls="-", lw=0.6, color="r", label="$B_x$")
-    ax.plot(ds.datetime, ds.y, ls="-", lw=0.6, color="k", label="$B_y$")
+    ax.set_ylim(-40, 40)
+    ax.set_ylabel(r"$\frac{\partial}{\partial t}$B, nT/s")
+    ax.plot(ds.datetime, ds.dx, ls="-", lw=0.6, color="r", label=r"$\frac{\partial}{\partial t}B_x$")
+    ax.plot(ds.datetime, ds.dy, ls="-", lw=0.3, color="k", label=r"$\frac{\partial}{\partial t}B_y$")
     ax.legend(loc=1)
     ax.set_xticklabels([])
     ax.text(0.05, 0.95, "(a)", ha="left", va="top", transform=ax.transAxes)
@@ -376,42 +340,161 @@ def figure7():
     ax.xaxis.set_major_formatter(date_format)
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
     ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
-    ax.set_ylim(-30, 30)
+    ax.set_ylim(-8, 8)
     ax.set_ylabel(r"E, V/km")
     ax.plot(ds.datetime, Ets["X"]/1e3, ls="-", lw=0.6, color="r")
-    ax.plot(ds.datetime, Ets["Y"]/1e3, ls="-", lw=0.6, color="k")
+    ax.plot(ds.datetime, Ets["Y"]/1e3, ls="-", lw=0.3, color="k")
     ax.text(0.05, 0.95, "(b) "+r"Case B, $\tau_0=100.0$ km", ha="left", va="top", transform=ax.transAxes)
     r0, r1 = np.corrcoef(ds.x, Ets["Y"])[0,1], np.corrcoef(ds.y, Ets["X"])[0,1]
-    ax.text(0.05, 0.3, "$r(B,E)_{x}$=%.3f"%r0, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="r",size=7))
-    ax.text(0.05, 0.2, "$r(B,E)_{y}$=%.3f"%r1, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.05, 0.3, "$r(\Delta B_x,E_y)$=%.3f"%r0, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.05, 0.2, "$r(\Delta B_y,E_x)$=%.3f"%r1, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
     r0, r1 = np.corrcoef(ds.dx, Ets["Y"])[0,1], np.corrcoef(ds.dy, Ets["X"])[0,1]
-    ax.text(0.95, 0.3, "$r(\partial B,E)_{x}$=%.3f"%r0, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="r",size=7))
-    ax.text(0.95, 0.2, "$r(\partial B,E)_{y}$=%.3f"%r1, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
-    ax.set_xticklabels([])
+    ax.text(0.95, 0.3, "$r(\partial B_x,E_y)$=%.3f"%r0, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.95, 0.2, "$r(\partial B_y,E_x)$=%.3f"%r1, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
+    fig.savefig("figures/Figure07.png", bbox_inches="tight")
+    return
 
-    ax = fig.add_subplot(start+2)
+def figure8():
+    plt.rcParams.update({
+        "font.size": 10
+    })
+    ds0, Ets0, _ = utils.run_benchmark_sim(snum=0)
+    ds1, Ets1, _ = utils.run_benchmark_sim(snum=1)
+
+    fig, start = plt.figure(dpi=300, figsize=(5,3*2.5)), 311
+
+    ax = fig.add_subplot(start)
     date_format = mdates.DateFormatter("%H")
     ax.xaxis.set_major_formatter(date_format)
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
     ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
-    ax.set_ylabel(r"GIC [Amps/$^\circ$]")
-    ax.plot(ds.datetime, Ets["X"]*20.3*1e-3, ls="-", lw=0.3, color="b") # N, A/p, to bus 9
-    ax.plot(ds.datetime, Ets["X"]*-27.67*1e-3, ls="--", lw=0.3, color="r", alpha=0.6) # N, A/p, to transformer T8
-    ax.set_ylim([-500, 500])
-    # ax.text(0.1, 0.9, tag[0], ha="left", va="center", transform=ax.transAxes)
-    # ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
-    # ax = ax.twinx()
-    # ax.set_ylabel(r"GIC [Amps]", color="r")
-    # ax.plot(ds.datetime, Ets["X"]*-279.08*1e-3, ls="-", lw=0.3, color="r", alpha=0.5) # N, A, to substation S5
-    # # ax.set_xlim([0, 24])
-    # ax.set_ylim([-4000, 4000])
-    ax.text(0.05, 0.95, "(c) GIC expecetd through B9 and T8 due to $E_x$", ha="left", va="top", transform=ax.transAxes)
-    fig.savefig("figures/Figure07.png", bbox_inches="tight")
+    ax.set_ylim([-300, 300])
+    ax.set_ylabel(r"GIC, Amps")
+    ax.plot(ds0.datetime, Ets0["Y"]*-65.46*1e-3, ls="-", lw=0.3, color="k", label=r"$GIC_y$") # E, Amps Sub 5: -65.46 A per 1 mv/km
+    ax.plot(ds0.datetime, Ets0["X"]*-279.8*1e-3, ls="-", lw=0.3, color="r", label=r"$GIC_x$") # E, Amps Sub 5: -279.8 A per 1 mv/km
+    ax.legend(loc=1)
+    r0, r1 = np.corrcoef(ds0.x, Ets0["Y"])[0,1], np.corrcoef(ds0.y, Ets0["X"])[0,1]
+    ax.text(0.05, 0.3, "$r(\Delta B_x,GIC_y)$=%.3f"%r0, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.05, 0.2, "$r(\Delta B_y,GIC_x)$=%.3f"%r1, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    r0, r1 = np.corrcoef(ds0.dx, Ets0["Y"])[0,1], np.corrcoef(ds0.dy, Ets0["X"])[0,1]
+    ax.text(0.95, 0.3, "$r(\partial B_x,GIC_y)$=%.3f"%r0, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.95, 0.2, "$r(\partial B_y,GIC_x)$=%.3f"%r1, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.05, 0.95, "(a) "+r"Case A, $\tau_0=10.0$ km", ha="left", va="top", transform=ax.transAxes)
+    
+    ax = fig.add_subplot(start+1)
+    date_format = mdates.DateFormatter("%H")
+    ax.xaxis.set_major_formatter(date_format)
+    ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
+    ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
+    ax.set_ylim([-1000, 1000])
+    ax.set_ylabel(r"GIC [Amps]")
+    ax.plot(ds0.datetime, Ets1["X"]*-279.8*1e-3, ls="-", lw=0.3, color="r") # E, Amps Sub 5: -279.8 A per 1 mv/km
+    ax.plot(ds0.datetime, Ets1["Y"]*-65.46*1e-3, ls="-", lw=0.3, color="k") # E, Amps Sub 5: -65.46 A per 1 mv/km
+    r0, r1 = np.corrcoef(ds0.x, Ets1["Y"])[0,1], np.corrcoef(ds0.y, Ets1["X"])[0,1]
+    ax.text(0.05, 0.3, "$r(\Delta B_x,GIC_y)$=%.3f"%r0, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.05, 0.2, "$r(\Delta B_y,GIC_x)$=%.3f"%r1, ha="left", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    r0, r1 = np.corrcoef(ds0.dx, Ets1["Y"])[0,1], np.corrcoef(ds0.dy, Ets1["X"])[0,1]
+    ax.text(0.95, 0.3, "$r(\partial B_x,GIC_y)$=%.3f"%r0, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.95, 0.2, "$r(\partial B_y,GIC_x)$=%.3f"%r1, ha="right", va="top", transform=ax.transAxes, fontdict=dict(color="k",size=7))
+    ax.text(0.05, 0.95, "(b) "+r"Case B, $\tau_0=100.0$ km", ha="left", va="top", transform=ax.transAxes)
+    ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
+
+    fig.subplots_adjust(wspace=0.5)
+    fig.savefig("figures/Figure08.png", bbox_inches="tight")
     return
 
-# figure7()
-# figure6()
-figure5()
+def figure9():
+    plt.rcParams.update({
+        "font.size": 10
+    })
+    ds0, Ets0, _ = utils.run_benchmark_sim(snum=0)
+    _, Ets1, _ = utils.run_benchmark_sim(snum=1)
+
+    fig, start = plt.figure(dpi=300, figsize=(5,2.5*2)), 211
+
+    B = np.sqrt(ds0.x**2+ds0.y**2)
+    dB = np.sqrt(ds0.dx**2+ds0.dy**2)
+    GIC = np.sqrt((Ets0["Y"]*-65.46*1e-3)**2, (Ets0["X"]*-279.8*1e-3)**2)
+    GIC = (Ets0["Y"]*-65.46*1e-3) + (Ets0["X"]*-279.8*1e-3)
+    ax = fig.add_subplot(start)
+    date_format = mdates.DateFormatter("%H")
+    ax.xaxis.set_major_formatter(date_format)
+    ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
+    ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
+    ax.set_ylabel(r"$\Delta$ B, nT", color="r")
+    ax.plot(ds0.datetime, B, ls="-", lw=0.3, color="r")
+    ax.set_ylim(0, 5000)
+    ax = ax.twinx()
+    ax.plot(ds0.datetime, GIC, ls="-", lw=0.3, color="k")
+    ax.set_ylim(-300, 300)
+    r0, r1 = np.corrcoef(B, GIC)[0,1], np.corrcoef(dB, GIC)[0,1]
+    ax.set_ylabel(r"GIC, Amps", color="k")
+    ax.text(
+        0.05, 0.95, 
+        "(a) "+r"Case A, $\tau_0=10.0$ km", 
+        ha="left", va="top", 
+        transform=ax.transAxes
+    )
+    ax.text(
+        0.95, 0.95,
+        "$r(\Delta B, GIC)$=%.3f"%r0,
+        ha="right", va="top", 
+        transform=ax.transAxes
+    )
+    ax.text(
+        0.95, 0.85,
+        "$r(\partial B, GIC)$=%.3f"%r1,
+        ha="right", va="top", 
+        transform=ax.transAxes
+    )
+
+    B = np.sqrt(ds0.x**2+ds0.y**2)
+    dB = np.sqrt(ds0.dx**2+ds0.dy**2)
+    GIC = np.sqrt((Ets1["Y"]*-65.46*1e-3)**2, (Ets1["X"]*-279.8*1e-3)**2)
+    GIC = (Ets1["Y"]*-65.46*1e-3) + (Ets1["X"]*-279.8*1e-3)
+    ax = fig.add_subplot(start+1)
+    date_format = mdates.DateFormatter("%H")
+    ax.xaxis.set_major_formatter(date_format)
+    ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
+    ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
+    ax.set_ylabel(r"$\partial$B, nT", color="r")
+    ax.plot(ds0.datetime, dB, ls="-", lw=0.3, color="r")
+    ax.set_ylim(0, 50)
+    ax = ax.twinx()
+    ax.plot(ds0.datetime, GIC, ls="-", lw=0.3, color="k")
+    ax.set_ylim(-1000, 1000)
+    r0, r1 = np.corrcoef(B, GIC)[0,1], np.corrcoef(dB, GIC)[0,1]
+    ax.set_ylabel(r"GIC, Amps", color="k")
+    ax.text(
+        0.05, 0.95, 
+        "(b) "+r"Case B, $\tau_0=100.0$ km", 
+        ha="left", va="top", 
+        transform=ax.transAxes
+    )
+    ax.text(
+        0.95, 0.95,
+        "$r(\Delta B, GIC)$=%.3f"%r0,
+        ha="right", va="top", 
+        transform=ax.transAxes
+    )
+    ax.text(
+        0.95, 0.85,
+        "$r(\partial B, GIC)$=%.3f"%r1,
+        ha="right", va="top", 
+        transform=ax.transAxes
+    )
+
+
+    fig.subplots_adjust(wspace=0.5)
+    fig.savefig("figures/Figure09.png", bbox_inches="tight")
+    return
+
+figure9()
+figure8()
+figure7()
+figure6()
+# figure5()
 # find_BM_Efield()
 # figure4()
 # figure2()
