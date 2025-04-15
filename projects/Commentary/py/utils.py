@@ -48,7 +48,7 @@ sites = [
     PROFILES.DB,
 ]
 
-def run_benchmark_sim(snum=0):
+def run_benchmark_sim(snum=0, dates=[]):
     from scubas.utils import fft, ifft
     site = sites[snum]
     ds, del_t = get_benchmark_datasets()
@@ -56,8 +56,15 @@ def run_benchmark_sim(snum=0):
     Ets = dict(
         Y=-ifft(np.array(calcTFx(site, freqs=f).E2B) * Bxf),
     )
+    ds["Ey"] = -ifft(np.array(calcTFx(site, freqs=f).E2B) * Bxf)
     Byf, f = fft(ds.y, del_t)
     Ets["X"] = ifft(np.array(calcTFx(site, freqs=f).E2B) * Byf)
+    ds["Ex"] = ifft(np.array(calcTFx(site, freqs=f).E2B) * Byf)
+    if len(dates) >= 2:
+        ds = ds[
+            (ds.datetime >= dates[0])
+            & (ds.datetime <= dates[1])
+        ]
     return ds, Ets, del_t
 
 def get_nerc_dataset():
@@ -69,12 +76,13 @@ def get_benchmark_datasets(a_scale=None):
     a_scale = a_scale if a_scale else a_60/a_55
     files = glob.glob("datasets/OTT*.csv")
     files.sort()
-    print("a_scale>>>", a_scale)
     datasets = pd.concat([pd.read_csv(f, parse_dates=["datetime"]) for f in files])
     datasets.x = (datasets.x-np.mean(datasets.x.iloc[:60]))*a_scale
     datasets.y = (datasets.y-np.mean(datasets.y.iloc[:60]))*a_scale
     datasets.z = (datasets.z-np.mean(datasets.z.iloc[:60]))*a_scale
     del_t = (datasets.datetime.iloc[1]-datasets.datetime.iloc[0]).total_seconds()
+    for key in ["x", "y", "z"]:
+        datasets[key] = datasets[key] * get_tapering_function(np.arange(len(datasets))*del_t)
     datasets["dx"] = np.diff(datasets.x, prepend=datasets.x.iloc[0])/del_t
     datasets["dy"] = np.diff(datasets.y, prepend=datasets.y.iloc[0])/del_t
     datasets["dz"] = np.diff(datasets.z, prepend=datasets.z.iloc[0])/del_t
@@ -152,3 +160,19 @@ def dBdt_fft(B, sr=1, multiplier=1j*2*np.pi, sqrt=False):
     else:
         dBdt = np.fft.ifft(b_fft*f*multiplier)
     return np.real(dBdt)
+
+def get_tapering_function(t, p=0.1):
+    """
+    This method is resposible for generateing
+    tapering function based on time sequence t
+    and tapering coefficient p
+    """
+    T = len(t)
+    P, P2 = int(T * p), int(T * p / 2)
+    w = np.zeros_like(t)
+    w[:P2] = 0.5 * (1 - np.cos(2 * np.pi * t[:P2] / P))
+    w[P2 : T - P2] = 1.0
+    w[T - P2 :] = 0.5 * (
+        1 - np.cos(2 * np.pi * (t[-1] - t[T - P2 :]) / P)
+    )
+    return w
