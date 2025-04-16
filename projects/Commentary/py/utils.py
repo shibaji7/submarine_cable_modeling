@@ -77,6 +77,8 @@ def get_benchmark_datasets(a_scale=None):
     files = glob.glob("datasets/OTT*.csv")
     files.sort()
     datasets = pd.concat([pd.read_csv(f, parse_dates=["datetime"]) for f in files])
+    for key in ["x", "y", "z"]:
+        datasets[key+"_o"] = datasets[key]*a_scale
     datasets.x = (datasets.x-np.mean(datasets.x.iloc[:60]))*a_scale
     datasets.y = (datasets.y-np.mean(datasets.y.iloc[:60]))*a_scale
     datasets.z = (datasets.z-np.mean(datasets.z.iloc[:60]))*a_scale

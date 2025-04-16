@@ -446,9 +446,9 @@ def figure9():
     ax.plot(ds0.datetime, B, ls="-", lw=0.3, color="r")
     ax.set_ylim(0, 5000)
     ax = ax.twinx()
-    ax.plot(ds0.datetime, GIC, ls="-", lw=0.3, color="k")
-    ax.set_ylim(-300, 300)
-    r0, r1 = np.corrcoef(B, GIC)[0,1], np.corrcoef(dB, GIC)[0,1]
+    ax.plot(ds0.datetime, np.abs(GIC), ls="-", lw=0.3, color="k")
+    ax.set_ylim(0, 300)
+    r0, r1 = np.corrcoef(B, np.abs(GIC))[0,1], np.corrcoef(dB, np.abs(GIC))[0,1]
     ax.set_ylabel(r"GIC, Amps", color="k")
     ax.text(
         0.05, 0.95, 
@@ -481,12 +481,12 @@ def figure9():
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
     ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
     ax.set_ylabel(r"$\partial$B, nT/s", color="r")
-    ax.plot(ds1.datetime, dB, ls="-", lw=0.3, color="r")
+    ax.plot(ds1.datetime, dB, ls="-", lw=0.6, color="r")
     ax.set_ylim(0, 50)
     ax = ax.twinx()
-    ax.plot(ds1.datetime, GIC, ls="-", lw=0.3, color="k")
-    ax.set_ylim(-1000, 1000)
-    r0, r1 = np.corrcoef(B, GIC)[0,1], np.corrcoef(dB, GIC)[0,1]
+    ax.plot(ds1.datetime, np.abs(GIC), ls="-", lw=0.2, color="k")
+    ax.set_ylim(0, 1000)
+    r0, r1 = np.corrcoef(B, np.abs(GIC))[0,1], np.corrcoef(dB, np.abs(GIC))[0,1]
     
     ax.set_ylabel(r"GIC, Amps", color="k")
     ax.text(
@@ -521,8 +521,107 @@ def figure9():
     fig.savefig("figures/Figure09a.png", bbox_inches="tight")
     return
 
-figure9()
-figure8()
+def figure10():
+    plt.rcParams.update({
+        "font.size": 10
+    })
+    dates = [dt.datetime(1989,3,12,12), dt.datetime(1989,3,15)]
+    ds0, _, del_t = utils.run_benchmark_sim(snum=0, dates=dates)
+    ds1, _, _ = utils.run_benchmark_sim(snum=1, dates=dates)
+
+    fig, start = plt.figure(dpi=300, figsize=(5,2.5*2)), 211
+
+    B = np.sqrt(ds0.x_o**2+ds0.y_o**2)
+    B = B - np.mean(B[:60])
+    dB = np.diff(B, prepend=B.iloc[0])/del_t
+    # dB = np.sqrt(ds0.dx**2+ds0.dy**2)
+    # GIC = np.sqrt((ds0.Ey*-65.46*1e-3)**2, (ds0.Ex*-279.8*1e-3)**2)
+    GIC = (ds0.Ey*-65.46*1e-3) + (ds0.Ex*-279.8*1e-3)
+    ax = fig.add_subplot(start)
+    date_format = mdates.DateFormatter("%H")
+    ax.xaxis.set_major_formatter(date_format)
+    ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
+    ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
+    ax.set_ylabel(r"$\Delta$ B, nT", color="r")
+    ax.plot(ds0.datetime, B, ls="-", lw=0.3, color="r")
+    ax.set_ylim(-5000, 5000)
+    ax = ax.twinx()
+    ax.plot(ds0.datetime, GIC, ls="-", lw=0.3, color="k")
+    ax.set_ylim(-300, 300)
+    r0, r1 = np.corrcoef(B, GIC)[0,1], np.corrcoef(dB, GIC)[0,1]
+    ax.set_ylabel(r"GIC, Amps", color="k")
+    ax.text(
+        0.05, 0.95, 
+        "(a) "+r"Case A, $\tau_0=10.0$ km", 
+        ha="left", va="top", 
+        transform=ax.transAxes
+    )
+    ax.text(
+        0.95, 0.95,
+        "$r(\Delta B, GIC)$=%.3f"%r0,
+        ha="right", va="top", 
+        transform=ax.transAxes
+    )
+    ax.text(
+        0.95, 0.85,
+        "$r(\partial B, GIC)$=%.3f"%r1,
+        ha="right", va="top", 
+        transform=ax.transAxes
+    )
+
+    B = np.sqrt(ds1.x_o**2+ds1.y_o**2)
+    B = B - np.mean(B[:60])
+    dB = np.diff(B, prepend=B.iloc[0])/del_t
+    GIC = (ds1.Ey*-65.46*1e-3) + (ds1.Ex*-279.8*1e-3)
+    ax = fig.add_subplot(start+1)
+    date_format = mdates.DateFormatter("%H")
+    ax.xaxis.set_major_formatter(date_format)
+    ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
+    ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
+    ax.set_ylabel(r"$\partial$B, nT/s", color="r")
+    ax.plot(ds1.datetime, dB, ls="-", lw=0.6, color="r")
+    ax.set_ylim(-50, 50)
+    ax = ax.twinx()
+    ax.plot(ds1.datetime, GIC, ls="-", lw=0.2, color="k")
+    ax.set_ylim(-1000, 1000)
+    r0, r1 = np.corrcoef(B, GIC)[0,1], np.corrcoef(dB, GIC)[0,1]
+    
+    ax.set_ylabel(r"GIC, Amps", color="k")
+    ax.text(
+        0.05, 0.95, 
+        "(b) "+r"Case B, $\tau_0=100.0$ km", 
+        ha="left", va="top", 
+        transform=ax.transAxes
+    )
+    ax.text(
+        0.95, 0.95,
+        "$r(\Delta B, GIC)$=%.3f"%r0,
+        ha="right", va="top", 
+        transform=ax.transAxes
+    )
+    ax.text(
+        0.95, 0.85,
+        "$r(\partial B, GIC)$=%.3f"%r1,
+        ha="right", va="top", 
+        transform=ax.transAxes
+    )
+
+
+    fig.subplots_adjust(wspace=0.5)
+    fig.savefig("figures/Figure10.png", bbox_inches="tight")
+
+    fig, start = plt.figure(dpi=300, figsize=(5,5)), 111
+    ax = fig.add_subplot(start)
+    ax.scatter(B, GIC, s=0.6, color="r")
+    ax.scatter(dB, GIC, s=0.6)
+    ax.set_xlabel(r"$\partial B$")
+    ax.set_ylabel(r"GIC")
+    fig.savefig("figures/Figure10a.png", bbox_inches="tight")
+    return
+
+figure10()
+# figure9()
+# figure8()
 # figure7()
 # figure6()
 # figure5()
