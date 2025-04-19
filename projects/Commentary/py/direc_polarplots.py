@@ -34,8 +34,10 @@ def compute(snum=0):
     ds["Eh"] = np.sqrt(ds.Ex**2+ds.Ey**2)
     ds["theta_Eh"] = np.degrees(np.pi+np.arctan2(ds.Ey, ds.Ex))
     ds["Bh"] = np.sqrt(ds.x_o**2+ds.y_o**2)
+    ds["theta_Bh"] = np.degrees(np.pi+np.arctan2(ds.y_o, ds.x_o))
     ds["Bh"] = ds["Bh"] - np.mean(ds["Bh"].iloc[:60])
     ds["dBh"] = np.diff(ds["Bh"], prepend=ds["Bh"].iloc[0])/del_t
+    ds["theta_dBh"] = np.degrees(np.pi+np.arctan2(ds.dy, ds.dx))
     return ds
 
 substn = dict(
