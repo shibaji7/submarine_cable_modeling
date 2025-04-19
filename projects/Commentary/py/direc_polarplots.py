@@ -84,17 +84,18 @@ def compute_segmented_corr(ds, dth, s0, s1, sub1, sub2):
         Cor_B.append(np.abs(np.corrcoef(np.abs(o.Bh), GIC_pipe)[0,1]))
         Cor_dB.append(np.abs(np.corrcoef(o.dBh, GIC_pipe)[0,1]))
 
-    Cor_B, Cor_dB = (
-        set_last_mid_point(Cor_B), 
-        set_last_mid_point(Cor_dB)
-    )
-    theta, Cor_B = smooth_filling(tcs, Cor_B, s0)
-    _, Cor_dB = smooth_filling(tcs, Cor_dB, s1)
-    Cor_B, Cor_dB = (
-        set_last_mid_point(Cor_B), 
-        set_last_mid_point(Cor_dB)
-    )
-    return theta, Cor_B-sub1, Cor_dB-sub2
+    # Cor_B, Cor_dB = (
+    #     set_last_mid_point(Cor_B), 
+    #     set_last_mid_point(Cor_dB)
+    # )
+    # theta, Cor_B = smooth_filling(tcs, Cor_B, s0)
+    # _, Cor_dB = smooth_filling(tcs, Cor_dB, s1)
+    # Cor_B, Cor_dB = (
+    #     set_last_mid_point(Cor_B), 
+    #     set_last_mid_point(Cor_dB)
+    # )
+    # return tcs, Cor_B-sub1, Cor_dB-sub2
+    return tcs, Cor_B, Cor_dB
 
 def pipeline():
     dsA = compute(0)
@@ -109,17 +110,23 @@ def pipeline():
     )
 
     fig, axs = plt.subplots(2, 1, subplot_kw={"projection": "polar"}, dpi=300, figsize=(3,6))
-    axs[0].plot(np.deg2rad(thetaA), CorA_B, ls="-", color="r", label=r"r(B, GIC)")
-    axs[0].plot(np.deg2rad(thetaA), CorA_dB, ls="-", color="b", label=r"r($\partial$B, GIC)")
+    # axs[0].plot(np.deg2rad(thetaA), CorA_B, ls="-", color="r", label=r"r(B, GIC)")
+    # axs[0].plot(np.deg2rad(thetaA), CorA_dB, ls="-", color="b", label=r"r($\partial$B, GIC)")
+    axs[0].bar(np.deg2rad(thetaA), CorA_B, bottom=0.0, color="r", width=np.deg2rad(thetaA[1]-thetaA[0]), alpha=0.5, label=r"r(B, GIC)")
+    axs[0].bar(np.deg2rad(thetaA), CorA_dB, bottom=0.0, color="b", width=np.deg2rad(thetaA[1]-thetaA[0]), alpha=0.5, label=r"r($\partial$B, GIC)")
     axs[0].set_rticks([0, 0.5, 1.0])
     axs[0].set_xticks([0, np.pi/2, np.pi, 3*np.pi/2])
     axs[0].set_rmax(1)
     axs[0].set_rmin(0)
-    axs[0].legend(loc=2)
+    axs[0].legend(bbox_to_anchor=(0.7, 1.2))
+    axs[0].text(0.05, 1.2, f"Cases for Pipeline", ha="left", va="center", transform=axs[0].transAxes)
     axs[0].text(1.1, 0.5, "(a) "+r"Case A, $\tau_0=10.0$ km", ha="left", va="center", transform=axs[0].transAxes, rotation=90)
 
-    axs[1].plot(np.deg2rad(thetaB), CorB_B, ls="-", color="r", label=r"r(B, GIC)")
-    axs[1].plot(np.deg2rad(thetaB), CorB_dB, ls="-", color="b", label=r"r($\partial$B, GIC)")
+    # axs[1].plot(np.deg2rad(thetaB), CorB_B, ls="-", color="r", label=r"r(B, GIC)")
+    # axs[1].plot(np.deg2rad(thetaB), CorB_dB, ls="-", color="b", label=r"r($\partial$B, GIC)")
+    axs[1].bar(np.deg2rad(thetaB), CorB_B, bottom=0.0, color="r", width=np.deg2rad(thetaB[1]-thetaB[0]), alpha=0.5, label=r"r(B, GIC)")
+    axs[1].bar(np.deg2rad(thetaB), CorB_dB, bottom=0.0, color="b", width=np.deg2rad(thetaB[1]-thetaB[0]), alpha=0.5, label=r"r($\partial$B, GIC)")
+    
     axs[1].set_rticks([0, 0.5, 1.0])
     axs[1].set_xticks([0, np.pi/2, np.pi, 3*np.pi/2])
     axs[1].set_rmax(1)
@@ -133,6 +140,31 @@ def compute_segmented_stn_corr(stn, ds, dth, s0, s1, sub1, sub2):
     Cor_B, Cor_dB = [], []
     theta_bins = np.arange(dth, 360+dth, dth)
     tcs = []
+    # ds["GIC"] = 1e-3*(stnab["a"]*np.cos(ds.theta_Eh)*np.array(ds.Eh)+\
+    #         (stnab["b"]*np.sin(ds.theta_Eh)*np.array(ds.Eh)))
+    ds["GIC"] = 1e-3*(stnab["a"]*np.array(ds.Ex)+\
+            (stnab["b"]*np.array(ds.Ey)))
+    
+    fig, axs = plt.subplots(2, 1, dpi=300, figsize=(8,6))
+    ax = axs[0]
+    ax.plot(range(len(ds)), ds.Bh, lw=1.2, zorder=2)
+    ax.set_ylabel("B, nT")
+    ax = ax.twinx()
+    ax.plot(range(len(ds)), ds.dBh, color="r", lw=0.2, zorder=1)
+    ax.set_xlim(0, len(ds))
+    ax.set_ylabel(r"$\partial$ B, nT/s", color="r")
+
+    ax = axs[1]
+    ax.set_xlim(0, len(ds))
+    ax.plot(range(len(ds)), ds.Ex, lw=0.2, zorder=2, ls="--", color="green")
+    ax.plot(range(len(ds)), ds.Ey, lw=0.2, zorder=2, ls=":", color="b")
+    ax.plot(range(len(ds)), np.sqrt(ds.Ex**2+ds.Ey**2), lw=0.6, zorder=2, ls="-", color="k")
+    ax.set_ylabel("E, mv/km")
+    ax = ax.twinx()
+    ax.plot(range(len(ds)), ds.GIC, lw=0.2, zorder=2, ls="--", color="r")
+    ax.set_ylabel("GIC, A")
+    
+    fig.savefig("figures/Figure120.png", bbox_inches="tight")
 
     for tc in theta_bins:
         tcs.append(tc)
@@ -140,22 +172,23 @@ def compute_segmented_stn_corr(stn, ds, dth, s0, s1, sub1, sub2):
         o = ds[
             (ds.theta_Eh>=tl) & (ds.theta_Eh<th)
         ]
-        GIC = (stnab["a"]*np.cos(tc)*np.array(o.Eh)) +\
-            (stnab["b"]*np.sin(tc)*np.array(o.Eh))
-        Cor_B.append(np.abs(np.corrcoef(o.Bh, GIC)[0,1]))
-        Cor_dB.append(np.abs(np.corrcoef(o.dBh, GIC)[0,1]))
+        # GIC = (stnab["a"]*np.cos(tc)*np.array(o.Eh)) +\
+        #     (stnab["b"]*np.sin(tc)*np.array(o.Eh))
+        Cor_B.append(np.abs(np.corrcoef(o.Bh, o.GIC)[0,1]))
+        Cor_dB.append(np.abs(np.corrcoef(o.dBh, o.GIC)[0,1]))
 
     Cor_B, Cor_dB = (
         set_last_mid_point(Cor_B), 
         set_last_mid_point(Cor_dB)
     )
-    theta, Cor_B = smooth_filling(tcs, Cor_B, s0)
-    _, Cor_dB = smooth_filling(tcs, Cor_dB, s1)
-    Cor_B, Cor_dB = (
-        set_last_mid_point(Cor_B), 
-        set_last_mid_point(Cor_dB)
-    )
-    return theta, Cor_B-sub1, Cor_dB-sub2
+    # theta, Cor_B = smooth_filling(tcs, Cor_B, s0)
+    # _, Cor_dB = smooth_filling(tcs, Cor_dB, s1)
+    # Cor_B, Cor_dB = (
+    #     set_last_mid_point(Cor_B), 
+    #     set_last_mid_point(Cor_dB)
+    # )
+    # return tcs, Cor_B-sub1, Cor_dB-sub2
+    return tcs, Cor_B, Cor_dB
     
 def powernet(stn=6):
     dsA = compute(0)
@@ -163,27 +196,31 @@ def powernet(stn=6):
 
     thetaA, CorA_B, CorA_dB = compute_segmented_stn_corr(
         f"stn{stn}", dsA, dth = 5, s0=0.02, 
-        s1=0.7, sub1=3e-2, sub2=0
+        s1=0.08, sub1=3e-2, sub2=0
     )
 
     thetaB, CorB_B, CorB_dB = compute_segmented_stn_corr(
-        f"stn{stn}", dsB, dth = 5, s0=6e-1, 
+        f"stn{stn}", dsB, dth = 5, s0=0.02, 
         s1=0.1, sub1=0.1, sub2=5e-2
     )
     
     fig, axs = plt.subplots(2, 1, subplot_kw={"projection": "polar"}, dpi=300, figsize=(3,6))
-    axs[0].plot(np.deg2rad(thetaA), CorA_B, ls="-", color="r", label=r"r(B, GIC)")
-    axs[0].plot(np.deg2rad(thetaA), CorA_dB, ls="-", color="b", label=r"r($\partial$B, GIC)")
+    # axs[0].plot(np.deg2rad(thetaA), CorA_B, ls="-", color="r", label=r"r(B, GIC)")
+    axs[0].bar(np.deg2rad(thetaA), CorA_B, bottom=0.0, color="r", width=np.deg2rad(thetaA[1]-thetaA[0]), alpha=0.5, label=r"r(B, GIC)")
+    axs[0].bar(np.deg2rad(thetaA), CorA_dB, bottom=0.0, color="b", width=np.deg2rad(thetaA[1]-thetaA[0]), alpha=0.5, label=r"r($\partial$B, GIC)")
+    # axs[0].plot(np.deg2rad(thetaA), CorA_dB, ls="-", color="b", label=r"r($\partial$B, GIC)")
     axs[0].set_rticks([0, 0.5, 1.0])
     axs[0].set_xticks([0, np.pi/2, np.pi, 3*np.pi/2])
     axs[0].set_rmax(1.)
     axs[0].set_rmin(0)
-    axs[0].legend(loc=2)
+    axs[0].legend(bbox_to_anchor=(0.7, 1.2))
     axs[0].text(0.05, 1.2, f"Cases for Sub/{stn}", ha="left", va="center", transform=axs[0].transAxes)
     axs[0].text(1.1, 0.5, "(a) "+r"Case A, $\tau_0=10.0$ km", ha="left", va="center", transform=axs[0].transAxes, rotation=90)
 
-    axs[1].plot(np.deg2rad(thetaB), CorB_B, ls="-", color="r", label=r"r(B, GIC)")
-    axs[1].plot(np.deg2rad(thetaB), CorB_dB, ls="-", color="b", label=r"r($\partial$B, GIC)")
+    # axs[1].plot(np.deg2rad(thetaB), CorB_B, ls="-", color="r", label=r"r(B, GIC)")
+    # axs[1].plot(np.deg2rad(thetaB), CorB_dB, ls="-", color="b", label=r"r($\partial$B, GIC)")
+    axs[1].bar(np.deg2rad(thetaB), CorB_B, bottom=0.0, color="r", width=np.deg2rad(thetaB[1]-thetaB[0]), alpha=0.5, label=r"r(B, GIC)")
+    axs[1].bar(np.deg2rad(thetaB), CorB_dB, bottom=0.0, color="b", width=np.deg2rad(thetaB[1]-thetaB[0]), alpha=0.5, label=r"r($\partial$B, GIC)")
     axs[1].set_rticks([0, 0.5, 1.0])
     axs[1].set_xticks([0, np.pi/2, np.pi, 3*np.pi/2])
     axs[1].set_rmax(1.)
