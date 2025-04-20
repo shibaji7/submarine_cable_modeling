@@ -73,15 +73,19 @@ def compute_segmented_corr(ds, dth, s0, s1, sub1, sub2):
     theta_bins = np.arange(dth, 360+dth, dth)
     tcs = []
 
+    line = np.array([0, 1])
     for tc in theta_bins:
-        tcs.append(tc)
+        tcs.append(tc-270)
         tl, th = tc-dth, tc+dth
         o = ds[
             (ds.theta_Eh>=tl) & (ds.theta_Eh<th)
         ]
-        E_A_pipe = np.cos(tc)*np.array(o.Eh)
-        GIC_pipe = E_A_pipe/1e3/Z_pipe
-        Cor_B.append(np.abs(np.corrcoef(np.abs(o.Bh), GIC_pipe)[0,1]))
+        E_A_pipe = np.cos(tc-270)*np.array(o.Eh)
+        # E_A_pipe = []
+        # for j, x in o.iterrows():
+        #     E_A_pipe.append(np.dot(line, ))
+        GIC_pipe = np.array(E_A_pipe)/1e3/Z_pipe
+        Cor_B.append(np.abs(np.corrcoef(o.Bh, GIC_pipe)[0,1]))
         Cor_dB.append(np.abs(np.corrcoef(o.dBh, GIC_pipe)[0,1]))
 
     # Cor_B, Cor_dB = (
@@ -118,7 +122,7 @@ def pipeline():
     axs[0].set_xticks([0, np.pi/2, np.pi, 3*np.pi/2])
     axs[0].set_rmax(1)
     axs[0].set_rmin(0)
-    axs[0].legend(bbox_to_anchor=(0.7, 1.2))
+    axs[0].legend(bbox_to_anchor=(1.2, 1.2))
     axs[0].text(0.05, 1.2, f"Cases for Pipeline", ha="left", va="center", transform=axs[0].transAxes)
     axs[0].text(1.1, 0.5, "(a) "+r"Case A, $\tau_0=10.0$ km", ha="left", va="center", transform=axs[0].transAxes, rotation=90)
 
@@ -230,4 +234,4 @@ def powernet(stn=6):
     return
 
 pipeline()
-powernet()
+# powernet()
