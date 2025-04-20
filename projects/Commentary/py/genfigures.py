@@ -300,7 +300,7 @@ def figure6():
     ax.xaxis.set_major_formatter(date_format)
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
     ax.set_xlim(dates)
-    ax.set_ylim(-2, 2)
+    ax.set_ylim(-1, 1)
     ax.set_ylabel(r"E, V/km")
     ax.plot(ds.datetime, ds.Ex/1e3, ls="-", lw=0.6, color="r", label=r"$E_x$")
     ax.plot(ds.datetime, ds.Ey/1e3, ls="-", lw=0.3, color="k", label=r"$E_y$")
@@ -619,11 +619,11 @@ def figure10():
     fig.savefig("figures/Figure10a.png", bbox_inches="tight")
     return
 
-figure10()
+# figure10()
 # figure9()
 # figure8()
 # figure7()
-# figure6()
+figure6()
 # figure5()
 # find_BM_Efield()
 # figure4()
