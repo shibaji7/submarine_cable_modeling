@@ -14,12 +14,15 @@ __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
 import datetime as dt
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
 <<<<<<< HEAD
 =======
 import pandas as pd
+
 >>>>>>> a8429f5bf3936f33668b28c9a7eedbb37d96a9e7
 
 plt.rcParams["font.family"] = "sans-serif"
@@ -150,10 +153,13 @@ class CartoDataOverlay(object):
     
 <<<<<<< HEAD
 
+from glob import glob
+
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import cartopy.io.shapereader as shpreader
-from glob import glob
+
+
 def load_bathymetry(zip_file_url):
     """Read zip file from Natural Earth containing bathymetry shapefiles"""
     # Download and extract shapefiles
@@ -299,5 +305,4 @@ if __name__ == "__main__":
     # cbr.outline.set_edgecolor("k")
     cb.save("figures/routes.png")
     cb.close()
-    pass
 >>>>>>> a8429f5bf3936f33668b28c9a7eedbb37d96a9e7

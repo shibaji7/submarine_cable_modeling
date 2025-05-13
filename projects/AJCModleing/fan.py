@@ -14,7 +14,7 @@ __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
 import datetime as dt
-import matplotlib
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -24,12 +24,11 @@ plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans", "Lucida Grande", "Ve
 
 import cartopy
 import matplotlib.ticker as mticker
-from cartobase import CartoBase, setsize
+from cartobase import setsize
 from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 
 
 class CartoDataOverlay(object):
-
     def __init__(
         self,
         date,
@@ -130,11 +129,13 @@ class CartoDataOverlay(object):
                 fontsize="x-small",
             )
         return ax
-    
+
+
 def get_bthmetry():
     # from scubas.coductivity import ConductivityProfile
     # cp = ConductivityProfile()
     from scipy.io import netcdf_file
+
     filename = ".scubas_config/LITHO1.0.nc"
     with netcdf_file(filename) as f:
         latitude = np.copy(f.variables["latitude"][:])
@@ -143,34 +144,30 @@ def get_bthmetry():
         # water levels
         water_bottom_depth = np.copy(f.variables["water_bottom_depth"][:])
         water_top_depth = np.copy(f.variables["water_top_depth"][:])
-        dwater = water_bottom_depth-water_top_depth
-        dwater[dwater<=0] = np.nan
+        dwater = water_bottom_depth - water_top_depth
+        dwater[dwater <= 0] = np.nan
         # dwater = np.ma.masked_invalid(dwater)
     return (latitude, longitude, dwater)
 
+
 if __name__ == "__main__":
-    cb = CartoDataOverlay(date=dt.datetime(1958,2,11))
+    cb = CartoDataOverlay(date=dt.datetime(1958, 2, 11))
     ax = cb.add_axes()
     bth = pd.read_csv("dataset/lat_long_bathymetry.csv")
-    xyz = cb.proj.transform_points(
-        cb.geo, bth.lon, bth.lat
-    )
-    ax.plot(
-        xyz[:, 0], xyz[:, 1],
-        ls="-", lw=0.8, color="r",
-        transform=cb.proj
-    )
+    xyz = cb.proj.transform_points(cb.geo, bth.lon, bth.lat)
+    ax.plot(xyz[:, 0], xyz[:, 1], ls="-", lw=0.8, color="r", transform=cb.proj)
     (latitude, longitude, dwater) = get_bthmetry()
     lats, lons = np.meshgrid(latitude, longitude)
-    xyz = cb.proj.transform_points(
-        cb.geo, lons, lats
-    )
+    xyz = cb.proj.transform_points(cb.geo, lons, lats)
     im = ax.pcolormesh(
-        xyz[:,:,0], xyz[:,:,1],
-        dwater.T, cmap="Blues",
-        transform=cb.proj, vmax=4,
-        vmin=0
-    )    
+        xyz[:, :, 0],
+        xyz[:, :, 1],
+        dwater.T,
+        cmap="Blues",
+        transform=cb.proj,
+        vmax=4,
+        vmin=0,
+    )
     cpos = [1.04, 0.1, 0.025, 0.8]
     cax = ax.inset_axes(cpos, transform=ax.transAxes)
     cbr = cb.fig.colorbar(im, ax=ax, cax=cax)
@@ -180,4 +177,3 @@ if __name__ == "__main__":
     cbr.outline.set_edgecolor("k")
     cb.save("figures/routes.png")
     cb.close()
-    pass

@@ -9,19 +9,16 @@ __maintainer__ = "Chakraborty, S."
 __email__ = "shibaji7@vt.edu"
 __status__ = "Research"
 
-import argparse
-import os
 
 import numpy as np
-from loguru import logger
 
-from scubas.conductivity import ConductivityProfile
 
 class OceanEarthProfile(object):
     def __init__(self):
         self.segments = np.arange(9).astype(str)
-        # Create 
+        # Create
         return
-    
+
+
 if __name__ == "__main__":
     OceanEarthProfile()

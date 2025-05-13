@@ -92,8 +92,8 @@ class CartoBase(GeoAxes):
         self.add_feature(cartopy.feature.LAKES, **kwargs)
         self.add_feature(cartopy.feature.OCEAN, **kwargs)
         # feature = cartopy.feature.NaturalEarthFeature(
-        #     "physical", "ocean", scale=resolution, 
-        #     edgecolor="none", 
+        #     "physical", "ocean", scale=resolution,
+        #     edgecolor="none",
         #     facecolor=cartopy.feature.COLORS["water"]
         # )
         # self.add_feature(feature)
@@ -365,17 +365,18 @@ class CartoBase(GeoAxes):
         return
 
     def add_bus(
-        self, 
+        self,
         lats,
         lons,
         tx=cartopy.crs.PlateCarree(),
         zorder=3,
-        ls="-", 
+        ls="-",
         lw=0.8,
-        color="r"
+        color="r",
     ):
         self.plot(
-            lons, lats,
+            lons,
+            lats,
             color=color,
             zorder=zorder,
             transform=tx,

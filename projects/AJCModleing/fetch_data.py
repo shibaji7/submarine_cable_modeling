@@ -1,53 +1,53 @@
+import datetime as dt
 import os
+
+import numpy as np
+import pandas as pd
 import pyspedas
 from loguru import logger
-import pandas as pd
-import datetime as dt
-import numpy as np
+
 os.environ["OMNIDATA_PATH"] = "/home/shibaji/omni/"
+
 
 def _load_omni_(dates, res=1):
     import pyomnidata
+
     logger.info(f"OMNIDATA_PATH: {os.environ['OMNIDATA_PATH']}")
     pyomnidata.UpdateLocalData()
-    omni = pd.DataFrame(
-        pyomnidata.GetOMNI(dates[0].year,Res=res)
-    )
+    omni = pd.DataFrame(pyomnidata.GetOMNI(dates[0].year, Res=res))
     omni["time"] = omni.apply(
         lambda r: (
             dt.datetime(
-                int(str(r.Date)[:4]), 
+                int(str(r.Date)[:4]),
                 int(str(r.Date)[4:6]),
-                int(str(r.Date)[6:].replace(".0","")) 
-            ) 
+                int(str(r.Date)[6:].replace(".0", "")),
+            )
             + dt.timedelta(hours=r.ut)
-        ), 
-        axis=1
+        ),
+        axis=1,
     )
-    omni = omni[
-        (omni.time>=dates[0])
-        & (omni.time<=dates[1])
-    ]
+    omni = omni[(omni.time >= dates[0]) & (omni.time <= dates[1])]
     return omni
+
 
 def load_speadas(dates, probe="c"):
     time_range = [
         dates[0].strftime("%Y-%m-%d/%H:%M"),
-        dates[1].strftime("%Y-%m-%d/%H:%M")
+        dates[1].strftime("%Y-%m-%d/%H:%M"),
     ]
     data_fgm = pyspedas.themis.fgm(
-        probe=probe, trange=time_range, 
-        time_clip=True, no_update=False,notplot=True
+        probe=probe, trange=time_range, time_clip=True, no_update=False, notplot=True
     )
     data_mom = pyspedas.themis.mom(
-        probe=probe, trange=time_range,
-        notplot=True,no_update=False,time_clip=True
+        probe=probe, trange=time_range, notplot=True, no_update=False, time_clip=True
     )
     pdyn = {
-        "x": data_mom["thc_peem_density"]["x"], 
-        "y": data_mom["thc_peem_density"]["y"]*1.67*(10**(-6))*0.5*np.nansum(
-            data_mom["thc_peim_velocity_gse"]["y"]**2, axis=1
-        )
+        "x": data_mom["thc_peem_density"]["x"],
+        "y": data_mom["thc_peem_density"]["y"]
+        * 1.67
+        * (10 ** (-6))
+        * 0.5
+        * np.nansum(data_mom["thc_peim_velocity_gse"]["y"] ** 2, axis=1),
     }
     data_mom["pdyn"] = pdyn
     return data_fgm, data_mom
@@ -117,6 +117,7 @@ def read_iaga(file, return_xyzf=True, return_header=False):
     else:
         return df
 
+
 def read_Bfield_data(files, return_xyzf=True, csv_file_date_name="Date"):
     """
     Read B-Files
@@ -134,19 +135,30 @@ def read_Bfield_data(files, return_xyzf=True, csv_file_date_name="Date"):
         Bfield = pd.concat([Bfield, o])
     return Bfield
 
+
 def clean_B_fields(stns, stn_files):
     frames = dict()
     for stn, fs in zip(stns, stn_files):
         o = pd.DataFrame()
         o = pd.concat([o, read_Bfield_data(fs)])
         # Remove Datagaps
-        print("Pre-Is there any issue / nan data? (X,Y,Z)", o.X.hasnans, o.Y.hasnans, o.Z.hasnans)
+        print(
+            "Pre-Is there any issue / nan data? (X,Y,Z)",
+            o.X.hasnans,
+            o.Y.hasnans,
+            o.Z.hasnans,
+        )
         o = o.replace(99999.0, np.nan)
-        for key in ["X", "Y", "Z"]:                    
+        for key in ["X", "Y", "Z"]:
             o[key] = o[key].interpolate(method="from_derivatives")
             o[key] = o[key].ffill()
             o[key] = o[key].bfill()
-        print("Post-Is there any issue / nan data? (X,Y,Z)", o.X.hasnans, o.Y.hasnans, o.Z.hasnans)
+        print(
+            "Post-Is there any issue / nan data? (X,Y,Z)",
+            o.X.hasnans,
+            o.Y.hasnans,
+            o.Z.hasnans,
+        )
         fs[0] = fs[0].replace(".txt", ".csv")
         for a in ["X", "Y", "Z", "F"]:
             fmed = np.median(o[a].iloc[:120])
