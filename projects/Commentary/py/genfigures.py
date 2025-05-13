@@ -31,7 +31,7 @@ def figure2():
     ]
 
 
-    fig = plt.figure(dpi=300, figsize=(2.5, 3))
+    fig = plt.figure(dpi=1000, figsize=(2.5, 3))
     ax = fig.add_subplot(211)
     ax.loglog(tfs[0].freq, np.abs(tfs[0].E2B), "r", lw=1.0, ls="-",)
     ax.loglog(tfs[2].freq, np.abs(tfs[2].E2B), "b", lw=0.6, ls="--", zorder=3)
@@ -75,7 +75,7 @@ def figure3():
         utils.calcTF(utils.sites[3], freqs),
     ]
 
-    fig = plt.figure(dpi=300, figsize=(2.5, 3))
+    fig = plt.figure(dpi=1000, figsize=(2.5, 3))
     ax = fig.add_subplot(211)
     ax.loglog(tfs[1].freq, np.abs(tfs[1].E2B), "r", lw=1.0, ls="-")
     ax.loglog(tfs[2].freq, np.abs(tfs[2].E2B), "b", lw=0.6, ls="--", zorder=3)
@@ -109,9 +109,9 @@ def figure4():
     plt.rcParams.update({
         "font.size": 10
     })
-    ds = utils.get_benchmark_datasets()
+    ds, _ = utils.get_benchmark_datasets()
 
-    fig, start = plt.figure(dpi=300, figsize=(5,7)), 311
+    fig, start = plt.figure(dpi=1000, figsize=(5,7)), 311
     ax = fig.add_subplot(start)
     date_format = mdates.DateFormatter("%H")
     ax.xaxis.set_major_formatter(date_format)
@@ -125,18 +125,18 @@ def figure4():
     ax.set_xticklabels([])
     ax.text(0.05, 0.95, "(a)", ha="left", va="top", transform=ax.transAxes)
 
-    ax = fig.add_subplot(start+1)
-    date_format = mdates.DateFormatter("%H")
-    ax.xaxis.set_major_formatter(date_format)
-    ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
-    ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
-    ax.set_ylim(-500, 500)
-    # ax.set_ylabel(r"$\frac{\partial B}{\partial t}$ in frequency domain, nT/s")
-    ax.set_ylabel(r"GIC Index")
-    ax.plot(ds.datetime, utils.dBdt_fft(ds.x, sqrt=True), ls="-", lw=0.6, color="r")
-    ax.plot(ds.datetime, utils.dBdt_fft(ds.y, sqrt=True), ls="-", lw=0.6, color="k")
-    ax.text(0.05, 0.95, "(b)", ha="left", va="top", transform=ax.transAxes)
-    ax.set_xticklabels([])
+    # ax = fig.add_subplot(start+1)
+    # date_format = mdates.DateFormatter("%H")
+    # ax.xaxis.set_major_formatter(date_format)
+    # ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
+    # ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
+    # ax.set_ylim(-500, 500)
+    # # ax.set_ylabel(r"$\frac{\partial B}{\partial t}$ in frequency domain, nT/s")
+    # ax.set_ylabel(r"GIC Index")
+    # ax.plot(ds.datetime, utils.dBdt_fft(ds.x, sqrt=True), ls="-", lw=0.6, color="r")
+    # ax.plot(ds.datetime, utils.dBdt_fft(ds.y, sqrt=True), ls="-", lw=0.6, color="k")
+    # ax.text(0.05, 0.95, "(b)", ha="left", va="top", transform=ax.transAxes)
+    # ax.set_xticklabels([])
 
     # ax = fig.add_subplot(start+2)
     # date_format = mdates.DateFormatter("%H")
@@ -150,12 +150,12 @@ def figure4():
     # ax.plot(datasets.datetime, dBdt_fft(datasets.y, sqrt=False)*a_scale, ls="-", lw=0.6, color="k")
     # ax.text(0.05, 0.95, "(c)", ha="left", va="top", transform=ax.transAxes)
 
-    ax = fig.add_subplot(start+2)
+    ax = fig.add_subplot(start+1)
     date_format = mdates.DateFormatter("%H")
     ax.xaxis.set_major_formatter(date_format)
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
     ax.set_xlim(dt.datetime(1989,3,12,12), dt.datetime(1989,3,15))
-    ax.set_ylim(-300, 300)
+    ax.set_ylim(-30, 30)
     ax.set_ylabel(r"$\frac{\partial B}{\partial t}$ in time domain, nT/s")
     ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
     ax.plot(ds.datetime, ds.dx, ls="-", lw=0.6, color="r")
@@ -179,7 +179,7 @@ def find_BM_Efield():
     Byf, f = fft(ds.y, 1)
     Ets["X"] = ifft(np.array(utils.calcTFx(site, freqs=f).E2B) * Byf)
 
-    fig, start = plt.figure(dpi=300, figsize=(5,7)), 311
+    fig, start = plt.figure(dpi=1000, figsize=(5,7)), 311
     ax = fig.add_subplot(start)
     date_format = mdates.DateFormatter("%H")
     ax.xaxis.set_major_formatter(date_format)
@@ -281,7 +281,7 @@ def figure6():
     dates= [dt.datetime(1989,3,12,12), dt.datetime(1989,3,15)]
     ds, _, _ = utils.run_benchmark_sim(snum=0)
 
-    fig, start = plt.figure(dpi=300, figsize=(5,7)), 311
+    fig, start = plt.figure(dpi=1000, figsize=(5,7)), 311
     ax = fig.add_subplot(start)
     date_format = mdates.DateFormatter("%H")
     ax.xaxis.set_major_formatter(date_format)
@@ -315,7 +315,7 @@ def figure6():
     ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
     fig.savefig("figures/Figure06.png", bbox_inches="tight")
 
-    fig, start = plt.figure(dpi=300, figsize=(5,5)), 111
+    fig, start = plt.figure(dpi=1000, figsize=(5,5)), 111
     ax = fig.add_subplot(start)
     ax.scatter(ds.y, ds.Ex, s=0.6, color="r")
     ax.scatter(ds.x, ds.Ey, s=0.6)
@@ -329,7 +329,7 @@ def figure7():
     dates= [dt.datetime(1989,3,12,12), dt.datetime(1989,3,15)]
     ds, _, _ = utils.run_benchmark_sim(snum=1, dates=dates)
 
-    fig, start = plt.figure(dpi=300, figsize=(5,7)), 311
+    fig, start = plt.figure(dpi=1000, figsize=(5,7)), 311
     ax = fig.add_subplot(start)
     date_format = mdates.DateFormatter("%H")
     ax.xaxis.set_major_formatter(date_format)
@@ -362,7 +362,7 @@ def figure7():
     ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
     fig.savefig("figures/Figure07.png", bbox_inches="tight")
 
-    fig, start = plt.figure(dpi=300, figsize=(5,5)), 111
+    fig, start = plt.figure(dpi=1000, figsize=(5,5)), 111
     ax = fig.add_subplot(start)
     ax.scatter(ds.dy, ds.Ex, s=0.6, color="r")
     ax.scatter(ds.dx, ds.Ey, s=0.6)
@@ -377,7 +377,7 @@ def figure8():
     ds0, _, _ = utils.run_benchmark_sim(snum=0)
     ds1, _, _ = utils.run_benchmark_sim(snum=1, dates=dates)
 
-    fig, start = plt.figure(dpi=300, figsize=(5,3*2.5)), 311
+    fig, start = plt.figure(dpi=1000, figsize=(5,3*2.5)), 311
 
     ax = fig.add_subplot(start)
     date_format = mdates.DateFormatter("%H")
@@ -427,7 +427,7 @@ def figure9():
     ds0, _, del_t = utils.run_benchmark_sim(snum=0)
     ds1, _, _ = utils.run_benchmark_sim(snum=1, dates=dates)
 
-    fig, start = plt.figure(dpi=300, figsize=(5,2.5*2)), 211
+    fig, start = plt.figure(dpi=1000, figsize=(5,2.5*2)), 211
 
     B = np.sqrt(ds0.x**2+ds0.y**2)
     print(len(ds0), len(B), B.shape,B.iloc[0])
@@ -512,7 +512,7 @@ def figure9():
     fig.subplots_adjust(wspace=0.5)
     fig.savefig("figures/Figure09.png", bbox_inches="tight")
 
-    fig, start = plt.figure(dpi=300, figsize=(5,5)), 111
+    fig, start = plt.figure(dpi=1000, figsize=(5,5)), 111
     ax = fig.add_subplot(start)
     # ax.scatter(B, GIC, s=0.6, color="r")
     ax.scatter(dB, GIC, s=0.6)
@@ -529,7 +529,7 @@ def figure10():
     ds0, _, del_t = utils.run_benchmark_sim(snum=0, dates=dates)
     ds1, _, _ = utils.run_benchmark_sim(snum=1, dates=dates)
 
-    fig, start = plt.figure(dpi=300, figsize=(5,2.5*2)), 211
+    fig, start = plt.figure(dpi=1000, figsize=(5,2.5*2)), 211
 
     B = np.sqrt(ds0.x_o**2+ds0.y_o**2)
     B = B - np.mean(B[:60])
@@ -610,7 +610,7 @@ def figure10():
     fig.subplots_adjust(wspace=0.5)
     fig.savefig("figures/Figure10.png", bbox_inches="tight")
 
-    fig, start = plt.figure(dpi=300, figsize=(5,5)), 111
+    fig, start = plt.figure(dpi=1000, figsize=(5,5)), 111
     ax = fig.add_subplot(start)
     ax.scatter(B, GIC, s=0.6, color="r")
     ax.scatter(dB, GIC, s=0.6)
@@ -623,9 +623,9 @@ def figure10():
 # figure9()
 # figure8()
 # figure7()
-figure6()
+# figure6()
 # figure5()
 # find_BM_Efield()
-# figure4()
-# figure2()
-# figure3()
+figure4()
+figure2()
+figure3()
