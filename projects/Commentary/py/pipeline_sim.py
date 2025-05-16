@@ -42,61 +42,61 @@ def run_pipe_line_simulations_for_benchmark_event(
     e_pipe = pipeline.compute_E(ef.ex, ef.ey)
     gic_pipe = pipeline.compute_J(e_pipe)
 
-    sp = StackPlots(nrows=2, ncols=3)
+    sp = StackPlots(nrows=2, ncols=2)
+    # _, ax = sp.plot_stack_plots(
+    #     bf.date,
+    #     ef.ex / 1e3,
+    #     dict(start=(0, 0), colspan=2, rowspan=1),
+    #     text=f"E-field under {title}",
+    #     ylabel="E-field (V/km)",
+    #     color="r",
+    #     lw=0.4,
+    #     label=r"$E_x$",
+    #     tag="(A)",
+    #     xlim=date_lim,
+    #     ylim=[-2, 2],
+    #     datetime=True,
+    # )
+    # sp.plot_stack_plots(
+    #     bf.date,
+    #     ef.ey / 1e3,
+    #     None,
+    #     label=r"$E_y$",
+    #     color="k",
+    #     lw=0.4,
+    #     xlim=date_lim,
+    #     ax=ax,
+    #     ylim=[-2, 2],
+    #     datetime=True,
+    # )
+    # ax.legend(loc=1)
     _, ax = sp.plot_stack_plots(
         bf.date,
-        ef.ex / 1e3,
+        gic_pipe,
         dict(start=(0, 0), colspan=2, rowspan=1),
-        text=f"E-field under {title}",
-        ylabel="E-field (V/km)",
-        color="r",
-        lw=0.4,
-        label=r"$E_x$",
-        tag="(A)",
-        xlim=date_lim,
-        ylim=[-2, 2],
-        datetime=True,
-    )
-    sp.plot_stack_plots(
-        bf.date,
-        ef.ey / 1e3,
-        None,
-        label=r"$E_y$",
-        color="k",
-        lw=0.4,
-        xlim=date_lim,
-        ax=ax,
-        ylim=[-2, 2],
-        datetime=True,
-    )
-    ax.legend(loc=1)
-    _, ax = sp.plot_stack_plots(
-        bf.date,
-        e_pipe / 1e3,
-        dict(start=(1, 0), colspan=2, rowspan=1),
-        text=rf"E-field and GIC along the pipeline $\alpha$={pipeline.angle} deg",
-        ylabel="E-field (V/km)",
+        title=rf"{title} / Pipe oriented: {angle}$^\circ$",
+        ylabel="GIC (A)",
         color="k",
         lw=0.9,
         xlim=date_lim,
-        ylim=[-1, 1],
-        xlabel="Time (UT)",
+        ylim=[-1500, 1500],
         datetime=True,
-        tag="(B)",
+        tag="(A)",
+        xlabel="Time, UT"
     )
-    sp.plot_stack_plots(
-        bf.date,
-        gic_pipe,
-        None,
-        ylabel="GIC (A)",
-        color="r",
-        lw=0.4,
-        xlim=date_lim,
-        ax=ax.twinx(),
-        ylabel_color="r",
-        ylim=[-500, 500],
-        datetime=True,
-    )
+    # sp.plot_stack_plots(
+    #     bf.date,
+    #     gic_pipe,
+    #     None,
+    #     ylabel="GIC (A)",
+    #     color="r",
+    #     lw=0.4,
+    #     xlim=date_lim,
+    #     ax=ax.twinx(),
+    #     ylabel_color="r",
+    #     ylim=[-500, 500],
+    #     datetime=True,
+    # )
 
     theta, cor = pipeline.compute_segmented_correlation(
         bf.bmag, ef.ex, ef.ey, normalize=site_name == "CaseA"
@@ -104,12 +104,12 @@ def run_pipe_line_simulations_for_benchmark_event(
     sp.plot_dirctional_plots(
         theta,
         cor,
-        dict(start=(0, 2), colspan=1, rowspan=1),
-        title=rf"{title} / Pipe oriented: {angle}$^\circ$",
+        dict(start=(1, 0), colspan=1, rowspan=1),
+        # title=rf"{title} / Pipe oriented: {angle}$^\circ$",
         text=r"r(GIC, $B_h$)",
         color="r",
         cable_angle=angle,
-        tag="(C)",
+        tag="(B)",
     )
     theta, cor = pipeline.compute_segmented_correlation(
         bf.dbh, ef.ex, ef.ey, normalize=site_name == "CaseB"
@@ -117,12 +117,13 @@ def run_pipe_line_simulations_for_benchmark_event(
     sp.plot_dirctional_plots(
         theta,
         cor,
-        dict(start=(1, 2), colspan=1, rowspan=1),
+        dict(start=(1, 1), colspan=1, rowspan=1),
         text=r"r(GIC, $\partial B_h$)",
         color="b",
         cable_angle=angle,
-        tag="(D)",
+        tag="(C)",
     )
+    sp.fig.subplots_adjust(hspace=0.5)
     sp.save_fig(f"figures/Comp_Paper_Benchmark_Pipeline_{site_name}_{angle}.png")
     sp.close()
     return
