@@ -140,15 +140,16 @@ for cp in convertable_parameters:
             text=fd["text"],
             ylim=fd["ylim"],
         )
+        # Generate hR datasets
         o.Time.iloc[0] = o.Time.iloc[0].to_pydatetime().replace(second=0, microsecond=0)
-        h = o.set_index("Time")
-        h = h[~h.index.duplicated()]
-        new_index_20s = pd.date_range(h.index.min(), h.index.max(), freq="1s")
-        tmp_index_20s = h.index.union(new_index_20s)
-        df = h.reindex(tmp_index_20s).interpolate("cubic").reindex(new_index_20s)
-        df.index.name = "Time"
-        df = df.reset_index()
-        print(df.head())
+        dts = o.Time.apply(lambda x: (x-o.Time.iloc[0]).total_seconds())
+        print(dts)
+        newdT = np.arange(0, dts.max(), 30)
+        from scipy.interpolate import CubicSpline
+        cs = CubicSpline(dts, o.Voltage, bc_type='natural')
+        df = pd.DataFrame()
+        df["dT"], df["Time"] = newdT, [o.Time.iloc[0]+dt.timedelta(seconds=s) for s in newdT]
+        df[fd['component']] = cs(newdT)
         draw_dataset(
             df,
             param=fd["component"],
