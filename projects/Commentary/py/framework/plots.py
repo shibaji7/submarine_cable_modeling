@@ -134,7 +134,6 @@ class StackPlots:
         rticks: Optional[Sequence] = [0, 0.5, 1.0],
         theta_ticks: Optional[Sequence] = [0, np.pi / 2, np.pi, 3 * np.pi / 2],
         cable_angle: Optional[float] = None,
-        text_loc: dict = dict(x=-0.1, y=1.05, ha="left", va="center",),
     ):
         """
         Plot directional plots.
@@ -167,11 +166,11 @@ class StackPlots:
         ax.set_rmin(rlims[0])
         if text:
             ax.text(
-                text_loc["x"],
-                text_loc["y"],
+                -0.1,
+                1.05,
                 text,
-                ha=text_loc["ha"],
-                va=text_loc["va"],
+                ha="left",
+                va="center",
                 transform=ax.transAxes,
                 color=color,
             )
