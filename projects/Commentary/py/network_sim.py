@@ -8,6 +8,22 @@ from mt_sites import PROFILES, TransferFunction
 from network import Substation
 from plots import StackPlots
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import scienceplots
+plt.style.use(["science", "ieee"])
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+    }
+)
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans", "Lucida Grande", "Verdana"]
+size = 18
+mpl.rcParams.update(
+    {"xtick.labelsize": size, "ytick.labelsize": size, "font.size": size}
+)
+
 
 def run_network_station_simulations_for_benchmark_event(
     site_name: str,
@@ -140,7 +156,7 @@ def compile_stack_plots(
         xlim=date_lim,
         ylim=[-2, 2],
         datetime=True,
-        tag="(A)",
+        tag="(a)",
     )
     sp.plot_stack_plots(
         bf.date,
@@ -155,13 +171,15 @@ def compile_stack_plots(
         ylim=[-2, 2],
     )
     ax.legend(loc=1)
+    ax.set_xticklabels([])
+    ax.set_xticklabels([], minor=True)
 
     for d, stn, tag in zip(
         range(len(stn_names)),
         stn_names, 
         [
-            "(B)", "(C)", "(D)", 
-            "(E)", "(F)", "(G)"
+            "(b)", "(c)", "(d)", 
+            "(e)", "(f)", "(g)"
         ]
     ):
         net = Substation(name=stn)
@@ -170,7 +188,7 @@ def compile_stack_plots(
             bf.date,
             gic_net / 1e3,
             dict(start=(d+1, 0), colspan=2, rowspan=1),
-            text=rf"GIC through substation, {stn}",
+            text="",
             ylabel="GIC (A)",
             color="k",
             lw=0.9,
@@ -178,8 +196,12 @@ def compile_stack_plots(
             ylim=[-500, 500],
             xlabel="Time (UT)" if d==len(stn_names)-1 else "",
             datetime=True,
-            tag=tag,
+            tag=tag + rf" GIC through substation, {stn}",
         )
+        if d != len(stn_names) - 1:
+            ax.set_xticklabels([])
+            ax.set_xticklabels([], minor=True)
+    sp.fig.subplots_adjust(hspace=0.0, wspace=0.0)
     sp.save_fig(
         f"figures/Stack_Paper_Benchmark_Net_{site_name}.png"
     )
@@ -199,14 +221,14 @@ def dial_plots(
     bf = Bfield.create_benchmark_bfield()
     tf = TransferFunction(site)
     ef = tf.compute_Efield(bf.bx, bf.by, bf.del_ta)
-    sp = StackPlots(nrows=4, ncols=3)
+    sp = StackPlots(nrows=2, ncols=3)
 
     for d, stn, tag in zip(
         range(len(stn_names)),
         stn_names, 
         [
-            "A", "B", "C", 
-            "D", "E", "F"
+            "a", "b", "c", 
+            "d", "e", "f"
         ]
     ):
         net = Substation(name=stn)
@@ -214,14 +236,14 @@ def dial_plots(
         theta, cor = net.compute_segmented_correlation(
             bf.bmag, ef.ex, ef.ey, normalize=site_name == "CaseA"
         )
-        sp.plot_dirctional_plots(
+        _, ax = sp.plot_dirctional_plots(
             theta,
             cor,
-            dict(start=(0+2*int(d/3), d%3), colspan=1, rowspan=1),
+            dict(start=(0+int(d/3), d%3), colspan=1, rowspan=1),
             title=f"{title} / Station: {stn}" if d==0 else f"Station: {stn}",
-            text=r"r(GIC, $B_h$)",
+            text=r"r(GIC, $B_h$)" if d==0 else "",
             color="r",
-            tag=f"({tag}-1)",
+            tag=f"({tag})",
         )
         theta, cor = net.compute_segmented_correlation(
             bf.dbh, ef.ex, ef.ey, normalize=site_name == "CaseB"
@@ -229,10 +251,12 @@ def dial_plots(
         sp.plot_dirctional_plots(
             theta,
             cor,
-            dict(start=(1+2*int(d/3), d%3), colspan=1, rowspan=1),
-            text=r"r(GIC, $\partial B_h$)",
-            tag=f"({tag}-2)",
+            None,
+            # dict(start=(1+2*int(d/3), d%3), colspan=1, rowspan=1),
+            text=r"r(GIC, $\frac{\partial B_h}{\partial t}$)" if d==2 else "",
+            # tag=f"({tag}-2)",
             color="b",
+            ax=ax,
         )
     sp.save_fig(
         f"figures/Dial_Paper_Benchmark_Net_{site_name}.png"
@@ -263,12 +287,12 @@ if __name__ == "__main__":
         r"Case B, $\tau_1$=100.0 km",
     )
     
-    # for stn in ["S2", "S3", "S4", "S5", "S6", "S8"]:
-    #     run_network_station_simulations_for_benchmark_event(
-    #         "CaseA",
-    #         stn,
-    #         r"Case A, $\tau_1$=10.0 km",
-    #     )
+    for stn in ["S2", "S3", "S4", "S5", "S6", "S8"]:
+        run_network_station_simulations_for_benchmark_event(
+            "CaseA",
+            stn,
+            r"Case A, $\tau_1$=10.0 km",
+        )
     #     run_network_station_simulations_for_benchmark_event(
     #         "CaseB",
     #         stn,

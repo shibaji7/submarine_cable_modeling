@@ -81,7 +81,7 @@ def run_pipe_line_simulations_for_benchmark_event(
         xlim=date_lim,
         ylim=[-1500, 1500],
         datetime=True,
-        tag="(A)",
+        tag="(a)",
         xlabel="Time, UT"
     )
     # sp.plot_stack_plots(
@@ -109,7 +109,7 @@ def run_pipe_line_simulations_for_benchmark_event(
         text=r"r(GIC, $B_h$)",
         color="r",
         cable_angle=angle,
-        tag="(B)",
+        tag="(b)",
     )
     theta, cor = pipeline.compute_segmented_correlation(
         bf.dbh, ef.ex, ef.ey, normalize=site_name == "CaseB"
@@ -118,10 +118,10 @@ def run_pipe_line_simulations_for_benchmark_event(
         theta,
         cor,
         dict(start=(1, 1), colspan=1, rowspan=1),
-        text=r"r(GIC, $\partial B_h$)",
+        text=r"r(GIC, $\frac{\partial B_h}{\partial t}$)",
         color="b",
         cable_angle=angle,
-        tag="(C)",
+        tag="(c)",
     )
     sp.fig.subplots_adjust(hspace=0.5)
     sp.save_fig(f"figures/Comp_Paper_Benchmark_Pipeline_{site_name}_{angle}.png")

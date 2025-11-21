@@ -17,7 +17,7 @@ setattr(
             "Sediments",
             "Lower Mantle",
         ],
-        desciption="This model is modified for David's cometary paper",
+        description="This model is modified for David's cometary paper",
         site_name="Two layer Earth model",
     ),
 )
@@ -31,7 +31,7 @@ setattr(
             "Sediments",
             "Lower Mantle",
         ],
-        desciption="This model is modified for David's cometary paper",
+        description="This model is modified for David's cometary paper",
         site_name="Two layer Earth model",
     ),
 )
@@ -44,7 +44,7 @@ setattr(
         names=[
             "Sediments",
         ],
-        desciption="This model is modified for David's cometary paper",
+        description="This model is modified for David's cometary paper",
         site_name="1 layer Uniform Earth model",
     ),
 )

@@ -94,8 +94,14 @@ class StackPlots:
         else:
             ax.set_xlim([time[0], time[-1]])
         if datetime:
-            ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
-            ax.xaxis.set_major_formatter(mdates.DateFormatter("%H"))
+            # ax.xaxis.set_major_locator(mdates.HourLocator(interval=12))
+            # ax.xaxis.set_major_formatter(mdates.DateFormatter("%H"))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))
+            ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H"))
+            ax.xaxis.set_major_locator(mdates.DayLocator())
+            ax.xaxis.set_minor_locator(mdates.HourLocator(interval=12))
+            ax.tick_params(axis="x", which="major", labelcolor="#00008B")
+            ax.tick_params(axis="x", which="minor", labelcolor="k")
         ax.plot(time, value, color=color, linewidth=lw, ls=ls, label=label)
         if text:
             ax.text(0.05, 1.05, text, ha="left", va="center", transform=ax.transAxes)
@@ -134,6 +140,7 @@ class StackPlots:
         rticks: Optional[Sequence] = [0, 0.5, 1.0],
         theta_ticks: Optional[Sequence] = [0, np.pi / 2, np.pi, 3 * np.pi / 2],
         cable_angle: Optional[float] = None,
+        text_location: Optional[tuple] = (-0.1, 1.05),
     ):
         """
         Plot directional plots.
@@ -148,7 +155,7 @@ class StackPlots:
                     [1, 1],
                     lw=1.2,
                     ls="-",
-                    color="m",
+                    color="k",
                 )
                 ax.plot(
                     np.deg2rad([cable_angle + 90, cable_angle + 270]),
@@ -166,8 +173,8 @@ class StackPlots:
         ax.set_rmin(rlims[0])
         if text:
             ax.text(
-                -0.1,
-                1.05,
+                text_location[0],
+                text_location[1],
                 text,
                 ha="left",
                 va="center",

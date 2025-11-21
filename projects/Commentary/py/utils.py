@@ -14,7 +14,7 @@ sites = [
             "Sediments",
             "Lower Mantle",
         ],
-        desciption="This model is modified for David's cometary paper",
+        description="This model is modified for David's cometary paper",
         site_name="Two layer Earth model",
     ),
     Site.init(
@@ -24,7 +24,7 @@ sites = [
             "Sediments",
             "Lower Mantle",
         ],
-        desciption="This model is modified for David's cometary paper",
+        description="This model is modified for David's cometary paper",
         site_name="Two layer Earth model",
     ),
     Site.init(
@@ -33,7 +33,7 @@ sites = [
         names=[
             "Lower Mantle",
         ],
-        desciption="This model is modified for David's cometary paper",
+        description="This model is modified for David's cometary paper",
         site_name="Unform Earth",
     ),
     Site.init(
@@ -42,7 +42,7 @@ sites = [
         names=[
             "Lower Mantle",
         ],
-        desciption="This model is modified for David's cometary paper",
+        description="This model is modified for David's cometary paper",
         site_name="Unform Earth",
     ),
     PROFILES.DB,
