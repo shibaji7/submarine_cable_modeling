@@ -133,8 +133,8 @@ if __name__ == "__main__":
     # for angle in np.arange(0, 100, 15):
     for angle in [45]:
         run_pipe_line_simulations_for_benchmark_event(
-            "CaseA", r"Case A, $\tau_1$=10.0 km", angle=angle
+            "CaseA", r"Case A", angle=angle
         )
         run_pipe_line_simulations_for_benchmark_event(
-            "CaseB", r"Case B, $\tau_1$=100.0 km", angle=angle
+            "CaseB", r"Case B", angle=angle
         )

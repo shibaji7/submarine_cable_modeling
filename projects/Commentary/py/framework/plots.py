@@ -165,7 +165,7 @@ class StackPlots:
                     color="k",
                 )
         if title:
-            ax.set_title(title, fontdict=dict(size=12))
+            ax.set_title(title, fontdict=dict(size=18))
         ax.plot(np.deg2rad(theta), r, color=color, lw=0.9, ls="-")
         ax.set_rticks(rticks)
         ax.set_xticks(theta_ticks)

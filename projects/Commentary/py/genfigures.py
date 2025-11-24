@@ -18,7 +18,7 @@ plt.rcParams.update(
 )
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = ["Tahoma", "DejaVu Sans", "Lucida Grande", "Verdana"]
-size = 15
+size = 12
 mpl.rcParams.update(
     {"xtick.labelsize": size, "ytick.labelsize": size, "font.size": size}
 )
@@ -34,7 +34,7 @@ def figure2():
         utils.calcTF(utils.sites[3], freqs),
     ]
 
-    fig = plt.figure(dpi=1000, figsize=(3.2, 3.7))
+    fig = plt.figure(dpi=1000, figsize=(3.5, 4))
     ax = fig.add_subplot(211)
     ax.loglog(
         tfs[0].freq,
@@ -57,7 +57,8 @@ def figure2():
     ax.text(
         0.9,
         1.05,
-        rf"Case A, $\tau_1={utils.sites[0].layers[0].thickness/1000}$ km",
+        # rf"Case A, $\tau_1={utils.sites[0].layers[0].thickness/1000}$ km",
+        rf"Case A",
         ha="right",
         va="center",
         transform=ax.transAxes,
@@ -89,7 +90,7 @@ def figure2():
     ax.set_yticks([0, 30, 45, 60, 90])
     ax.set_ylabel(r"Phase $[^\circ]$")
     ax.text(0.1, 0.7, rf"(A-II)", ha="left", va="center", transform=ax.transAxes)
-    ax.legend(loc="upper right")
+    ax.legend(loc="upper right", fontsize=10)
     ax.set_ylim(0, 90)
     ax.set_xticks([1e-10, 1e-5, 1e-2, 1e0])
     ax.axvline(1e-5, ls="--", lw=0.8, color="m")
@@ -111,7 +112,7 @@ def figure3():
         utils.calcTF(utils.sites[3], freqs),
     ]
 
-    fig = plt.figure(dpi=1000, figsize=(3.2, 3.7))
+    fig = plt.figure(dpi=1000, figsize=(3.5, 4))
     ax = fig.add_subplot(211)
     ax.loglog(tfs[1].freq, np.abs(tfs[1].E2B), "r", lw=1.0, ls="-")
     ax.loglog(tfs[2].freq, np.abs(tfs[2].E2B), "b", lw=0.6, ls="--", zorder=3)
@@ -129,7 +130,8 @@ def figure3():
     ax.text(
         0.9,
         1.05,
-        rf"Case B, $\tau_1={utils.sites[1].layers[0].thickness/1000}$ km",
+        # rf"Case B, $\tau_1={utils.sites[1].layers[0].thickness/1000}$ km",
+        rf"Case B",
         ha="right",
         va="center",
         transform=ax.transAxes,
@@ -157,7 +159,7 @@ def figure3():
         label=r"Uni($\rho=3000 \Omega.m$)",
     )
     ax.axvspan(1e-10, 1e-5, color="k", alpha=0.2)
-    ax.legend(loc="lower right")
+    ax.legend(loc="lower right", fontsize=10)
     ax.set_yticks([0, 30, 45, 60, 90])
     ax.set_ylabel(r"Phase $[^\circ]$")
     ax.set_xlabel(r"Frequency [Hz]")
@@ -239,7 +241,7 @@ def figure4():
     fig.savefig("figures/Figure04.png", bbox_inches="tight")
     return
 
-
+# figure4()
 figure2()
 figure3()
-figure4()
+

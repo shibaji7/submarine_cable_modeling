@@ -240,10 +240,11 @@ def dial_plots(
             theta,
             cor,
             dict(start=(0+int(d/3), d%3), colspan=1, rowspan=1),
-            title=f"{title} / Station: {stn}" if d==0 else f"Station: {stn}",
-            text=r"r(GIC, $B_h$)" if d==0 else "",
+            title=f"{title} / Substation: {stn}" if d==0 else f"Substation: {stn}",
+            text=r"r(GIC, $B_h$)" if d==4 else "",
             color="r",
             tag=f"({tag})",
+            text_location=(-.65, 1.2)
         )
         theta, cor = net.compute_segmented_correlation(
             bf.dbh, ef.ex, ef.ey, normalize=site_name == "CaseB"
@@ -253,10 +254,11 @@ def dial_plots(
             cor,
             None,
             # dict(start=(1+2*int(d/3), d%3), colspan=1, rowspan=1),
-            text=r"r(GIC, $\frac{\partial B_h}{\partial t}$)" if d==2 else "",
+            text=r"r(GIC, $\frac{\partial B_h}{\partial t}$)" if d==4 else "",
             # tag=f"({tag}-2)",
             color="b",
             ax=ax,
+            text_location=(1.2, 1.2)
         )
     sp.save_fig(
         f"figures/Dial_Paper_Benchmark_Net_{site_name}.png"
@@ -269,30 +271,34 @@ if __name__ == "__main__":
     dial_plots(
         "CaseA",
         ["S2", "S3", "S4", "S5", "S6", "S8"],
-        r"Case A, $\tau_1$=10.0 km",
+        # r"Case A, $\tau_1$=10.0 km",
+        r"Case A",
     )
     dial_plots(
         "CaseB",
         ["S2", "S3", "S4", "S5", "S6", "S8"],
-        r"Case B, $\tau_1$=100.0 km",
+        # r"Case B, $\tau_1$=100.0 km",
+        r"Case B",
     )
     compile_stack_plots(
         "CaseA",
         ["S2", "S3", "S4", "S5", "S6", "S8"],
-        r"Case A, $\tau_1$=10.0 km",
+        # r"Case A, $\tau_1$=10.0 km",
+        "Case A",
     )
     compile_stack_plots(
         "CaseB",
         ["S2", "S3", "S4", "S5", "S6", "S8"],
-        r"Case B, $\tau_1$=100.0 km",
+        # r"Case B, $\tau_1$=100.0 km",
+        "Case B",
     )
     
-    for stn in ["S2", "S3", "S4", "S5", "S6", "S8"]:
-        run_network_station_simulations_for_benchmark_event(
-            "CaseA",
-            stn,
-            r"Case A, $\tau_1$=10.0 km",
-        )
+    # for stn in ["S2", "S3", "S4", "S5", "S6", "S8"]:
+    #     run_network_station_simulations_for_benchmark_event(
+    #         "CaseA",
+    #         stn,
+    #         r"Case A, $\tau_1$=10.0 km",
+    #     )
     #     run_network_station_simulations_for_benchmark_event(
     #         "CaseB",
     #         stn,
