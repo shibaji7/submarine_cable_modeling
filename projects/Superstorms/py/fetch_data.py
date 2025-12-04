@@ -6,7 +6,7 @@ import pandas as pd
 import pyspedas
 from loguru import logger
 
-os.environ["OMNIDATA_PATH"] = "/home/shibaji/omni/"
+os.environ["OMNIDATA_PATH"] = "/home/chakras4/OMNI/"
 
 
 def _load_omni_(dates, res=1):

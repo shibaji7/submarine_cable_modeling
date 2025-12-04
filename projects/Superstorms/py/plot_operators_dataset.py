@@ -55,12 +55,35 @@ def plot_datasets_instack(
 
 
 if __name__ == "__main__":
-    df = read_files_as_pandas("dataset/Operators/AJC PFE DATA/Oxford Falls (AUSTRALIA)")
+    fold_name = "Oxford Falls (AUSTRALIA)"
+    df = read_files_as_pandas(f"dataset/Operators/AJC PFE DATA/{fold_name}")
     stn, station_code, data_cad = "OXF", 2, 1
     plot_datasets_instack(
         [df],
         fig_title=f"Date: 10-12 May 2024; Stn: {stn.lower()}/aus",
         volt_key=f"V_(S{station_code})_{stn} ({data_cad}S) (V)",
         curr_key=f"I_(S{station_code})_{stn} ({data_cad}S) (mA)",
+        fname=f"figures/ajc_{stn.lower()}.png",
+    )
+
+    fold_name = "Tumon Bay (GUAM)"
+    df = read_files_as_pandas(f"dataset/Operators/AJC PFE DATA/{fold_name}")
+    stn, station_code, data_cad = "TMB", 4, 1
+    plot_datasets_instack(
+        [df],
+        fig_title=f"Date: 10-12 May 2024; Stn: {stn.lower()}/aus",
+        volt_key=f"S_4_V (V)",
+        curr_key=f"S_4_I (mA)",
+        fname=f"figures/ajc_{stn.lower()}.png",
+    )
+
+    fold_name = "Maruyama (JAPAN)"
+    df = read_files_as_pandas(f"dataset/Operators/AJC PFE DATA/{fold_name}")
+    stn, station_code, data_cad = "mar", 4, 1
+    plot_datasets_instack(
+        [df],
+        fig_title=f"Date: 10-12 May 2024; Stn: {stn.lower()}/aus",
+        volt_key=f"V_(S9)_MRU (5S) (V)",
+        curr_key=f"I_(S9)_MRU(5S) (mA)",
         fname=f"figures/ajc_{stn.lower()}.png",
     )
