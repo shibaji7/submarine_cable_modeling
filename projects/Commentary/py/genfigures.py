@@ -72,16 +72,16 @@ def figure2():
         tfs[2].freq,
         np.angle(tfs[2].E2B, deg=True),
         "b",
-        lw=0.6,
+        lw=0.4,
         ls="--",
-        zorder=3,
+        zorder=4,
         label=r"Uni($\rho$=3 $\Omega.m$)",
     )
     ax.semilogx(
         tfs[3].freq,
         np.angle(tfs[3].E2B, deg=True),
         "k",
-        lw=0.6,
+        lw=0.9,
         ls="-",
         zorder=3,
         label=r"Uni($\rho$=3000 $\Omega.m$)",
@@ -144,16 +144,16 @@ def figure3():
         tfs[2].freq,
         np.angle(tfs[2].E2B, deg=True),
         "b",
-        lw=0.6,
+        lw=0.4,
         ls="--",
-        zorder=3,
+        zorder=4,
         label=r"Uni($\rho=3 \Omega.m$)",
     )
     ax.semilogx(
         tfs[3].freq,
         np.angle(tfs[3].E2B, deg=True),
         "k",
-        lw=0.6,
+        lw=0.9,
         ls="-",
         zorder=3,
         label=r"Uni($\rho=3000 \Omega.m$)",
@@ -234,7 +234,8 @@ def figure4():
     ax.set_xlim(dt.datetime(1989, 3, 12, 12), dt.datetime(1989, 3, 15))
     ax.set_ylim(-20, 20)
     ax.set_ylabel(r"$\frac{\partial B}{\partial t}$, nT/s")
-    ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
+    # ax.set_xlabel(r"Time, UT since 12 UT on 12 March 1989")
+    ax.set_xlabel(r"Time, UT")
     ax.plot(ds.datetime, ds.dx, ls="-", lw=0.6, color="r")
     ax.plot(ds.datetime, ds.dy, ls="-", lw=0.6, color="k")
     ax.text(0.05, 0.95, "(b)", ha="left", va="top", transform=ax.transAxes)
