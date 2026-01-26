@@ -115,3 +115,16 @@ if __name__ == "__main__":
         fname=f"figures/ajc_{stn.lower()}.png",
         is_filter=True,
     )
+
+    # fold_name = "Tanguisson (Guam)"
+    fold_name = "Tanguisson (GUAM)"
+    df = read_files_as_pandas(f"dataset/Operators/AJC PFE DATA/{fold_name}")
+    stn, station_code, data_cad = "tng", 4, 1
+    plot_datasets_instack(
+        [df],
+        fig_title=f"Date: 10-12 May 2024; Stn: {stn.lower()}/guam",
+        volt_key=f"V_S6_TNG (V)",
+        curr_key=f"I_S6_TNG (mA)",
+        fname=f"figures/ajc_{stn.lower()}.png",
+        is_filter=True,
+    )
