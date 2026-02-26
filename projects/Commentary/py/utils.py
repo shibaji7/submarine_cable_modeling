@@ -8,7 +8,7 @@ from scubas.datasets import PROFILES, Site
 
 sites = [
     Site.init(
-        conductivities=[1 / 3, 1 / 3000],
+        conductivities=[1 / 10, 1 / 3000],
         thicknesses=[10000, np.inf],
         names=[
             "Sediments",
@@ -18,7 +18,7 @@ sites = [
         site_name="Two layer Earth model",
     ),
     Site.init(
-        conductivities=[1 / 3000, 1 / 3],
+        conductivities=[1 / 3000, 1 / 10],
         thicknesses=[100000, np.inf],
         names=[
             "Sediments",
@@ -28,7 +28,7 @@ sites = [
         site_name="Two layer Earth model",
     ),
     Site.init(
-        conductivities=[1 / 3],
+        conductivities=[1 / 10],
         thicknesses=[np.inf],
         names=[
             "Lower Mantle",

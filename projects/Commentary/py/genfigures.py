@@ -75,7 +75,7 @@ def figure2():
         lw=0.4,
         ls="--",
         zorder=4,
-        label=r"Uni($\rho$=3 $\Omega.m$)",
+        label=r"Uni($\rho$=10 $\Omega.m$)",
     )
     ax.semilogx(
         tfs[3].freq,
@@ -147,7 +147,7 @@ def figure3():
         lw=0.4,
         ls="--",
         zorder=4,
-        label=r"Uni($\rho=3 \Omega.m$)",
+        label=r"Uni($\rho=10 \Omega.m$)",
     )
     ax.semilogx(
         tfs[3].freq,
@@ -242,7 +242,7 @@ def figure4():
     fig.savefig("figures/Figure04.png", bbox_inches="tight")
     return
 
-# figure4()
+figure4()
 figure2()
 figure3()
 

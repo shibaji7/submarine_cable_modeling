@@ -42,7 +42,7 @@ def run_pipe_line_simulations_for_benchmark_event(
     e_pipe = pipeline.compute_E(ef.ex, ef.ey)
     gic_pipe = pipeline.compute_J(e_pipe)
 
-    sp = StackPlots(nrows=2, ncols=2)
+    sp = StackPlots(nrows=2, ncols=2, dpi=300)
     # _, ax = sp.plot_stack_plots(
     #     bf.date,
     #     ef.ex / 1e3,

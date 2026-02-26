@@ -11,7 +11,7 @@ setattr(
     PROFILES,
     "CaseA",
     Site.init(
-        conductivities=[1 / 3, 1 / 3000],
+        conductivities=[1 / 10, 1 / 3000],
         thicknesses=[10000, np.inf],
         names=[
             "Sediments",
@@ -25,7 +25,7 @@ setattr(
     PROFILES,
     "CaseB",
     Site.init(
-        conductivities=[1 / 3000, 1 / 3],
+        conductivities=[1 / 3000, 1 / 10],
         thicknesses=[100000, np.inf],
         names=[
             "Sediments",
@@ -39,7 +39,7 @@ setattr(
     PROFILES,
     "Uniform",
     Site.init(
-        conductivities=[1 / 3],
+        conductivities=[1 / 10],
         thicknesses=[np.inf],
         names=[
             "Sediments",
