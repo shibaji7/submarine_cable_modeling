@@ -3,6 +3,7 @@ import sys
 
 sys.path.append("py/framework")
 
+import numpy as np
 from intermagnet import Bfield
 from mt_sites import PROFILES, TransferFunction
 from network import Substation
@@ -20,19 +21,7 @@ def run_network_stations_simulations_for_benchmark_event(
 ):
     """
     Run the pipeline simulation for the benchmark event.
-
-    This function simulates the geoelectric field (E-field) and geomagnetically induced currents (GIC)
-    along a pipeline for a benchmark geomagnetic event. It uses a predefined magnetic field (B-field)
-    dataset, computes the corresponding E-field using a transfer function for the specified site,
-    and calculates the resulting GIC along the pipeline. The results are visualized in a series of
-    plots, including time series of the B-field, E-field, and GIC, as well as directional sensitivity
-    plots showing correlations between GIC and magnetic field variations.
-
-    Args:
-        site_name (str): The site identifier/name for which the transfer function is applied.
-        title (str): A descriptive title for the plots, indicating the site or scenario being analyzed.
-        angle (float): The angle of the pipeline relative to the geomagnetic north (in degrees).
-        date_lim (list[dt.datetime]): The time range for the simulation and plots.
+    (No polar plots in this function — no changes needed to correlation calls.)
     """
     site = getattr(PROFILES, site_name)
     bf = Bfield.create_benchmark_bfield()
@@ -81,7 +70,6 @@ def run_network_stations_simulations_for_benchmark_event(
             lw=0.9,
             xlim=date_lim,
             ylim=[-500, 500],
-            # xlabel="Time (UT)",
             datetime=True,
             tag=f"({chr(98 + j)})",
         )
@@ -101,20 +89,7 @@ def run_network_station_simulations_for_benchmark_event(
     ],
 ):
     """
-    Run the pipeline simulation for the benchmark event.
-
-    This function simulates the geoelectric field (E-field) and geomagnetically induced currents (GIC)
-    along a pipeline for a benchmark geomagnetic event. It uses a predefined magnetic field (B-field)
-    dataset, computes the corresponding E-field using a transfer function for the specified site,
-    and calculates the resulting GIC along the pipeline. The results are visualized in a series of
-    plots, including time series of the B-field, E-field, and GIC, as well as directional sensitivity
-    plots showing correlations between GIC and magnetic field variations.
-
-    Args:
-        site_name (str): The site identifier/name for which the transfer function is applied.
-        title (str): A descriptive title for the plots, indicating the site or scenario being analyzed.
-        angle (float): The angle of the pipeline relative to the geomagnetic north (in degrees).
-        date_lim (list[dt.datetime]): The time range for the simulation and plots.
+    Run the station simulation for the benchmark event.
     """
     site = getattr(PROFILES, site_name)
     bf = Bfield.create_benchmark_bfield()
@@ -166,27 +141,28 @@ def run_network_station_simulations_for_benchmark_event(
         tag="(B)",
     )
 
+    # --- CHANGED: bf.bmag -> bf.bx, bf.by; removed normalize ---
     theta, cor = net.compute_segmented_correlation(
-        bf.bmag, ef.ex, ef.ey, normalize=site_name == "CaseA"
+        bf.bx, bf.by, ef.ex, ef.ey
     )
-    # sp = StackPlots(nrows=2, ncols=1, polar=True)
     sp.plot_dirctional_plots(
         theta,
-        cor,
+        np.abs(cor),
         dict(start=(0, 2), colspan=1, rowspan=1),
         title=f"{title} / Station: {stn}",
-        text=r"r(GIC, $B_h$)",
+        text=r"r(GIC, $B_\theta$)",
         color="r",
         tag="(C)",
     )
+    # --- CHANGED: bf.dbh -> bf.dbx, bf.dby; removed normalize ---
     theta, cor = net.compute_segmented_correlation(
-        bf.dbh, ef.ex, ef.ey, normalize=site_name == "CaseB"
+        bf.dbx, bf.dby, ef.ex, ef.ey
     )
     sp.plot_dirctional_plots(
         theta,
-        cor,
+        np.abs(cor),
         dict(start=(1, 2), colspan=1, rowspan=1),
-        text=r"r(GIC, $\partial B_h$)",
+        text=r"r(GIC, $\frac{\partial B_\theta}{\partial t}$)",
         tag="(D)",
         color="b",
     )
@@ -205,6 +181,7 @@ def compile_stack_plots(
         dt.datetime(1989, 3, 15),
     ],
 ):
+    """No correlation calls here — no changes needed."""
     site = getattr(PROFILES, site_name)
     bf = Bfield.create_benchmark_bfield()
     tf = TransferFunction(site)
@@ -241,10 +218,7 @@ def compile_stack_plots(
     for d, stn, tag in zip(
         range(len(stn_names)),
         stn_names, 
-        [
-            "(B)", "(C)", "(D)", 
-            "(E)", "(F)", "(G)"
-        ]
+        ["(B)", "(C)", "(D)", "(E)", "(F)", "(G)"]
     ):
         net = Substation(name=stn)
         gic_net = net.compute_J(ef.ex, ef.ey)
@@ -283,46 +257,48 @@ def dial_plots(
     for d, stn, tag in zip(
         range(len(stn_names)),
         stn_names, 
-        [
-            "A", "B", "C", 
-            "D", "E", "F"
-        ]
+        ["A", "B", "C", "D", "E", "F"]
     ):
         net = Substation(name=stn)
+
+        # --- CHANGED: bf.bmag -> bf.bx, bf.by; removed normalize ---
         thetaAb, corAb = net.compute_segmented_correlation(
-            bf.bmag, efA.ex, efA.ey, normalize=True
+            bf.bx, bf.by, efA.ex, efA.ey
         )
+        # --- CHANGED: bf.dbh -> bf.dbx, bf.dby; removed normalize ---
         thetaAdb, corAdb = net.compute_segmented_correlation(
-            bf.dbh, efA.ex, efA.ey, normalize=False
+            bf.dbx, bf.dby, efA.ex, efA.ey
         )
         _, ax = sp.plot_dirctional_plots(
             thetaAb,
-            corAb,
+            np.abs(corAb),  # --- CHANGED: added np.abs() ---
             dict(start=(d, 0), colspan=1, rowspan=1),
             title=r"Case A, $\tau_1$=10.0 km" if d == 0 else None,
-            text=r"r(GIC, $B_h$)" if d==0 else None,
+            text=r"r(GIC, $B_\theta$)" if d==0 else None,
             color="r",
             tag=f"({tag}-1)",
         )
         ax.text(-0.4, 0.5, f"Station: {stn}", ha="left", va="center", transform=ax.transAxes, rotation=90)
         sp.plot_dirctional_plots(
             thetaAdb,
-            corAdb,
+            np.abs(corAdb),  # --- CHANGED: added np.abs() ---
             dict(start=(d, 0), colspan=1, rowspan=1),
             tag=f"",
             color="b",
             ax=ax,
         )
 
+        # --- CHANGED: bf.bmag -> bf.bx, bf.by; removed normalize ---
         thetaBb, corBb = net.compute_segmented_correlation(
-            bf.bmag, efB.ex, efB.ey, normalize=False
+            bf.bx, bf.by, efB.ex, efB.ey
         )
+        # --- CHANGED: bf.dbh -> bf.dbx, bf.dby; removed normalize ---
         thetaBdb, corBdb = net.compute_segmented_correlation(
-            bf.dbh, efB.ex, efB.ey, normalize=True
+            bf.dbx, bf.dby, efB.ex, efB.ey
         )
         _, ax = sp.plot_dirctional_plots(
             thetaBb,
-            corBb,
+            np.abs(corBb),  # --- CHANGED: added np.abs() ---
             dict(start=(d, 1), colspan=1, rowspan=1),
             title=r"Case B, $\tau_1$=100.0 km" if d == 0 else None,
             color="r",
@@ -330,9 +306,9 @@ def dial_plots(
         )
         sp.plot_dirctional_plots(
             thetaBdb,
-            corBdb,
+            np.abs(corBdb),  # --- CHANGED: added np.abs() ---
             dict(start=(d, 1), colspan=1, rowspan=1),
-            text=r"r(GIC, $\partial B_h$)" if d == 0 else None,
+            text=r"r(GIC, $\frac{\partial B_\theta}{\partial t}$)" if d == 0 else None,
             tag=f"",
             color="b",
             ax=ax,
@@ -349,35 +325,9 @@ if __name__ == "__main__":
     dial_plots(
         ["S2", "S3", "S4", "S5", "S6", "S8"],
     )
-    # dial_plots(
-    #     "CaseB",
-    #     ["S2", "S3", "S4", "S5", "S6", "S8"],
-    #     r"Case B, $\tau_1$=100.0 km",
-    # )
-    # compile_stack_plots(
-    #     "CaseA",
-    #     ["S2", "S3", "S4", "S5", "S6", "S8"],
-    #     r"Case A, $\tau_1$=10.0 km",
-    # )
-    # compile_stack_plots(
-    #     "CaseB",
-    #     ["S2", "S3", "S4", "S5", "S6", "S8"],
-    #     r"Case B, $\tau_1$=100.0 km",
-    # )
     
     run_network_stations_simulations_for_benchmark_event(
         "CaseA",
         ["S2", "S3", "S4", "S5", "S6", "S8"],
         r"Case A, $\tau_1$=10.0 km",
     )
-    # for stn in ["S2", "S3", "S4", "S5", "S6", "S8"]:
-    #     run_network_station_simulations_for_benchmark_event(
-    #         "CaseA",
-    #         stn,
-    #         r"Case A, $\tau_1$=10.0 km",
-    #     )
-    #     run_network_station_simulations_for_benchmark_event(
-    #         "CaseB",
-    #         stn,
-    #         r"Case A, $\tau_1$=100.0 km",
-    #     )

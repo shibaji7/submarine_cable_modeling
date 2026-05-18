@@ -87,42 +87,65 @@ class Pipeline:
 
     def compute_segmented_correlation(
         self,
-        bh: np.array,
+        bx: np.array,
+        by: np.array,
         ex: np.array,
         ey: np.array,
-        normalize: bool = False,
-        rotate: float = 45.0,
+        dtheta: float = 1.0,
+        trim_fraction: float = 0.1,
     ):
         """
-        Compute the segmented correlation of the magnetic field (B-field) values with the pipeline's GIC.
+        Compute the correlation between pipeline GIC and the magnetic field
+        projection B_theta(t) = Bx(t)*cos(theta) + By(t)*sin(theta) as a
+        function of azimuthal direction theta.
+
+        This follows the approach of Trichtchenko and Boteler (2004), where
+        the directional dependence of correlation is determined by projecting
+        the measured Bx and By components onto each azimuthal direction and
+        computing the Pearson correlation with GIC at each angle.
 
         Parameters:
-        bh (np.array): Array of horizontal magnetic field values in nT.
-        ex (np.array): Array of horizontal electric field values in the X-direction (North-South) in mV/km or V/km.
-        ey (np.array): Array of horizontal electric field values in the Y-direction (East-West) in mV/km or V/km.
-        normalize (bool, optional): Whether to normalize the correlation values. Default is False.
-        rotate (float, optional): Angle in degrees to rotate the theta segments. Default is 45.0.
+        bx (np.array): Array of north (X) magnetic field (or dB/dt) variations.
+        by (np.array): Array of east (Y) magnetic field (or dB/dt) variations.
+        ex (np.array): Array of north (X) electric field values in mV/km.
+        ey (np.array): Array of east (Y) electric field values in mV/km.
+        dtheta (float): Angular resolution in degrees. Default is 1.0.
+        trim_fraction (float): Fraction of time series to trim from each end to
+            exclude tapered/quiet boundary regions. Default is 0.1 (10% each end).
 
         Returns:
-        np.array: Theta segments in degrees.
-        np.array: Computed segmented correlation values.
+        theta_deg (np.array): Azimuthal angles in degrees [0, 360).
+        cor (np.array): Correlation coefficient r(GIC, B_theta) at each angle.
         """
-        logger.debug("Calculate Correlation Coefficients")
-        theta = np.linspace(
-            0, 2 * np.pi, 1001
-        )  # These all are E, B, or dB/dt direction
+        logger.debug("Calculate directional correlation coefficients")
+
+        # Trim tapered boundary regions before computing correlations.
+        # The benchmark B-field has a 5% cosine taper on each end; the gradient
+        # (dB/dt) has large artificial transients there that distort the result.
+        N = len(bx)
+        i_start = int(N * trim_fraction)
+        i_end = N - int(N * trim_fraction)
+        bx_t = bx[i_start:i_end]
+        by_t = by[i_start:i_end]
+
+        # Compute GIC over full arrays, then trim to the same active window
         gic = self.compute_J(self.compute_E(ex, ey))
-        cor = np.abs(
-            (
-                np.cos(theta - np.deg2rad(self.angle))
-                + np.sin(theta - np.deg2rad(self.angle))
-            )
-            * np.corrcoef(bh, gic)[0, 1]
+        gic_t = gic[i_start:i_end]
+
+        theta_deg = np.arange(0, 360, dtheta)
+        theta_rad = np.deg2rad(theta_deg)
+
+        cor = np.zeros(len(theta_deg))
+        for i, th in enumerate(theta_rad):
+            # Project B-field (or dB/dt) onto direction theta
+            b_theta = bx_t * np.cos(th) + by_t * np.sin(th)
+            if np.std(b_theta) < 1e-10 or np.std(gic_t) < 1e-10:
+                cor[i] = 0.0
+            else:
+                cor[i] = np.corrcoef(b_theta, gic_t)[0, 1]
+
+        logger.debug(
+            f"Peak |r| = {np.max(np.abs(cor)):.4f} at "
+            f"theta = {theta_deg[np.argmax(np.abs(cor))]:.1f} deg"
         )
-        logger.debug(f"R:{np.corrcoef(bh, gic)[0, 1]}")
-        if normalize:
-            while np.max(cor) >= 1.0:
-                cor = cor * np.random.uniform(0.8, 0.9)
-            while np.max(cor) <= 0.8:
-                cor = cor * np.random.uniform(1, 1.1)
-        return np.rad2deg(theta) + rotate, np.array(cor)
+        return theta_deg, cor

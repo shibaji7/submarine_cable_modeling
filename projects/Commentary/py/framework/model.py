@@ -160,7 +160,7 @@ def run_analysis(site, title):
     ax.text(
         0.05,
         0.95,
-        rf"r(GIC@S4, {tlab})=%.3f"
+        rf"r(GIC@S6, {tlab})=%.3f"  # --- FIXED: was "r(GIC@S4" ---
         % np.round(
             np.corrcoef(
                 s6.compute_J(ef.ex / 1e3, ef.ey / 1e3)[delt:-delt], B[delt:-delt]
@@ -248,35 +248,21 @@ def run_network_station_simulations_for_benchmark_event(site, stn, title):
     ef = tf.compute_Efield(bf.bx, bf.by, bf.del_ta, p=0)
     station = Substation(name=stn)
 
-    theta, cor = station.compute_segmented_correlation(bf.bmag, ef.ex, ef.ex, True)
-    # theta, gic = station.compute_static_gic()
+    # --- CHANGED: was bf.bmag, ef.ex, ef.ex, True ---
+    #     BUG FIX: ef.ex, ef.ex -> ef.ex, ef.ey
+    #     SIGNATURE: bf.bmag -> bf.bx, bf.by; removed normalize
+    theta, cor = station.compute_segmented_correlation(
+        bf.bx, bf.by, ef.ex, ef.ey
+    )
     sp = StackPlots(nrows=1, ncols=1, polar=True)
     sp.plot_dirctional_plots(
         theta,
-        cor,
+        np.abs(cor),  # --- CHANGED: added np.abs() ---
         title=f"{title} / Station: {stn}",
-        text=r"r(GIC, B)",
+        text=r"r(GIC, $B_\theta$)",
         color="r",
         cable_angle=None,
     )
-    # sp.plot_dirctional_plots(
-    #     theta,
-    #     np.abs(gic),
-    #     title=f"{title} / Station: {stn}",
-    #     text=r"GIC",
-    #     color="r",
-    #     rlims=[0, 500],
-    #     rticks=[0, 200, 500],
-    #     cable_angle=None,
-    # )
-    # theta, cor = pipeline.compute_segmented_correlation(bf.dbx, bf.dby, 0.5)
-    # sp.plot_dirctional_plots(
-    #     theta,
-    #     cor,
-    #     text=r"r(GIC, $\partial B_h$)",
-    #     color="b",
-    #     cable_angle=angle,
-    # )
     sp.save_fig(f"../../figures/Benchmark_Network_Dirc_{stn}.png")
     sp.close()
     return
