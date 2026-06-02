@@ -92,7 +92,7 @@ class Pipeline:
         ex: np.array,
         ey: np.array,
         dtheta: float = 1.0,
-        trim_fraction: float = 0.1,
+        trim_fraction: float = 0.3,
     ):
         """
         Compute the correlation between pipeline GIC and the magnetic field
