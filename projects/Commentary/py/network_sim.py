@@ -128,7 +128,7 @@ def compile_double_stack_plots(
     ],
 ):
     bf = Bfield.create_benchmark_bfield()
-    sp = StackPlots(nrows=len(stn_names)+1, ncols=4)
+    sp = StackPlots(nrows=len(stn_names)+1, ncols=4, dpi=300)
     dpx = 0
     for site_name, title in zip(site_names, titles):
         site = getattr(PROFILES, site_name)

@@ -186,7 +186,7 @@ def compile_stack_plots(
     bf = Bfield.create_benchmark_bfield()
     tf = TransferFunction(site)
     ef = tf.compute_Efield(bf.bx, bf.by, bf.del_ta)
-    sp = StackPlots(nrows=len(stn_names)+1, ncols=2)
+    sp = StackPlots(nrows=len(stn_names)+1, ncols=2, dpi=300)
     _, ax = sp.plot_stack_plots(
         bf.date,
         ef.ex / 1e3,
