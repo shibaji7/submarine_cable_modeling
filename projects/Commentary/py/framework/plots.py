@@ -141,6 +141,7 @@ class StackPlots:
         theta_ticks: Optional[Sequence] = [0, np.pi / 2, np.pi, 3 * np.pi / 2],
         cable_angle: Optional[float] = None,
         text_location: Optional[tuple] = (-0.1, 1.05),
+        lw: Optional[float] = 0.8,
     ):
         """
         Plot directional plots.
@@ -166,7 +167,7 @@ class StackPlots:
                 )
         if title:
             ax.set_title(title, fontdict=dict(size=18))
-        ax.plot(np.deg2rad(theta), r, color=color, lw=0.9, ls="-")
+        ax.plot(np.deg2rad(theta), r, color=color, lw=lw, ls="-")
         ax.set_rticks(rticks)
         ax.set_xticks(theta_ticks)
         ax.set_rmax(1)
