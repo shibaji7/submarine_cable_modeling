@@ -144,17 +144,15 @@ def run_proxy_robustness_pipeline(
         bf.bx, bf.by, gic_U, gic_U, bf.del_ta 
     )
 
-    # Proxy colours: m (vs GIC_A) and darkgreen (vs GIC_B)
-    PROXY_A_COLOR = "m"   # m
-    PROXY_B_COLOR = "darkgreen"   # darkgreen
-
+    PROXY_COLOR = "k"   # m
+    
     j = 0
     # --- Figure ---
     sp = StackPlots(nrows=2, ncols=3, dpi=300)
     for site_name, title, ef, gic_self, gic_other in [
         ("CaseA", "Case A", ef_A, gic_A, gic_B),
-        ("CaseB", "Case B", ef_B, gic_B, gic_A),
         ("Uniform-X", r"Uniform ($\rho$=1000 $\Omega\cdot$m)",  ef_U, gic_U, gic_U),
+        ("CaseB", "Case B", ef_B, gic_B, gic_A),
     ]:
         gic_pipe = gic_A if site_name == "CaseA" else gic_B
 
@@ -199,9 +197,9 @@ def run_proxy_robustness_pipeline(
             ax=ax_B,
             text=r"r(GIC, $\sqrt{f}B_\theta$)" if j==0 else "",
             grid=None,
-            color=PROXY_A_COLOR,
+            color=PROXY_COLOR,
             text_location=(1., -.2),
-            lw=0.6,
+            lw=1.2,
         )
 
         # dB/dt panel with proxy overlaid
@@ -218,9 +216,9 @@ def run_proxy_robustness_pipeline(
             theta_B, r_cross,
             ax=ax_dB,
             grid=None,
-            color=PROXY_A_COLOR,
+            color=PROXY_COLOR,
             text_location=(0.6, 1.1),
-            lw=0.6,
+            lw=1.2,
         )
         ax_B.text(0.5, 1.15, title, ha="center", va="bottom", transform=ax_B.transAxes)
             # ax_dB.text(0.5, 1.15, "Case B", ha="center", va="bottom", transform=ax_dB.transAxes)
