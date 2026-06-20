@@ -48,6 +48,19 @@ setattr(
         site_name="1 layer Uniform Earth model",
     ),
 )
+setattr(
+    PROFILES,
+    "Uniform-X",
+    Site.init(
+        conductivities=[1 / 1e3],
+        thicknesses=[np.inf],
+        names=[
+            "Sediments",
+        ],
+        description="This model is modified for David's cometary paper",
+        site_name="1 layer Uniform Earth model",
+    ),
+)
 
 
 class TransferFunction:

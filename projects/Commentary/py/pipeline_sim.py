@@ -127,13 +127,21 @@ def run_proxy_robustness_pipeline(
     ef_B = TransferFunction(getattr(PROFILES, "CaseB")).compute_Efield(
         bf.bx, bf.by, bf.del_ta
     )
+    ef_U = TransferFunction(getattr(PROFILES, "Uniform-X")).compute_Efield(
+        bf.bx, bf.by, bf.del_ta
+    )
     pipe = Pipeline(angle=angle)
     gic_A = pipe.compute_J(pipe.compute_E(ef_A.ex, ef_A.ey))
     gic_B = pipe.compute_J(pipe.compute_E(ef_B.ex, ef_B.ey))
+    gic_U = pipe.compute_J(pipe.compute_E(ef_U.ex, ef_U.ey))
 
     # --- Proxy robustness (conductivity-agnostic) ---
     theta, r_proxy_A, r_proxy_B = pipe.compute_proxy_robustness(
         bf.bx, bf.by, gic_A, gic_B, bf.del_ta
+    )
+    # same array twice, take first result
+    _, r_proxy_U, _ = pipe.compute_proxy_robustness(
+        bf.bx, bf.by, gic_U, gic_U, bf.del_ta 
     )
 
     # Proxy colours: m (vs GIC_A) and darkgreen (vs GIC_B)
@@ -142,12 +150,11 @@ def run_proxy_robustness_pipeline(
 
     j = 0
     # --- Figure ---
-    sp = StackPlots(nrows=2, ncols=2, dpi=300)
-    for site_name, title, ef, gic_self, gic_other, self_label, other_label in [
-        ("CaseA", "Case A", ef_A, gic_A, gic_B,
-         r"r(GIC, $\sqrt{f}B_\theta$)", r"r(GIC, $\sqrt{f}B_\theta$)"),
-        ("CaseB", "Case B", ef_B, gic_B, gic_A,
-         r"r(GIC, $\sqrt{f}B_\theta$)", r"r(GIC, $\sqrt{f}B_\theta$)"),
+    sp = StackPlots(nrows=2, ncols=3, dpi=300)
+    for site_name, title, ef, gic_self, gic_other in [
+        ("CaseA", "Case A", ef_A, gic_A, gic_B),
+        ("CaseB", "Case B", ef_B, gic_B, gic_A),
+        ("Uniform-X", r"Uniform ($\rho$=1000 $\Omega\cdot$m)",  ef_U, gic_U, gic_U),
     ]:
         gic_pipe = gic_A if site_name == "CaseA" else gic_B
 
@@ -162,16 +169,18 @@ def run_proxy_robustness_pipeline(
         # --- Numeric summary ---
         # proxy curves are the same for both cases (same bx/by);
         # r_proxy_A = |r(proxy, GIC_A)|, r_proxy_B = |r(proxy, GIC_B)|
-        r_self  = r_proxy_A if site_name == "CaseA" else r_proxy_B
-        r_cross = r_proxy_B if site_name == "CaseA" else r_proxy_A
+        # r_self  = r_proxy_A if site_name == "CaseA" else r_proxy_B
+        r_self = {"CaseA": r_proxy_A, "CaseB": r_proxy_B, "Uniform-X": r_proxy_U}[site_name]
+        # r_cross = r_proxy_B if site_name == "CaseA" else r_proxy_A
+        r_cross = {"CaseA": r_proxy_B, "CaseB": r_proxy_A, "Uniform-X": r_proxy_U}[site_name]
         _print_proxy_summary(
             angle,
             theta,
             [
                 (f"r(GIC, B_theta)  [{site_name}]",  np.abs(cor_B)),
                 (f"r(GIC, dB/dt)    [{site_name}]",  np.abs(cor_dB)),
-                (self_label,                          r_self),
-                (other_label,                         r_cross),
+                (r"r(GIC, $\sqrt{f}B_\theta$)" + f"[{site_name}]" ,  r_self),
+                (r"r(GIC, $\sqrt{f}B_\theta$)" + f"[{site_name}]", r_cross),
             ],
         )
 
@@ -179,32 +188,31 @@ def run_proxy_robustness_pipeline(
         _, ax_B = sp.plot_dirctional_plots(
             theta_B,
             np.abs(cor_B),
-            dict(start=(j, 0), colspan=1, rowspan=1),
+            dict(start=(0, j), colspan=1, rowspan=1),
             text=r"r(GIC, $B_\theta$)" if j==0 else "",
             color="r",
             cable_angle=angle,
-            tag="(a)",
+            tag=f"({chr(97+2*j)})",
         )
         sp.plot_dirctional_plots(
             theta_B, r_self,
             ax=ax_B,
-            text=self_label if j==0 else "",
+            text=r"r(GIC, $\sqrt{f}B_\theta$)" if j==0 else "",
             grid=None,
             color=PROXY_A_COLOR,
-            text_location=(1., 0.8),
+            text_location=(1., -.2),
             lw=0.6,
-            tag="(b)",
         )
 
         # dB/dt panel with proxy overlaid
         _, ax_dB = sp.plot_dirctional_plots(
             theta_dB,
             np.abs(cor_dB),
-            dict(start=(j, 1), colspan=1, rowspan=1),
+            dict(start=(1, j), colspan=1, rowspan=1),
             text=r"r(GIC, $\frac{\partial B_\theta}{\partial t}$)" if j==0 else "",
             color="b",
             cable_angle=angle,
-            tag="(c)",
+            tag=f"({chr(98+2*j)})",
         )
         sp.plot_dirctional_plots(
             theta_B, r_cross,
@@ -213,11 +221,9 @@ def run_proxy_robustness_pipeline(
             color=PROXY_A_COLOR,
             text_location=(0.6, 1.1),
             lw=0.6,
-            tag="(d)",
         )
-        if j==0:
-            ax_B.text(0.5, 1.15, "Case A", ha="center", va="bottom", transform=ax_B.transAxes)
-            ax_dB.text(0.5, 1.15, "Case B", ha="center", va="bottom", transform=ax_dB.transAxes)
+        ax_B.text(0.5, 1.15, title, ha="center", va="bottom", transform=ax_B.transAxes)
+            # ax_dB.text(0.5, 1.15, "Case B", ha="center", va="bottom", transform=ax_dB.transAxes)
         j += 1
 
     sp.fig.subplots_adjust(hspace=0.5, wspace=0.1)
